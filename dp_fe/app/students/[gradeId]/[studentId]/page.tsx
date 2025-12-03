@@ -1,0 +1,188 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, Users, Edit, Printer, Trash2, User, Calendar, FileText, Star, Trophy } from "lucide-react";
+
+import { useStudent360, useDeleteStudent } from "@/hooks/useStudents";
+import { useGrades } from "@/hooks/useGrades";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutController,
+  DynamicPageHeader,
+  VerticalToolbar,
+} from "@/components/layout/dynamic";
+import { StudentsMenu } from "@/components/students/students-menu";
+
+import { StudentSummaryHeader } from "@/components/students/details/StudentSummaryHeader";
+
+import { BasicInfoSection } from "@/components/students/tabs/BasicInfoSection";
+import { AttendanceTab } from "@/components/students/tabs/AttendanceTab";
+import { NotesTab } from "@/components/students/tabs/NotesTab";
+import { TalentsSection } from "@/components/students/tabs/TalentsSection";
+import { RolesAndActivitiesTab } from "@/components/students/tabs/RolesAndActivitiesTab";
+
+import type { Student } from "@/types/models";
+
+interface StudentPageProps {
+  params: {
+    gradeId: string;
+    studentId: string;
+  };
+}
+
+export default function StudentDetailPage({ params }: StudentPageProps) {
+  const router = useRouter();
+  const { gradeId, studentId } = params;
+
+  const { data: grades = [] } = useGrades();
+  const { data: student360, isLoading } = useStudent360(studentId);
+  const deleteStudentMutation = useDeleteStudent(gradeId);
+
+  const grade = grades.find((g) => g.id === gradeId);
+  const [activeTab, setActiveTab] = useState<"basic" | "attendance" | "notes" | "talents" | "roles">("basic");
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center text-muted-foreground">
+        <Users className="mr-2 h-6 w-6 animate-spin" />
+        Loading student profile...
+      </div>
+    );
+  }
+
+  if (!student360 || !student360.student) {
+    return (
+      <div className="flex h-screen items-center justify-center flex-col gap-4">
+        <p className="text-lg font-semibold">Student not found</p>
+        <Button onClick={() => router.push(`/students/${gradeId}`)}>
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          Back to student list
+        </Button>
+      </div>
+    );
+  }
+
+  const { student, attendance, notes, talents, houseHistory, competitions, clubs, prefectHistory } = student360;
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to delete this student?")) {
+      deleteStudentMutation.mutate(studentId, {
+        onSuccess: () => {
+          router.push(`/students/${gradeId}`);
+        },
+      });
+    }
+  };
+
+  return (
+    <LayoutController showMainMenu showHorizontalToolbar showVerticalToolbar>
+      <StudentsMenu />
+
+      <DynamicPageHeader
+        title={`${student.firstNameSi || student.firstNameEn} ${student.lastNameSi || student.lastNameEn}`}
+        subtitle={`Grade: ${grade?.nameSi || grade?.nameEn || "Unknown"} • Admission No: ${student.admissionNumber}`}
+        icon={Users}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => router.push(`/students/${gradeId}`)}>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button variant="outline" size="sm">
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+            <Button variant="outline" size="sm">
+              <Printer className="mr-2 h-4 w-4" />
+              Print
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleDelete}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </div>
+        }
+      />
+
+      <VerticalToolbar>
+        <Button
+          variant={activeTab === "basic" ? "secondary" : "ghost"}
+          size="icon"
+          title="Basic Info"
+          onClick={() => setActiveTab("basic")}
+        >
+          <User className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={activeTab === "attendance" ? "secondary" : "ghost"}
+          size="icon"
+          title="Attendance"
+          onClick={() => setActiveTab("attendance")}
+        >
+          <Calendar className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={activeTab === "notes" ? "secondary" : "ghost"}
+          size="icon"
+          title="Notes"
+          onClick={() => setActiveTab("notes")}
+        >
+          <FileText className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={activeTab === "talents" ? "secondary" : "ghost"}
+          size="icon"
+          title="Talents"
+          onClick={() => setActiveTab("talents")}
+        >
+          <Star className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={activeTab === "roles" ? "secondary" : "ghost"}
+          size="icon"
+          title="Roles & Activities"
+          onClick={() => setActiveTab("roles")}
+        >
+          <Trophy className="h-4 w-4" />
+        </Button>
+      </VerticalToolbar>
+
+      <div className="p-6 space-y-8">
+        <StudentSummaryHeader student={student as Student} />
+
+        <div className="pt-2">
+          {activeTab === "basic" && <BasicInfoSection student={student as Student} onSave={() => {}} />}
+
+          {activeTab === "attendance" && <AttendanceTab student={student as Student} attendanceData={attendance} />}
+
+          {activeTab === "notes" && (
+            <NotesTab
+              notes={notes || []} // Use notes from 360 response (or student.notes)
+              onAddNote={() => {}}
+              onDeleteNote={() => {}}
+            />
+          )}
+
+          {activeTab === "talents" && (
+            <TalentsSection
+              talents={talents || []}
+              onAddTalent={() => {}}
+              onRemoveTalent={() => {}}
+            />
+          )}
+
+          {activeTab === "roles" && (
+            <RolesAndActivitiesTab
+              student={student as Student}
+              clubs={clubs || []}
+              activities={competitions || []}
+              houseHistory={houseHistory || []}
+              houseWins={[]} // Add if available in 360
+            />
+          )}
+        </div>
+      </div>
+    </LayoutController>
+  );
+}
