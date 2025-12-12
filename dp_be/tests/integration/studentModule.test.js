@@ -105,7 +105,7 @@ afterAll(async () => {
 
 describe('Student Module Integration Tests', () => {
   let gradeId
-
+  let sectionId
   let studentId
 
   describe('Grade Routes', () => {
@@ -166,7 +166,7 @@ describe('Student Module Integration Tests', () => {
       expect(res.statusCode).toBe(201)
       expect(res.body.data).toHaveProperty('id')
       expect(res.body.data.nameEn).toBe('A')
-
+      sectionId = res.body.data.id
     })
 
     it('should list sections', async () => {

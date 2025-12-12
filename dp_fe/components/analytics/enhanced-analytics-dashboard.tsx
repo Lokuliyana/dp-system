@@ -734,7 +734,7 @@ export function EnhancedAnalyticsDashboard({ students }: EnhancedAnalyticsDashbo
                   </li>
                   <li>Establish mentorship pairs with top performers</li>
                   <li>Plan talent showcase events to celebrate student achievements</li>
-                  <li>Review curriculum effectiveness for &quot;Needs Improvement&quot; group</li>
+                  <li>Review curriculum effectiveness for "Needs Improvement" group</li>
                 </ul>
               </div>
             </CardContent>
