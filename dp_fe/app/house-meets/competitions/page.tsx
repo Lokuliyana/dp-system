@@ -271,7 +271,7 @@ export default function CompetitionsPage() {
                 <div className="border p-3 rounded-md bg-slate-50 space-y-3">
                   <Label className="font-semibold">Personal Awards</Label>
                   <p className="text-xs text-muted-foreground">
-                    Define awards like "Best Actor", "Best Speaker" etc.
+                    Define awards like &quot;Best Actor&quot;, &quot;Best Speaker&quot; etc.
                   </p>
                   <div className="flex gap-2">
                     <Input

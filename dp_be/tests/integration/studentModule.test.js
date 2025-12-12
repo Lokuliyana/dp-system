@@ -105,7 +105,7 @@ afterAll(async () => {
 
 describe('Student Module Integration Tests', () => {
   let gradeId
-  let sectionId
+
   let studentId
 
   describe('Grade Routes', () => {
@@ -166,7 +166,7 @@ describe('Student Module Integration Tests', () => {
       expect(res.statusCode).toBe(201)
       expect(res.body.data).toHaveProperty('id')
       expect(res.body.data.nameEn).toBe('A')
-      sectionId = res.body.data.id
+
     })
 
     it('should list sections', async () => {
@@ -219,7 +219,7 @@ describe('Student Module Integration Tests', () => {
           admissionNumber: '12345',
           admissionDate: new Date().toISOString(),
           dob: new Date('2015-01-01').toISOString(),
-          gradeId: gradeId,
+          gradeId,
           academicYear: 2024,
         })
 
@@ -244,13 +244,13 @@ describe('Student Module Integration Tests', () => {
           admissionNumber: '67890',
           admissionDate: new Date().toISOString(),
           dob: new Date('2015-02-01').toISOString(),
-          gradeId: gradeId,
+          gradeId,
           academicYear: 2024,
         })
 
       const res = await request(app)
         .get(`${env.apiPrefix}/students`)
-        .query({ gradeId: gradeId })
+        .query({ gradeId })
         .set('Authorization', authHeader)
 
       if (res.statusCode !== 200) {
@@ -273,7 +273,7 @@ describe('Student Module Integration Tests', () => {
           admissionNumber: 'UP123',
           admissionDate: new Date().toISOString(),
           dob: new Date('2015-01-01').toISOString(),
-          gradeId: gradeId,
+          gradeId,
           academicYear: 2024,
         })
       const sId = createRes.body.data.id
@@ -304,7 +304,7 @@ describe('Student Module Integration Tests', () => {
           admissionNumber: 'DEL123',
           admissionDate: new Date().toISOString(),
           dob: new Date('2015-01-01').toISOString(),
-          gradeId: gradeId,
+          gradeId,
           academicYear: 2024,
         })
       const sId = createRes.body.data.id
@@ -322,7 +322,7 @@ describe('Student Module Integration Tests', () => {
       // Verify deletion
       const listRes = await request(app)
         .get(`${env.apiPrefix}/students`)
-        .query({ gradeId: gradeId })
+        .query({ gradeId })
         .set('Authorization', authHeader)
 
       const found = listRes.body.data.find((s) => s.id === sId)
@@ -352,7 +352,7 @@ describe('Student Module Integration Tests', () => {
           admissionNumber: 'ATT123',
           admissionDate: new Date().toISOString(),
           dob: new Date('2015-01-01').toISOString(),
-          gradeId: gradeId,
+          gradeId,
           academicYear: 2024,
         })
       studentId = studentRes.body.data.id
@@ -364,8 +364,8 @@ describe('Student Module Integration Tests', () => {
         .set('Authorization', authHeader)
         .send({
           date: new Date().toISOString(),
-          studentId: studentId,
-          gradeId: gradeId,
+          studentId,
+          gradeId,
           status: 'present',
         })
 
@@ -381,15 +381,15 @@ describe('Student Module Integration Tests', () => {
     it('should list attendance by date', async () => {
       const date = new Date().toISOString()
       await request(app).post(`${env.apiPrefix}/attendance`).set('Authorization', authHeader).send({
-        date: date,
-        studentId: studentId,
-        gradeId: gradeId,
+        date,
+        studentId,
+        gradeId,
         status: 'absent',
       })
 
       const res = await request(app)
         .get(`${env.apiPrefix}/attendance/by-date`)
-        .query({ date: date, gradeId: gradeId })
+        .query({ date, gradeId })
         .set('Authorization', authHeader)
 
       if (res.statusCode !== 200) {

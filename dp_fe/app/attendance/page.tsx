@@ -25,14 +25,14 @@ export default function AttendancePage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">--</div>
-              <p className="text-xs text-muted-foreground">Today's attendance</p>
+              <p className="text-xs text-muted-foreground">Today&apos;s attendance</p>
             </CardContent>
           </Card>
           {/* Add more stats cards here */}
         </div>
         
         <div className="mt-6">
-          <p className="text-muted-foreground">Select "Mark Attendance" from the menu to record attendance for a class.</p>
+          <p className="text-muted-foreground">Select &quot;Mark Attendance&quot; from the menu to record attendance for a class.</p>
         </div>
       </div>
     </LayoutController>
