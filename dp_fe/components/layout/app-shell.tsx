@@ -26,7 +26,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* Main area */}
       <SidebarInset>
         {/* Top bar */}
-        <header className="flex h-14 items-center gap-2 border-b bg-white px-4">
+        <header className="flex h-12 items-center gap-2 border-b bg-white px-4">
           <SidebarTrigger />
           {/* Optional: breadcrumb / page title component here */}
         </header>

@@ -28,7 +28,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "px-4 py-6 sm:px-6 lg:px-8", // consistent padding
+        "px-4 py-4 sm:px-4 lg:px-6", // consistent padding
         variant === "default" && "mx-auto max-w-7xl",
         variant === "fluid" && "w-full",
         className

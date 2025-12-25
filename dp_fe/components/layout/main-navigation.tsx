@@ -81,7 +81,7 @@ export function MainNavigation() {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
-      <SidebarHeader className="border-b border-sidebar-border pb-3">
+      <SidebarHeader className="border-b border-sidebar-border pb-2">
         <Link href="/" className="flex items-center gap-3 px-2 py-1">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
             <BookOpen className="h-5 w-5" />
@@ -104,18 +104,18 @@ export function MainNavigation() {
           if (!items || items.length === 0) return null;
 
           return (
-            <SidebarGroup key={groupKey}>
-              <SidebarGroupLabel>
+            <SidebarGroup key={groupKey} className="py-1">
+              <SidebarGroupLabel className="h-6">
                 {GROUP_LABELS[groupKey]}
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="gap-0">
                   {items.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item.href);
                     return (
                       <SidebarMenuItem key={item.id}>
-                        <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+                        <SidebarMenuButton asChild isActive={active} tooltip={item.label} size="sm">
                           <Link href={item.href}>
                             <Icon />
                             <span>{item.label}</span>
@@ -126,13 +126,13 @@ export function MainNavigation() {
                   })}
                 </SidebarMenu>
               </SidebarGroupContent>
-              {groupKey !== "insights" && <SidebarSeparator />}
+              {groupKey !== "insights" && <SidebarSeparator className="my-1" />}
             </SidebarGroup>
           );
         })}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
+      <SidebarFooter className="border-t border-sidebar-border p-1">
         <div className="flex items-center justify-between px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
           <span>School Management System</span>
           <span className="text-[10px]">v2.0</span>

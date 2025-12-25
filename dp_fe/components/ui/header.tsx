@@ -29,8 +29,8 @@ export function Header({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4",
-        isPage && "border-b border-slate-200 bg-white px-6 py-5 sticky top-0 z-10",
+        "flex flex-col gap-2",
+        isPage && "border-b border-slate-200 bg-white px-4 py-3 sticky top-0 z-10",
         !isPage && "px-0 py-0",
         className
       )}
