@@ -16,6 +16,13 @@ router.get(
   ctrl.listSections
 )
 
+router.get(
+  '/by-grade',
+  // permit([P.SECTION.READ]),
+  validate(V.listSectionsByGradeSchema),
+  ctrl.listSectionsByGrade
+)
+
 router.patch(
   '/:id',
   // permit([P.SECTION.UPDATE]),

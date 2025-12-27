@@ -10,9 +10,24 @@ router.post(
   ctrl.createStudent
 )
 
-// list by grade via query: /students?gradeId=...
+router.post(
+  '/bulk-import',
+  // permit([P.STUDENT.CREATE]),
+  require('../middlewares/upload.middleware').single('file'),
+  ctrl.bulkImportStudents
+)
+
+// universal list with pagination and search
 router.get(
   '/',
+  // permit([P.STUDENT.READ]),
+  validate(V.listStudentsSchema),
+  ctrl.listStudents
+)
+
+// list by grade via query: /students/by-grade?gradeId=...
+router.get(
+  '/by-grade',
   // permit([P.STUDENT.READ]),
   validate(V.listStudentsByGradeSchema),
   ctrl.listStudentsByGrade

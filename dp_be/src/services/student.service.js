@@ -1,5 +1,7 @@
 const Student = require('../models/student.model')
+const Grade = require('../models/grade.model')
 const ApiError = require('../utils/apiError')
+const xlsx = require('xlsx')
 
 // other models for 360 view (some may be added later)
 const Attendance = require('../models/attendance.model')
@@ -21,8 +23,50 @@ function handleDup(err) {
   throw err
 }
 
+// Helper to calculate grade based on DOB
+const calculateGrade = async (schoolId, dob, academicYear) => {
+  if (!dob || !academicYear) return null
+
+  const d = new Date(dob)
+  const dobYear = d.getFullYear()
+  const dobMonth = d.getMonth() + 1 // 1-12
+
+  // Cutoff is Jan 31st.
+  // If born Feb-Dec: Grade 1 Year = dobYear + 6
+  // If born Jan: Grade 1 Year = dobYear + 5
+  let grade1Year
+  if (dobMonth > 1) {
+    grade1Year = dobYear + 6
+  } else {
+    // If born in Jan, check day? User said "before 31 goes for senior batch".
+    // "2006 jan 31st grade 1 will be 2011". 2006 + 5 = 2011.
+    // So if born in Jan (any day <= 31), it's +5.
+    grade1Year = dobYear + 5
+  }
+
+  const currentLevel = academicYear - grade1Year + 1
+
+  if (currentLevel < 1 || currentLevel > 14) {
+    // Out of range, maybe return null or handle gracefully?
+    // For now, let's try to find it.
+  }
+
+  const grade = await Grade.findOne({ schoolId, level: currentLevel })
+  return grade
+}
+
 exports.createStudent = async ({ schoolId, payload, userId }) => {
   try {
+    // Auto-allocate grade if not provided
+    if (!payload.gradeId && payload.dob && payload.academicYear) {
+      const grade = await calculateGrade(schoolId, payload.dob, payload.academicYear)
+      if (grade) {
+        payload.gradeId = grade._id
+      } else {
+        throw new ApiError(400, 'Could not determine grade based on DOB')
+      }
+    }
+
     const doc = await Student.create({
       ...payload,
       schoolId,
@@ -34,15 +78,234 @@ exports.createStudent = async ({ schoolId, payload, userId }) => {
   }
 }
 
+exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
+  const workbook = xlsx.read(fileBuffer, { type: 'buffer' })
+  const sheetName = workbook.SheetNames[0]
+  const sheet = workbook.Sheets[sheetName]
+  const data = xlsx.utils.sheet_to_json(sheet, { header: 1 })
+
+  // Remove header
+  const rows = data.slice(1)
+  const grades = await Grade.find({ schoolId }).lean()
+
+  // We need academicYear to calculate grade.
+  // Assuming current year if not specified? Or maybe we should pass it?
+  // For now, let's assume the current year is the academic year for import.
+  const currentYear = new Date().getFullYear()
+
+  const results = {
+    success: 0,
+    failed: 0,
+    errors: [],
+  }
+
+  const parseDate = (val) => {
+    if (!val) return undefined
+    if (val instanceof Date) return val
+    if (typeof val === 'number') {
+      return new Date(Math.round((val - 25569) * 86400 * 1000))
+    }
+    return new Date(val)
+  }
+
+  for (const [index, row] of rows.entries()) {
+    if (!row || row.length === 0) continue
+
+    try {
+      const [
+        admissionNumber,
+        nameWithInitialsSi,
+        fullNameSi,
+        firstNameSi,
+        lastNameSi,
+        fullNameEn,
+        dobRaw,
+        sex,
+        birthCertificateNumber,
+        admissionDateRaw,
+        admittedGradeName,
+        addressSi,
+        whatsappNumber,
+        emergencyNumber,
+        email,
+        medium,
+        motherNameEn,
+        motherNumber,
+        motherOccupation,
+        fatherNameEn,
+        fatherNumber,
+        fatherOccupation,
+      ] = row
+
+      if (!admissionNumber) continue
+
+      const dob = parseDate(dobRaw)
+      let gradeId
+
+      // 1. Try to calculate grade based on DOB (Priority)
+      if (dob) {
+        const calculatedGrade = await calculateGrade(schoolId, dob, currentYear)
+        if (calculatedGrade) gradeId = calculatedGrade._id
+      }
+
+      // 2. If not calculated, try to find grade by name provided in CSV
+      if (!gradeId && admittedGradeName) {
+        const g = grades.find(
+          (g) =>
+            g.nameEn === admittedGradeName ||
+            g.nameSi === admittedGradeName ||
+            g.nameEn === String(admittedGradeName)
+        )
+        if (g) gradeId = g._id
+      }
+
+      if (!gradeId) {
+        throw new Error('Grade could not be determined for student')
+      }
+
+      const mapSex = (val) => {
+        if (!val) return undefined
+        const v = String(val).trim().toLowerCase()
+        if (['male', 'm', 'පුරුෂ'].includes(v)) return 'male'
+        if (['female', 'f', 'woman', 'ස්​ත්‍රී', 'ස්ත්‍රී'].includes(v)) return 'female'
+        return v
+      }
+
+      const mapMedium = (val) => {
+        if (!val) return undefined
+        const v = String(val).trim().toLowerCase()
+        if (['sinhala', 'sin', 'සිංහල'].includes(v)) return 'sinhala'
+        if (['english', 'eng', 'ඉංග්‍රීසි'].includes(v)) return 'english'
+        if (['tamil', 'tam', 'දෙමළ'].includes(v)) return 'tamil'
+        return v
+      }
+
+      const payload = {
+        admissionNumber: String(admissionNumber),
+        nameWithInitialsSi,
+        fullNameSi,
+        firstNameSi,
+        lastNameSi,
+        fullNameEn,
+        dob,
+        sex: mapSex(sex),
+        birthCertificateNumber: String(birthCertificateNumber || ''),
+        admissionDate: parseDate(admissionDateRaw),
+        admittedGrade: String(admittedGradeName || ''),
+        gradeId,
+        addressSi,
+        whatsappNumber: String(whatsappNumber || ''),
+        emergencyNumber: String(emergencyNumber || ''),
+        email,
+        medium: mapMedium(medium),
+        motherNameEn,
+        motherNumber: String(motherNumber || ''),
+        motherOccupation,
+        fatherNameEn,
+        fatherNumber: String(fatherNumber || ''),
+        fatherOccupation,
+        academicYear: currentYear, // Set academic year for the record
+      }
+
+      await Student.findOneAndUpdate(
+        { schoolId, admissionNumber: String(admissionNumber) },
+        {
+          $set: { ...payload, updatedById: userId },
+          $setOnInsert: { createdById: userId, schoolId },
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+
+      results.success++
+    } catch (err) {
+      results.failed++
+      results.errors.push({
+        row: index + 2,
+        error: err.message,
+        admissionNumber: row ? row[0] : 'Unknown',
+      })
+    }
+  }
+
+  return results
+}
+
+exports.listStudents = async ({
+  schoolId,
+  page = 1,
+  limit = 10,
+  search = '',
+  gradeId,
+  sectionId,
+  academicYear,
+  sex,
+  birthYear,
+  admittedYear,
+}) => {
+  const q = { schoolId }
+
+  if (gradeId) q.gradeId = gradeId
+  if (sectionId) q.sectionId = sectionId
+  if (academicYear) q.academicYear = Number(academicYear)
+  if (sex) q.sex = sex
+
+  if (birthYear) {
+    const start = new Date(`${birthYear}-01-01`)
+    const end = new Date(`${birthYear}-12-31`)
+    q.dob = { $gte: start, $lte: end }
+  }
+
+  if (admittedYear) {
+    const start = new Date(`${admittedYear}-01-01`)
+    const end = new Date(`${admittedYear}-12-31`)
+    q.admissionDate = { $gte: start, $lte: end }
+  }
+
+  if (search) {
+    const searchRegex = new RegExp(search, 'i')
+    q.$or = [
+      { firstNameEn: searchRegex },
+      { lastNameEn: searchRegex },
+      { fullNameEn: searchRegex },
+      { fullNameSi: searchRegex },
+      { admissionNumber: searchRegex },
+      { phoneNum: searchRegex },
+      { whatsappNumber: searchRegex },
+    ]
+  }
+
+  const skip = (page - 1) * limit
+
+  const [items, total] = await Promise.all([
+    Student.find(q)
+      .sort({ admissionNumber: 1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('gradeId', 'nameEn level')
+      .populate('sectionId', 'nameEn')
+      .lean(),
+    Student.countDocuments(q),
+  ])
+
+  return {
+    items: items.map((item) => ({ ...item, id: item._id })),
+    total,
+    page: Number(page),
+    limit: Number(limit),
+    totalPages: Math.ceil(total / limit),
+  }
+}
+
 exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear }) => {
   const q = { schoolId, gradeId }
   if (academicYear) q.academicYear = Number(academicYear)
 
   const items = await Student.find(q)
     .sort({ admissionNumber: 1 })
+    .populate('sectionId', 'nameEn')
     .lean()
 
-  return items.map(item => ({ ...item, id: item._id }))
+  return items.map((item) => ({ ...item, id: item._id }))
 }
 
 exports.updateStudentBasicInfo = async ({ schoolId, id, payload, userId }) => {

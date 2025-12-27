@@ -30,29 +30,46 @@ import { cn } from "@/lib/utils";
 import type { Student } from "@/types/models";
 
 const studentSchema = z.object({
-  firstNameSi: z.string().optional(),
-  lastNameSi: z.string().optional(),
-  firstNameEn: z.string().min(1, "First Name (English) is required"),
-  lastNameEn: z.string().min(1, "Last Name (English) is required"),
+  // --- Names ---
+  firstNameSi: z.string().min(1, "First Name (Sinhala) is required"),
+  lastNameSi: z.string().min(1, "Last Name (Sinhala) is required"),
+  fullNameSi: z.string().min(1, "Full Name (Sinhala) is required"),
+  nameWithInitialsSi: z.string().min(1, "Name with Initials (Sinhala) is required"),
+  
+  firstNameEn: z.string().optional(),
+  lastNameEn: z.string().optional(),
+  fullNameEn: z.string().min(1, "Full Name (English) is required"),
+
+  // --- Personal ---
   admissionNumber: z.string().min(1, "Admission Number is required"),
   admissionDate: z.date({ required_error: "Admission Date is required" }),
   dob: z.date({ required_error: "Date of Birth is required" }),
-  gradeId: z.string().min(1, "Grade is required"),
+  sex: z.enum(["male", "female"], { required_error: "Sex is required" }),
+  birthCertificateNumber: z.string().optional(),
+
+  // --- Academic ---
+  gradeId: z.string().optional(),
   sectionId: z.string().optional(),
+  admittedGrade: z.string().optional(),
+  medium: z.enum(["sinhala", "english", "tamil"]).optional(),
+  academicYear: z.number().min(2000, "Invalid Year"),
+
+  // --- Contact ---
   email: z.string().email().optional().or(z.literal("")),
   phoneNum: z.string().optional(),
+  whatsappNumber: z.string().optional(),
+  emergencyNumber: z.string().optional(),
   addressSi: z.string().optional(),
   addressEn: z.string().optional(),
-  academicYear: z.number().min(2000, "Invalid Year"),
-  emergencyContacts: z.array(
-    z.object({
-      nameSi: z.string().optional(),
-      nameEn: z.string().optional(),
-      relationshipSi: z.string().optional(),
-      relationshipEn: z.string().optional(),
-      number: z.string().optional(),
-    })
-  ).optional(),
+
+  // --- Parents ---
+  motherNameEn: z.string().optional(),
+  motherNumber: z.string().optional(),
+  motherOccupation: z.string().optional(),
+
+  fatherNameEn: z.string().optional(),
+  fatherNumber: z.string().optional(),
+  fatherOccupation: z.string().optional(),
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;
@@ -72,30 +89,86 @@ export function StudentForm({
   onSubmit,
   isLoading,
 }: StudentFormProps) {
+  const firstInputRef = useState<HTMLInputElement | null>(null);
+  
+  // Focus first input on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const input = document.querySelector('input[name="firstNameSi"]') as HTMLInputElement;
+      if (input) input.focus();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      if (e.ctrlKey || e.metaKey) {
+        // Ctrl + Enter -> Submit
+        e.preventDefault();
+        form.handleSubmit(handleSubmit)();
+      } else {
+        // Enter -> Next field
+        e.preventDefault();
+        const formEl = e.currentTarget as HTMLFormElement;
+        const elements = Array.from(formEl.elements) as HTMLElement[];
+        const index = elements.indexOf(e.target as HTMLElement);
+        
+        if (index > -1 && index < elements.length - 1) {
+          // Find next focusable element (skip hidden, disabled, etc if needed)
+          let nextIndex = index + 1;
+          while (nextIndex < elements.length) {
+            const next = elements[nextIndex];
+            if (next.tagName === 'INPUT' || next.tagName === 'SELECT' || next.tagName === 'TEXTAREA' || next.tagName === 'BUTTON') {
+              if (!next.hasAttribute('disabled') && !next.hasAttribute('hidden')) {
+                next.focus();
+                break;
+              }
+            }
+            nextIndex++;
+          }
+        }
+      }
+    }
+  };
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
       firstNameSi: initialData?.firstNameSi || "",
       lastNameSi: initialData?.lastNameSi || "",
+      nameWithInitialsSi: initialData?.nameWithInitialsSi || "",
+      fullNameSi: initialData?.fullNameSi || "",
+      
       firstNameEn: initialData?.firstNameEn || "",
       lastNameEn: initialData?.lastNameEn || "",
+      fullNameEn: initialData?.fullNameEn || "",
+
       admissionNumber: initialData?.admissionNumber || "",
-      admissionDate: initialData?.admissionDate ? new Date(initialData.admissionDate) : new Date(),
+      admissionDate: initialData?.admissionDate ? new Date(initialData.admissionDate) : undefined,
       dob: initialData?.dob ? new Date(initialData.dob) : undefined,
+      sex: (initialData?.sex as "male" | "female") || undefined,
+      birthCertificateNumber: initialData?.birthCertificateNumber || "",
+
       gradeId: initialData?.gradeId || "",
       sectionId: initialData?.sectionId || "",
-      email: initialData?.email || "",
-      phoneNum: initialData?.phoneNum || "",
+      admittedGrade: initialData?.admittedGrade || "",
+      medium: (initialData?.medium as "sinhala" | "english" | "tamil") || "sinhala",
+      academicYear: initialData?.academicYear || new Date().getFullYear(),
+
       addressSi: initialData?.addressSi || "",
       addressEn: initialData?.addressEn || "",
-      academicYear: initialData?.academicYear || new Date().getFullYear(),
-      emergencyContacts: initialData?.emergencyContacts || [],
-    },
-  });
+      phoneNum: initialData?.phoneNum || "",
+      whatsappNumber: initialData?.whatsappNumber || "",
+      emergencyNumber: initialData?.emergencyNumber || "",
+      email: initialData?.email || "",
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "emergencyContacts",
+      motherNameEn: initialData?.motherNameEn || "",
+      motherNumber: initialData?.motherNumber || "",
+      motherOccupation: initialData?.motherOccupation || "",
+
+      fatherNameEn: initialData?.fatherNameEn || "",
+      fatherNumber: initialData?.fatherNumber || "",
+      fatherOccupation: initialData?.fatherOccupation || "",
+    },
   });
 
   // Reset form when initialData changes (for editing)
@@ -104,38 +177,74 @@ export function StudentForm({
       form.reset({
         firstNameSi: initialData.firstNameSi || "",
         lastNameSi: initialData.lastNameSi || "",
+        fullNameSi: initialData.fullNameSi || "",
+        nameWithInitialsSi: initialData.nameWithInitialsSi || "",
         firstNameEn: initialData.firstNameEn || "",
         lastNameEn: initialData.lastNameEn || "",
+        fullNameEn: initialData.fullNameEn || "",
+        
         admissionNumber: initialData.admissionNumber || "",
-        admissionDate: initialData.admissionDate ? new Date(initialData.admissionDate) : new Date(),
+        admissionDate: initialData.admissionDate ? new Date(initialData.admissionDate) : undefined,
         dob: initialData.dob ? new Date(initialData.dob) : undefined,
+        sex: (initialData.sex as "male" | "female") || undefined,
+        birthCertificateNumber: initialData.birthCertificateNumber || "",
+        
         gradeId: initialData.gradeId || "",
         sectionId: initialData.sectionId || "",
+        admittedGrade: initialData.admittedGrade || "",
+        medium: (initialData.medium as "sinhala" | "english" | "tamil") || "sinhala",
+        academicYear: initialData.academicYear || new Date().getFullYear(),
+        
         email: initialData.email || "",
         phoneNum: initialData.phoneNum || "",
+        whatsappNumber: initialData.whatsappNumber || "",
+        emergencyNumber: initialData.emergencyNumber || "",
         addressSi: initialData.addressSi || "",
         addressEn: initialData.addressEn || "",
-        academicYear: initialData.academicYear || new Date().getFullYear(),
-        emergencyContacts: initialData.emergencyContacts || [],
+        
+        motherNameEn: initialData.motherNameEn || "",
+        motherNumber: initialData.motherNumber || "",
+        motherOccupation: initialData.motherOccupation || "",
+        fatherNameEn: initialData.fatherNameEn || "",
+        fatherNumber: initialData.fatherNumber || "",
+        fatherOccupation: initialData.fatherOccupation || "",
       });
     } else {
       // Reset to empty state if initialData is undefined (switching to create mode)
        form.reset({
         firstNameSi: "",
         lastNameSi: "",
+        fullNameSi: "",
+        nameWithInitialsSi: "",
         firstNameEn: "",
         lastNameEn: "",
+        fullNameEn: "",
+        
         admissionNumber: "",
         admissionDate: new Date(),
         dob: undefined,
+        sex: "male",
+        birthCertificateNumber: "",
+        
         gradeId: "",
         sectionId: "",
+        admittedGrade: "",
+        medium: "sinhala",
+        academicYear: new Date().getFullYear(),
+        
         email: "",
         phoneNum: "",
+        whatsappNumber: "",
+        emergencyNumber: "",
         addressSi: "",
         addressEn: "",
-        academicYear: new Date().getFullYear(),
-        emergencyContacts: [],
+        
+        motherNameEn: "",
+        motherNumber: "",
+        motherOccupation: "",
+        fatherNameEn: "",
+        fatherNumber: "",
+        fatherOccupation: "",
       });
     }
   }, [initialData, form]);
@@ -154,256 +263,24 @@ export function StudentForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {/* Names */}
-          <FormField
-            control={form.control}
-            name="firstNameEn"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name (English) *</FormLabel>
-                <FormControl>
-                  <Input placeholder="John" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="lastNameEn"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name (English) *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Doe" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="firstNameSi"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name (Sinhala)</FormLabel>
-                <FormControl>
-                  <Input placeholder="සමන්" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="lastNameSi"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name (Sinhala)</FormLabel>
-                <FormControl>
-                  <Input placeholder="පෙරේරා" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Admission & Personal */}
-          <FormField
-            control={form.control}
-            name="admissionNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Admission Number *</FormLabel>
-                <FormControl>
-                  <Input placeholder="AD-1234" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="admissionDate"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Admission Date *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
-                    onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="dob"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Date of Birth *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
-                    onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="academicYear"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Academic Year *</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    {...field} 
-                    onChange={e => field.onChange(parseInt(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Academic */}
-          <FormField
-            control={form.control}
-            name="gradeId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Grade *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a grade" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {grades.map((grade) => (
-                      <SelectItem key={grade.id} value={grade.id}>
-                        {grade.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="sectionId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Section</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a section" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {sections.map((section) => (
-                      <SelectItem key={section.id} value={section.id}>
-                        {section.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Contact */}
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="student@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="phoneNum"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="0771234567" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="addressEn"
-            render={({ field }) => (
-              <FormItem className="col-span-2">
-                <FormLabel>Address (English)</FormLabel>
-                <FormControl>
-                  <Input placeholder="123 Main St, Colombo" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="addressSi"
-            render={({ field }) => (
-              <FormItem className="col-span-2">
-                <FormLabel>Address (Sinhala)</FormLabel>
-                <FormControl>
-                  <Input placeholder="123 ප්‍රධාන පාර, කොළඹ" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Emergency Contacts */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Emergency Contacts</h3>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => append({ nameEn: "", number: "" })}
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add Contact
-            </Button>
-          </div>
-          {fields.map((field, index) => (
-            <div key={field.id} className="grid grid-cols-1 gap-4 md:grid-cols-3 items-end border p-4 rounded-md">
+      <form 
+        onSubmit={form.handleSubmit(handleSubmit)} 
+        onKeyDown={handleKeyDown}
+        className="space-y-8"
+      >
+        <div className="space-y-8">
+          {/* Section 1: Names */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Names</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name={`emergencyContacts.${index}.nameEn`}
+                name="admissionNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>Admission Number *</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input placeholder="AD-1234" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -411,12 +288,12 @@ export function StudentForm({
               />
               <FormField
                 control={form.control}
-                name={`emergencyContacts.${index}.relationshipEn`}
+                name="nameWithInitialsSi"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Relationship</FormLabel>
+                    <FormLabel>Name with Initials (Sinhala) *</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input placeholder="එස්. පෙරේරා" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -424,28 +301,332 @@ export function StudentForm({
               />
               <FormField
                 control={form.control}
-                name={`emergencyContacts.${index}.number`}
+                name="fullNameSi"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                  <FormItem className="col-span-2">
+                    <FormLabel>Full Name (Sinhala) *</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input placeholder="සමන් පෙරේරා" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-destructive"
-                onClick={() => remove(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <FormField
+                control={form.control}
+                name="firstNameSi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name (Sinhala) *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="සමන්" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastNameSi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name (Sinhala) *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="පෙරේරා" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="fullNameEn"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Full Name (English) *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Saman Perera" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-          ))}
+          </div>
+
+          {/* Section 2: Personal Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Personal Details</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="dob"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date of Birth *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                        onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="admissionDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Admitted Date *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                        onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="gradeId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Admitted Grade (System) <span className="text-xs font-normal text-muted-foreground">(Auto-allocated if empty)</span></FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select grade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {grades.map((grade) => (
+                          <SelectItem key={grade.id} value={grade.id}>
+                            {grade.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="admittedGrade"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Admitted Grade (Record)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Grade 1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sex"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sex *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select sex" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="male">Male (පුරුෂ)</SelectItem>
+                        <SelectItem value="female">Female (ස්ත්‍රී)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Section 3: Contact Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Contact Details</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="addressSi"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Address (Sinhala)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="ලිපිනය" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="whatsappNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>WhatsApp Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="077..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="emergencyNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Emergency Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="077..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="email@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="medium"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Medium</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select medium" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="sinhala">Sinhala (සිංහල)</SelectItem>
+                        <SelectItem value="english">English (ඉංග්‍රීසි)</SelectItem>
+                        <SelectItem value="tamil">Tamil (දෙමළ)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Section 4: Parent Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Parent Details</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* Mother */}
+              <div className="space-y-4 p-4 border rounded-md">
+                <h4 className="font-medium text-sm text-muted-foreground">Mother</h4>
+                <FormField
+                  control={form.control}
+                  name="motherNameEn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name (English)</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="motherNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="motherOccupation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Occupation</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Father */}
+              <div className="space-y-4 p-4 border rounded-md">
+                <h4 className="font-medium text-sm text-muted-foreground">Father</h4>
+                <FormField
+                  control={form.control}
+                  name="fatherNameEn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name (English)</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="fatherNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="fatherOccupation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Occupation</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end gap-2">

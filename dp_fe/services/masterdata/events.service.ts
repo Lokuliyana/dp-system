@@ -1,16 +1,19 @@
 import { axiosInstance } from "@/lib/axios"
 import { endpoints } from "@/lib/endpoints"
-import type { Event, EventRegistration } from "@/types/models"
+import type { Event, EventRegistration, EventCategory } from "@/types/models"
 
 export type CreateEventPayload = {
-  nameSi: string
-  nameEn: string
+  titleSi: string
+  titleEn: string
   descriptionSi?: string
   descriptionEn?: string
-  eventType?: string
-  date: string
+  category: EventCategory
+  startDate: string
+  endDate?: string
   gradeIds?: string[]
-  teacherInChargeId: string
+  chairHeadTeacherId?: string
+  clubId?: string
+  squadId?: string
   year: number
 }
 
@@ -18,6 +21,7 @@ export type RegisterEventPayload = {
   eventId: string
   studentId: string
   year: number
+  noteEn?: string
 }
 
 export const eventsService = {

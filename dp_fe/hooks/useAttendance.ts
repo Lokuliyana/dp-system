@@ -48,3 +48,19 @@ export function useDeleteAttendance(date: string, gradeId?: string) {
     },
   })
 }
+
+export function useAttendanceStats(startDate: string, endDate: string, gradeId?: string) {
+  return useQuery({
+    queryKey: ["attendance", "stats", startDate, endDate, gradeId],
+    queryFn: () => attendanceService.getStats(startDate, endDate, gradeId),
+    enabled: !!startDate && !!endDate,
+  })
+}
+
+export function useAttendanceByRange(startDate: string, endDate: string, gradeId?: string) {
+  return useQuery({
+    queryKey: ["attendance", "range", startDate, endDate, gradeId],
+    queryFn: () => attendanceService.listByRange(startDate, endDate, gradeId),
+    enabled: !!startDate && !!endDate && !!gradeId,
+  })
+}

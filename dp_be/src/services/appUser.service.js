@@ -65,6 +65,7 @@ exports.createAppUser = async ({ schoolId, payload, userId }) => {
     email: payload.email.toLowerCase(),
     password: hashed,
     roleId: payload.roleId,
+    permissions: payload.permissions || [],
     schoolId,
     createdById: userId,
   })

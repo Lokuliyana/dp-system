@@ -21,7 +21,7 @@ export interface StudentNote {
 export interface Student {
   id: string
   gradeId: string
-  rollNumber: number
+  admissionNumber: string
   firstName: string
   lastName: string
   email: string
@@ -35,6 +35,8 @@ export interface Student {
   talents: Talent[]
   notes: StudentNote[]
   phoneNumber: string
+  fullNameEn?: string
+  whatsappNumber?: string
 }
 
 export interface Grade {
@@ -91,7 +93,7 @@ export function generateSampleStudents(): Student[] {
       students.push({
         id: `${grade.id}-student-${i}`,
         gradeId: grade.id,
-        rollNumber: i,
+        admissionNumber: `25/${String(i).padStart(4, "0")}`,
         firstName: firstNames[Math.floor(Math.random() * firstNames.length)],
         lastName: lastNames[Math.floor(Math.random() * lastNames.length)],
         email: `student${i}@school.edu`,

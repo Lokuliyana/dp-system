@@ -46,3 +46,23 @@ exports.deleteAttendance = asyncHandler(async (req, res) => {
   })
   res.json(ApiResponse.ok({ deleted: true }))
 })
+
+exports.getAttendanceStats = asyncHandler(async (req, res) => {
+  const stats = await service.getAttendanceStats({
+    schoolId: req.schoolId,
+    startDate: req.query.startDate,
+    endDate: req.query.endDate,
+    gradeId: req.query.gradeId,
+  })
+  res.json(ApiResponse.ok(stats))
+})
+
+exports.listAttendanceByRange = asyncHandler(async (req, res) => {
+  const items = await service.listAttendanceByRange({
+    schoolId: req.schoolId,
+    startDate: req.query.startDate,
+    endDate: req.query.endDate,
+    gradeId: req.query.gradeId,
+  })
+  res.json(ApiResponse.ok(items))
+})

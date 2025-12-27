@@ -4,10 +4,17 @@ import { qk } from "@/lib/queryKeys"
 import type { CreateStudentPayload, UpdateStudentPayload } from "@/services/students.service"
 import type { Student } from "@/types/models"
 
-export function useStudents() {
+export function useStudents(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  gradeId?: string;
+  sectionId?: string;
+  academicYear?: number;
+} = {}) {
   return useQuery({
-    queryKey: qk.students.all,
-    queryFn: () => studentsService.listAll(),
+    queryKey: [qk.students.all, params],
+    queryFn: () => studentsService.list(params),
     staleTime: 60_000,
   })
 }
@@ -85,6 +92,16 @@ export function useRemoveStudentNote(studentId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.students.notes(studentId) })
       qc.invalidateQueries({ queryKey: qk.students.view360(studentId) })
+    },
+  })
+}
+
+export function useBulkImportStudents() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => studentsService.bulkImport(file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.students.all })
     },
   })
 }

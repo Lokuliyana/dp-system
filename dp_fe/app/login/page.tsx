@@ -3,8 +3,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
-import { authService } from "@/services/masterdata/auth.service";
+import { useLogin } from "@/hooks/useAuth";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
 import {
@@ -35,28 +34,7 @@ function LoginForm() {
   const [showPw, setShowPw] = React.useState(false);
   const [errMsg, setErrMsg] = React.useState<string | null>(null);
 
-  const loginMut = useMutation({
-    mutationFn: authService.login,
-    onSuccess: (data) => {
-      setErrMsg(null);
-
-      // Store tokens for axios interceptor / session-store usage
-      if (data?.accessToken)
-        localStorage.setItem("accessToken", data.accessToken);
-      if (data?.refreshToken)
-        localStorage.setItem("refreshToken", data.refreshToken);
-      if (data?.user) localStorage.setItem("me", JSON.stringify(data.user));
-
-      router.replace(redirectTo);
-    },
-    onError: (e: any) => {
-      const msg =
-        e?.response?.data?.message ||
-        e?.message ||
-        "Login failed. Check email/password.";
-      setErrMsg(msg);
-    },
-  });
+  const loginMut = useLogin();
 
   function onChange<K extends keyof FormState>(key: K, val: FormState[K]) {
     setForm((p) => ({ ...p, [key]: val }));
@@ -68,6 +46,26 @@ function LoginForm() {
     loginMut.mutate({
       email: form.email.trim().toLowerCase(),
       password: form.password,
+    }, {
+      onSuccess: (data) => {
+        setErrMsg(null);
+
+        // Store tokens for axios interceptor / session-store usage
+        if (data?.accessToken)
+          localStorage.setItem("accessToken", data.accessToken);
+        if (data?.refreshToken)
+          localStorage.setItem("refreshToken", data.refreshToken);
+        if (data?.user) localStorage.setItem("me", JSON.stringify(data.user));
+
+        router.replace(redirectTo);
+      },
+      onError: (e: any) => {
+        const msg =
+          e?.response?.data?.message ||
+          e?.message ||
+          "Login failed. Check email/password.";
+        setErrMsg(msg);
+      },
     });
   }
 

@@ -5,6 +5,13 @@ import { Plus, Edit, Trash2, Users, Shield, Loader } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Badge } from "@/components/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { LiveUserSearch, type SearchableUser } from "@/components/shared";
 import {
   ManagementConsole,
@@ -43,6 +50,7 @@ export function ClubsAndSocieties() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<SearchableUser[]>([]);
   const [showMemberSearch, setShowMemberSearch] = useState(false);
+  const [selectedPositionId, setSelectedPositionId] = useState<string>("member");
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -170,7 +178,7 @@ export function ClubsAndSocieties() {
     selectedMembersToAdd.forEach((user) => {
       assignMemberMutation.mutate({
         studentId: user.id,
-        positionId: null,
+        positionId: selectedPositionId === "member" ? null : selectedPositionId,
       });
     });
 
@@ -254,11 +262,14 @@ export function ClubsAndSocieties() {
                       <Badge variant="outline">{club.members?.length ?? 0} members</Badge>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {(club.members || []).map((m) => (
-                        <Badge key={m.studentId} variant="outline">
-                          Student {m.studentId}
-                        </Badge>
-                      ))}
+                      {(club.members || []).map((m) => {
+                        const pos = positions.find((p) => p.id === m.positionId);
+                        return (
+                          <Badge key={m.studentId} variant="outline" className={pos ? "border-primary/20 bg-primary/5 text-primary" : ""}>
+                            Student {m.studentId} {pos ? `• ${pos.nameEn}` : ""}
+                          </Badge>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
@@ -290,6 +301,22 @@ export function ClubsAndSocieties() {
                       selected={selectedMembersToAdd}
                       onChange={setSelectedMembersToAdd}
                     />
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-500">Role / Position</label>
+                      <Select value={selectedPositionId} onValueChange={setSelectedPositionId}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="member">Member</SelectItem>
+                          {positions.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.nameEn}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Button
                       className="w-full"
                       onClick={handleAssignMembers}

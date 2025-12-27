@@ -35,6 +35,8 @@ export type LayoutContextType = {
   setMainAreaProps: Dispatch<
     SetStateAction<React.ComponentPropsWithoutRef<typeof ScrollArea>>
   >;
+  setPageTitle: Dispatch<SetStateAction<string | null>>;
+  pageTitle: string | null;
 };
 
 export const LayoutContext = createContext<LayoutContextType | null>(null);

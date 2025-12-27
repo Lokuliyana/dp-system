@@ -1001,14 +1001,14 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
       <CardContent className="p-0">
         <div
           ref={tableRef}
-          className="overflow-auto border-x border-border"
+          className="overflow-auto"
           style={{ maxHeight: virtualScrolling ? "600px" : undefined }}
         >
           <table className="w-full border-collapse bg-background">
             <thead className={`${stickyHeader ? "sticky top-0 z-20" : ""} bg-muted/50 backdrop-blur-sm`}>
               <tr className="border-b-2 border-border">
                 {enableRowNumbers && (
-                  <th className="text-center p-2 font-semibold w-16 border-r border-border bg-muted/70 text-xs text-muted-foreground sticky left-0 z-10">
+                  <th className="text-center p-2 font-semibold w-16 bg-muted/70 text-xs text-muted-foreground sticky left-0 z-10">
                     <div className="flex items-center justify-center gap-1">
                       <span>#</span>
                     </div>
@@ -1016,7 +1016,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
                 )}
 
                 {enableSelection && (
-                  <th className="text-left p-3 font-semibold w-12 border-r border-border bg-muted/70 sticky left-16 z-10">
+                  <th className="text-left p-3 font-semibold w-12 bg-muted/70 sticky left-16 z-10">
                     <Checkbox
                       checked={selectedRows.size === paginatedData.length && paginatedData.length > 0}
                       onCheckedChange={toggleSelectAll}
@@ -1028,7 +1028,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
                 {visibleColumnsArray.map((column, index) => (
                   <th
                     key={String(column.key)}
-                    className={`text-left p-3 font-semibold border-r border-border last:border-r-0 bg-muted/70 ${
+                    className={`text-left p-3 font-semibold bg-muted/70 ${
                       column.type === "number" || column.type === "currency" || column.type === "percentage"
                         ? "text-right"
                         : ""
@@ -1107,7 +1107,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
                     title={decorations.tooltip}
                   >
                     {enableRowNumbers && (
-                      <td className="p-2 text-center border-r border-border bg-muted/20 text-xs text-muted-foreground font-mono sticky left-0 z-10">
+                      <td className="p-2 text-center bg-muted/20 text-xs text-muted-foreground font-mono sticky left-0 z-10">
                         <div className="flex items-center justify-center">
                           {actualRowNumber}
                           {hasRowErrors && <AlertTriangle className="h-3 w-3 text-red-500 ml-1" />}
@@ -1116,7 +1116,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
                     )}
 
                     {enableSelection && (
-                      <td className="p-3 border-r border-border bg-background/50 sticky left-16 z-10">
+                      <td className="p-3 bg-background/50 sticky left-16 z-10">
                         <Checkbox
                           checked={selectedRows.has(rowId)}
                           onCheckedChange={() => toggleRowSelection(rowId)}
@@ -1128,7 +1128,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
                     {visibleColumnsArray.map((column, colIndex) => (
                       <td
                         key={String(column.key)}
-                        className={`p-3 border-r border-border last:border-r-0 ${
+                        className={`p-3 ${
                           column.type === "number" || column.type === "currency" || column.type === "percentage"
                             ? "text-right"
                             : ""
@@ -1197,7 +1197,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
         )}
 
         {enableStatusBar && (
-          <div className="border-x border-b border-border bg-muted/20 px-6 py-4">
+          <div className="border-b border-border bg-muted/20 px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
                 {onAddRow && !readOnly && (
@@ -1256,7 +1256,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
         )}
 
         {totalPages > 1 && (
-          <div className="border-x border-b border-border bg-background px-6 py-4">
+          <div className="border-b border-border bg-background px-6 py-4">
             <div className="flex justify-center">
               <div className="flex items-center gap-2">
                 <Button

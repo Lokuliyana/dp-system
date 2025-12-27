@@ -2,14 +2,30 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users } from "lucide-react";
+import { Users, Plus, UserPlus, Search, Layers, ChevronRight, MoreVertical, Trash2, Pencil } from "lucide-react";
 
-import { useGrades, useUpdateGrade } from "@/hooks/useGrades";
-import { useStudentsByGrade } from "@/hooks/useStudents"; // We might need to fetch students count per grade if not in grade object
+import { useGrades, useUpdateGrade, useCreateGrade, useDeleteGrade } from "@/hooks/useGrades";
+import { useSections, useCreateSection, useUpdateSection, useDeleteSection } from "@/hooks/useSections";
 import { GradeSelector } from "@/components/students/grade/GradeSelector";
 import { GradeForm } from "@/components/students/grade/GradeForm";
+import { SectionForm } from "@/components/students/section/SectionForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { Grade } from "@/types/models";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DeleteConfirmationModal } from "@/components/reusable";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { Grade, Section } from "@/types/models";
 import {
   LayoutController,
   DynamicPageHeader,
@@ -18,39 +34,129 @@ import { StudentsMenu } from "@/components/students/students-menu";
 
 export default function StudentsPage() {
   const router = useRouter();
-  const { data: grades = [], isLoading } = useGrades();
-
-  // Ideally, the grades API should return student counts. 
-  // If not, we might need to fetch it separately or the backend should provide it.
-  // Assuming grades have a studentCount property or similar based on listGradesWithStats
   
+  // Data Fetching
+  const { data: grades = [], isLoading: isLoadingGrades } = useGrades();
+  const { data: sections = [], isLoading: isLoadingSections } = useSections();
+
+  // Mutations
+  const updateGradeMutation = useUpdateGrade();
+  const deleteGradeMutation = useDeleteGrade();
+  const { mutate: createGrade } = useCreateGrade();
+
+  const createSectionMutation = useCreateSection();
+  const updateSectionMutation = useUpdateSection();
+  const deleteSectionMutation = useDeleteSection();
+
+  // State
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Grade Modal State
+  const [editingGrade, setEditingGrade] = useState<Grade | null>(null);
+  const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
+  const [targetSectionId, setTargetSectionId] = useState<string | null>(null);
+  const [gradeToDelete, setGradeToDelete] = useState<string | null>(null);
+
+  // Section Modal State
+  const [editingSection, setEditingSection] = useState<Section | null>(null);
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
+  const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
+
+  // Derived Data
   const studentCountsByGrade = grades.reduce((acc, g) => {
     // @ts-ignore - assuming studentCount exists in the response from listGradesWithStats
     acc[g.id] = g.studentCount || 0;
     return acc;
   }, {} as Record<string, number>);
 
-  const [editingGrade, setEditingGrade] = useState<Grade | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const updateGradeMutation = useUpdateGrade();
+  const filteredGrades = grades.filter((grade) => 
+    grade.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    grade.nameSi.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
+  // Group Grades by Section
+  const gradesBySection = sections.map(section => {
+    const sectionGrades = filteredGrades.filter(g => section.assignedGradeIds?.includes(g.id));
+    return {
+      section,
+      grades: sectionGrades
+    };
+  });
+
+  const assignedGradeIds = new Set(sections.flatMap(s => s.assignedGradeIds || []));
+  const unassignedGrades = filteredGrades.filter(g => !assignedGradeIds.has(g.id));
+
+  // Handlers - Grade
   const handleEditGrade = (grade: Grade) => {
     setEditingGrade(grade);
-    setIsEditModalOpen(true);
+    setIsGradeModalOpen(true);
   };
 
-  const handleUpdateGrade = (data: any) => {
+  const handleDeleteGrade = (id: string) => {
+    deleteGradeMutation.mutate(id, {
+      onSuccess: () => setGradeToDelete(null),
+    });
+  };
+
+  const handleSaveGrade = (data: any) => {
     if (editingGrade) {
       updateGradeMutation.mutate({ id: editingGrade.id, payload: data }, {
         onSuccess: () => {
-          setIsEditModalOpen(false);
+          setIsGradeModalOpen(false);
           setEditingGrade(null);
+        },
+      });
+    } else {
+      createGrade(data, {
+        onSuccess: (newGrade) => {
+          // If we are adding to a specific section, update the section
+          if (targetSectionId) {
+            const section = sections.find(s => s.id === targetSectionId);
+            if (section) {
+              const updatedGradeIds = [...(section.assignedGradeIds || []), newGrade.id];
+              updateSectionMutation.mutate({
+                id: section.id,
+                payload: { assignedGradeIds: updatedGradeIds }
+              });
+            }
+          }
+          setIsGradeModalOpen(false);
+          setTargetSectionId(null);
         },
       });
     }
   };
 
-  if (isLoading) {
+  // Handlers - Section
+  const handleEditSection = (section: Section) => {
+    setEditingSection(section);
+    setIsSectionModalOpen(true);
+  };
+
+  const handleDeleteSection = (id: string) => {
+    deleteSectionMutation.mutate(id, {
+      onSuccess: () => setSectionToDelete(null),
+    });
+  };
+
+  const handleSaveSection = (data: any) => {
+    if (editingSection) {
+      updateSectionMutation.mutate({ id: editingSection.id, payload: data }, {
+        onSuccess: () => {
+          setIsSectionModalOpen(false);
+          setEditingSection(null);
+        },
+      });
+    } else {
+      createSectionMutation.mutate(data, {
+        onSuccess: () => {
+          setIsSectionModalOpen(false);
+        },
+      });
+    }
+  };
+
+  if (isLoadingGrades || isLoadingSections) {
     return (
       <div className="flex h-screen items-center justify-center text-muted-foreground">
         <Users className="mr-2 h-6 w-6 animate-spin" />
@@ -69,22 +175,142 @@ export default function StudentsPage() {
         title="Student Management"
         subtitle="Browse grades and manage student profiles across the school."
         icon={Users}
+        actions={
+          <div className="flex items-center gap-2">
+
+            <Button 
+              variant="outline"
+              className="gap-2" 
+              onClick={() => {
+                setEditingSection(null);
+                setIsSectionModalOpen(true);
+              }}
+            >
+              <Layers className="h-4 w-4" />
+              Add Section
+            </Button>
+            <Button className="gap-2" onClick={() => {
+              setEditingGrade(null);
+              setTargetSectionId(null);
+              setIsGradeModalOpen(true);
+            }}>
+              <Plus className="h-4 w-4" />
+              Add Grade
+            </Button>
+          </div>
+        }
       />
 
-      {/* 3. Content: Grade Selector */}
-      <div className="p-6">
-        <GradeSelector
-          grades={grades}
-          studentCountsByGrade={studentCountsByGrade}
-          onSelectGrade={(gradeId) => router.push(`/students/${gradeId}`)}
-          onEdit={handleEditGrade}
-        />
+      {/* 3. Content */}
+      <div className="p-6 space-y-6">
+        {/* Search Bar */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+          <Input
+            placeholder="Search grades..."
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {/* Sections Accordion */}
+        <Accordion type="multiple" className="space-y-4" defaultValue={sections.map(s => s.id)}>
+          {gradesBySection.map(({ section, grades }) => (
+            <AccordionItem key={section.id} value={section.id} className="border rounded-lg bg-white px-4">
+              <div className="flex items-center justify-between py-4">
+                <AccordionTrigger className="hover:no-underline py-0 flex-1">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                      <Layers className="h-5 w-5" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-lg text-slate-900">{section.nameEn}</div>
+                      <div className="text-sm text-slate-500">{section.nameSi}</div>
+                    </div>
+                    <div className="ml-2 px-2.5 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">
+                      {grades.length} Grades
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <div className="flex items-center gap-2 ml-4">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-8 gap-1.5 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTargetSectionId(section.id);
+                      setEditingGrade(null);
+                      setIsGradeModalOpen(true);
+                    }}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Grade
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreVertical className="h-4 w-4 text-slate-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditSection(section)}>
+                        <Pencil className="mr-2 h-4 w-4" /> Edit Section
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-red-600 focus:text-red-600"
+                        onClick={() => setSectionToDelete(section.id)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete Section
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+              
+              <AccordionContent className="pt-2 pb-6">
+                {grades.length > 0 ? (
+                  <GradeSelector
+                    grades={grades}
+                    studentCountsByGrade={studentCountsByGrade}
+                    onSelectGrade={(gradeId) => router.push(`/students/${gradeId}`)}
+                    onEdit={handleEditGrade}
+                    onDelete={setGradeToDelete}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-lg border border-dashed">
+                    No grades in this section yet.
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+
+        {/* Unassigned Grades */}
+        {unassignedGrades.length > 0 && (
+          <div className="space-y-4 pt-4">
+            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+              Unassigned Grades
+            </h3>
+            <GradeSelector
+              grades={unassignedGrades}
+              studentCountsByGrade={studentCountsByGrade}
+              onSelectGrade={(gradeId) => router.push(`/students/${gradeId}`)}
+              onEdit={handleEditGrade}
+              onDelete={setGradeToDelete}
+            />
+          </div>
+        )}
       </div>
 
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      {/* Grade Modal */}
+      <Dialog open={isGradeModalOpen} onOpenChange={setIsGradeModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Grade</DialogTitle>
+            <DialogTitle>{editingGrade ? "Edit Grade" : "Add New Grade"}</DialogTitle>
           </DialogHeader>
           <GradeForm
             defaultValues={editingGrade ? {
@@ -92,12 +318,47 @@ export default function StudentsPage() {
               nameEn: editingGrade.nameEn,
               level: editingGrade.level,
             } : undefined}
-            onSubmit={handleUpdateGrade}
+            onSubmit={handleSaveGrade}
             isLoading={updateGradeMutation.isPending}
-            onCancel={() => setIsEditModalOpen(false)}
+            onCancel={() => setIsGradeModalOpen(false)}
           />
         </DialogContent>
       </Dialog>
+
+      {/* Section Modal */}
+      <Dialog open={isSectionModalOpen} onOpenChange={setIsSectionModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingSection ? "Edit Section" : "Add New Section"}</DialogTitle>
+          </DialogHeader>
+          <SectionForm
+            grades={grades}
+            defaultValues={editingSection ? {
+              nameSi: editingSection.nameSi,
+              nameEn: editingSection.nameEn,
+              assignedGradeIds: editingSection.assignedGradeIds || [],
+            } : undefined}
+            onSubmit={handleSaveSection}
+            isLoading={updateSectionMutation.isPending || createSectionMutation.isPending}
+            onCancel={() => setIsSectionModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmations */}
+      <DeleteConfirmationModal
+        isOpen={!!gradeToDelete}
+        onClose={() => setGradeToDelete(null)}
+        onConfirm={() => gradeToDelete && handleDeleteGrade(gradeToDelete)}
+        itemName="this grade"
+      />
+      
+      <DeleteConfirmationModal
+        isOpen={!!sectionToDelete}
+        onClose={() => setSectionToDelete(null)}
+        onConfirm={() => sectionToDelete && handleDeleteSection(sectionToDelete)}
+        itemName="this section"
+      />
     </LayoutController>
   );
 }

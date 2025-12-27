@@ -12,6 +12,12 @@ exports.createSectionSchema = z.object({
   })
 })
 
+exports.listSectionsByGradeSchema = z.object({
+  query: z.object({
+    gradeId: objectId
+  })
+})
+
 exports.updateSectionSchema = z.object({
   params: z.object({
     id: objectId

@@ -7,7 +7,8 @@ import { Input } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { Badge } from "@/components/ui";
 import { Plus, Trash2, Star } from "lucide-react";
-import { TALENT_CATEGORIES, type Talent } from "@/lib/school-data";
+import { TALENT_CATEGORIES } from "@/lib/school-data";
+import type { Talent } from "@/types/models";
 
 interface TalentsSectionProps {
   talents: Talent[];

@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { Settings, Database, Server } from "lucide-react";
+import { Settings, Database, Server, Users } from "lucide-react";
 
 export default function ConfigurationPage() {
   return (
@@ -46,10 +47,22 @@ export default function ConfigurationPage() {
         </Card>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <p className="text-sm text-slate-600">
-          Select a category from the sidebar to manage specific configuration settings.
-        </p>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Link href="/configuration/users">
+          <Card className="hover:bg-slate-50 transition-colors cursor-pointer h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                User Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-500">
+                Manage system users, roles, and granular permissions.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );

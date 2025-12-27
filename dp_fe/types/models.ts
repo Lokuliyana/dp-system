@@ -89,30 +89,49 @@ export type StudentNote = {
 };
 
 export type Student = BaseDoc & {
-  firstNameSi?: string;
-  lastNameSi?: string;
-  fullNameSi?: string;
+  // --- Names ---
+  firstNameSi: string;
+  lastNameSi: string;
+  fullNameSi: string;
+  nameWithInitialsSi: string;
 
-  firstNameEn: string;
-  lastNameEn: string;
-  fullNameEn?: string;
+  firstNameEn?: string;
+  lastNameEn?: string;
+  fullNameEn: string;
 
+  // --- Personal ---
   admissionNumber: string;
   admissionDate: string;
   dob: string;
+  sex: "male" | "female";
+  birthCertificateNumber?: string;
 
+  // --- Academic ---
   gradeId: Id;
   sectionId?: Id;
+  admittedGrade?: string;
+  medium?: "sinhala" | "english" | "tamil";
+  academicYear: number;
 
+  // --- Contact ---
   email?: string;
   phoneNum?: string;
+  whatsappNumber?: string;
+  emergencyNumber?: string;
   addressSi?: string;
   addressEn?: string;
 
+  // --- Parents ---
+  motherNameEn?: string;
+  motherNumber?: string;
+  motherOccupation?: string;
+  fatherNameEn?: string;
+  fatherNumber?: string;
+  fatherOccupation?: string;
+
+  // --- Legacy / Extra ---
   emergencyContacts: EmergencyContact[];
   notes: StudentNote[];
-
-  academicYear: number;
 };
 
 /* -------------------- STUDENT TALENT (F6) -------------------- */
@@ -433,7 +452,8 @@ export type EventCategory =
   | "squad"
   | "staff"
   | "academic"
-  | "regular";
+  | "regular"
+  | "main";
 
 export type Event = BaseDoc & {
   titleSi: string;
@@ -445,6 +465,7 @@ export type Event = BaseDoc & {
 
   clubId?: Id;
   squadId?: Id;
+  chairHeadTeacherId?: Id;
 
   startDate: string;
   endDate?: string;
@@ -550,6 +571,7 @@ export type AppUser = BaseDoc & {
   email: string;
   role: UserRole;
   isActive: boolean;
+  permissions?: string[];
 };
 
 /* -------------------- REPORT OUTPUTS (F38–F42) -------------------- */

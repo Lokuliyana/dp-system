@@ -10,12 +10,14 @@ import { StudentsMenu } from "@/components/students/students-menu";
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui";
 import { DeleteConfirmationModal } from "@/components/reusable";
 import { useGrades, useCreateGrade, useUpdateGrade, useDeleteGrade } from "@/hooks/useGrades";
+import { useTeachers } from "@/hooks/useTeachers";
 import { GradeForm } from "@/components/students/grade/GradeForm";
 import { CreateGradePayload } from "@/services/masterdata/grades.service";
 import { Grade } from "@/types/models";
 
 export default function GradesManagementPage() {
   const { data: grades = [], isLoading } = useGrades();
+  const { data: teachers = [] } = useTeachers();
   const createGradeMutation = useCreateGrade();
   const updateGradeMutation = useUpdateGrade();
   const deleteGradeMutation = useDeleteGrade();
@@ -119,6 +121,11 @@ export default function GradesManagementPage() {
                     <div>
                       <p className="font-medium text-slate-900">{grade.nameSi}</p>
                       <p className="text-sm text-slate-500">{grade.nameEn}</p>
+                      {grade.classTeacherId && (
+                        <p className="text-xs text-blue-600 mt-1">
+                          Head: {teachers.find(t => t.id === grade.classTeacherId)?.firstNameEn} {teachers.find(t => t.id === grade.classTeacherId)?.lastNameEn}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                       <Button
@@ -159,6 +166,7 @@ export default function GradesManagementPage() {
               nameSi: editingGrade.nameSi,
               nameEn: editingGrade.nameEn,
               level: editingGrade.level,
+              classTeacherId: editingGrade.classTeacherId,
             } : undefined}
             onSubmit={editingGrade ? handleUpdate : handleCreate} 
             onCancel={() => setIsCreateModalOpen(false)}

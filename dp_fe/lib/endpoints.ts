@@ -49,4 +49,5 @@ export const endpoints = {
   examResults: "/exam-results", 
 
   promotion: "/promotion/trigger",
+  permissions: "/permissions",
 } as const;

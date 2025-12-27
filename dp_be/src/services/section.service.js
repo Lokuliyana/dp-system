@@ -28,6 +28,16 @@ exports.listSections = async ({ schoolId }) => {
   return items.map(item => ({ ...item, id: item._id }))
 }
 
+exports.listSectionsByGrade = async ({ schoolId, gradeId }) => {
+  const items = await Section.find({
+    schoolId,
+    assignedGradeIds: gradeId
+  })
+    .sort({ nameEn: 1 })
+    .lean()
+  return items.map(item => ({ ...item, id: item._id }))
+}
+
 exports.updateSection = async ({ schoolId, id, payload, userId }) => {
   try {
     const updated = await Section.findOneAndUpdate(

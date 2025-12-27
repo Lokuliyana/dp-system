@@ -34,6 +34,11 @@ export function HouseMeetsMenu() {
             href: "/house-meets/history",
             icon: <History className="h-4 w-4" />,
           },
+          {
+            text: "Champions",
+            href: "/house-meets/champions",
+            icon: <Trophy className="h-4 w-4" />, // Reusing Trophy or import Crown
+          },
         ]}
       />
 

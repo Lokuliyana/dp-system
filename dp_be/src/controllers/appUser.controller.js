@@ -12,6 +12,11 @@ exports.refresh = asyncHandler(async (req, res) => {
   res.json(ApiResponse.ok(result))
 })
 
+exports.me = asyncHandler(async (req, res) => {
+  // req.user is already populated by auth middleware
+  res.json(ApiResponse.ok(req.user))
+})
+
 exports.createAppUser = asyncHandler(async (req, res) => {
   const doc = await service.createAppUser({
     schoolId: req.schoolId,

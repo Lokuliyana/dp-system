@@ -11,7 +11,7 @@ const options = {
     },
     servers: [
       {
-        url: env.API_BASE_URL || `http://localhost:${env.PORT || 5000}/api`,
+        url: `${env.apiBaseUrl}${env.apiPrefix}`,
         description: 'API Server',
       },
     ],

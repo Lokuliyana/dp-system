@@ -1,8 +1,13 @@
 const gradeService = require('../services/grade.service')
 const asyncHandler = require('../middlewares/asyncHandler')
 const ApiResponse = require('../utils/apiResponse')
+const ApiError = require('../utils/apiError')
 
-exports.createGrade = asyncHandler(async (req, res) => {
+exports.createGrade = asyncHandler(async (req, res, next) => {
+  if (!req.user) {
+    return next(new ApiError(401, 'User not authenticated'))
+  }
+
   const grade = await gradeService.createGrade({
     schoolId: req.schoolId,
     payload: req.body,
@@ -19,7 +24,11 @@ exports.listGradesWithStats = asyncHandler(async (req, res) => {
   res.json(ApiResponse.ok(items))
 })
 
-exports.updateGrade = asyncHandler(async (req, res) => {
+exports.updateGrade = asyncHandler(async (req, res, next) => {
+  if (!req.user) {
+    return next(new ApiError(401, 'User not authenticated'))
+  }
+
   const grade = await gradeService.updateGrade({
     schoolId: req.schoolId,
     id: req.params.id,

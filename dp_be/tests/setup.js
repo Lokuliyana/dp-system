@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const env = require('../src/config/env')
 
-let mongoServer
+
 
 const connect = async () => {
   // Use existing connection if available (e.g. from app start)

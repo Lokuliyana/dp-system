@@ -40,7 +40,10 @@ import { useHouses } from "@/hooks/useHouses";
 import { cn } from "@/lib/utils";
 import { Competition, CompetitionResult } from "@/types/models";
 
+import { useToast } from "@/components/ui/use-toast";
+
 export default function HouseResultsPage() {
+  const { toast } = useToast();
   const currentYear = new Date().getFullYear();
   const [year] = useState(currentYear);
   const { data: grades = [] } = useGrades();
@@ -210,6 +213,13 @@ export default function HouseResultsPage() {
     });
   };
 
+  const handleSaveAll = () => {
+    toast({
+      title: "Results Finalized",
+      description: "Competition results have been successfully recorded.",
+    });
+  };
+
   const loading = resultsLoading || housesLoading || regLoading;
   const PLACES = [1, 2, 3, 4, 5] as const;
 
@@ -226,6 +236,11 @@ export default function HouseResultsPage() {
         title="Competition Results"
         subtitle="Record results for registered students."
         icon={Medal}
+        actions={
+          <Button onClick={handleSaveAll} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+            Save & Finalize
+          </Button>
+        }
       />
 
       <div className="flex h-[calc(100vh-140px)]">

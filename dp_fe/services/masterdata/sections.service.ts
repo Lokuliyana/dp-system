@@ -19,6 +19,11 @@ export const sectionsService = {
       .then(r => r.data.data as Section[])
   },
 
+  listByGrade(gradeId: string) {
+    return axiosInstance.get(`${endpoints.sections}/by-grade`, { params: { gradeId } })
+      .then(r => r.data.data as Section[])
+  },
+
   update(id: string, payload: Partial<CreateSectionPayload>) {
     return axiosInstance.patch(`${endpoints.sections}/${id}`, payload)
       .then(r => r.data.data as Section)

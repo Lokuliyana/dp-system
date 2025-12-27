@@ -1,6 +1,6 @@
 import { axiosInstance } from "@/lib/axios";
 import { endpoints } from "@/lib/endpoints";
-import type { Student } from "@/types/models/student";
+import type { Student } from "@/types/models";
 
 export type CreateStudentPayload = {
   firstNameSi?: string;
@@ -37,7 +37,7 @@ export const studentsService = {
 
   listByGrade(gradeId: string, academicYear?: number) {
     return axiosInstance
-      .get(endpoints.students, { params: { gradeId, academicYear } })
+      .get(`${endpoints.students}/by-grade`, { params: { gradeId, academicYear } })
       .then((r) => r.data.data as Student[]);
   },
 
@@ -47,10 +47,23 @@ export const studentsService = {
       .then((r) => r.data.data as Student);
   },
 
-  listAll() {
+  list(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    gradeId?: string;
+    sectionId?: string;
+    academicYear?: number;
+  }) {
     return axiosInstance
-      .get(endpoints.students)
-      .then((r) => r.data.data as Student[]);
+      .get(endpoints.students, { params })
+      .then((r) => r.data.data as {
+        items: Student[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      });
   },
 
   remove(id: string) {
@@ -75,5 +88,15 @@ export const studentsService = {
     return axiosInstance
       .get(`${endpoints.students}/${id}/360`, { params: { year } })
       .then((r) => r.data.data);
+  },
+
+  bulkImport(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return axiosInstance
+      .post(`${endpoints.students}/bulk-import`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data.data as { success: number; failed: number; errors: any[] });
   },
 };

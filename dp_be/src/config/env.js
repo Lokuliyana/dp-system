@@ -2,7 +2,6 @@ require('dotenv').config()
 const ApiError = require('../utils/apiError')
 
 const required = [
-  'SERVER_PORT',
   'MONGO_URI',
   'JWT_ACCESS_SECRET',
   'JWT_REFRESH_SECRET'
@@ -12,10 +11,17 @@ required.forEach((k) => {
   if (!process.env[k]) throw new ApiError(500, `Missing env: ${k}`)
 })
 
+if (!process.env.PORT && !process.env.SERVER_PORT) {
+  // Warn or default, but Vercel/Heroku provide PORT.
+  // For local dev, we expect PORT in .env
+  console.warn('No PORT or SERVER_PORT defined in env, defaulting to 5000')
+}
+
 const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: Number(process.env.SERVER_PORT || process.env.PORT),
   apiPrefix: process.env.API_PREFIX || '/api/v1',
+  apiBaseUrl: process.env.API_BASE_URL || `http://localhost:${Number(process.env.PORT || 5000)}`,
   appName: process.env.APP_NAME || 'AnandaDp',
 
   mongoUri: process.env.MONGO_URI,

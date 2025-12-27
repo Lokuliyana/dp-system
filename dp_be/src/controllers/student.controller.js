@@ -9,6 +9,35 @@ exports.createStudent = asyncHandler(async (req, res) => {
     userId: req.user.id,
   })
   res.status(201).json(ApiResponse.created(doc))
+  res.status(201).json(ApiResponse.created(doc))
+})
+
+exports.bulkImportStudents = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new Error('Please upload a file')
+  }
+  const result = await service.bulkImportStudents({
+    schoolId: req.schoolId,
+    fileBuffer: req.file.buffer,
+    userId: req.user.id,
+  })
+  res.json(ApiResponse.ok(result))
+})
+
+exports.listStudents = asyncHandler(async (req, res) => {
+  const data = await service.listStudents({
+    schoolId: req.schoolId,
+    page: req.query.page,
+    limit: req.query.limit,
+    search: req.query.search,
+    gradeId: req.query.gradeId,
+    sectionId: req.query.sectionId,
+    academicYear: req.query.academicYear,
+    sex: req.query.sex,
+    birthYear: req.query.birthYear,
+    admittedYear: req.query.admittedYear,
+  })
+  res.json(ApiResponse.ok(data))
 })
 
 exports.listStudentsByGrade = asyncHandler(async (req, res) => {

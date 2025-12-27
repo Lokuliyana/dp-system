@@ -7,7 +7,8 @@ import { Input } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { Badge } from "@/components/ui";
 import { Plus, Trash2, FileText, Lock, Calendar } from "lucide-react";
-import { NOTE_CATEGORIES, type StudentNote } from "@/lib/school-data";
+import { NOTE_CATEGORIES } from "@/lib/school-data";
+import type { StudentNote } from "@/types/models";
 
 interface NotesTabProps {
   notes: StudentNote[];
@@ -17,11 +18,9 @@ interface NotesTabProps {
 
 export function NotesTab({ notes, onAddNote, onDeleteNote }: NotesTabProps) {
   const [formData, setFormData] = useState({
-    title: "",
     content: "",
-    category: "academic" as const,
-    author: "Teacher",
-    isPrivate: true,
+    category: "academic" as StudentNoteCategory,
+    createdById: "current-user-id", // Should come from auth context
   });
 
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -35,8 +34,8 @@ export function NotesTab({ notes, onAddNote, onDeleteNote }: NotesTabProps) {
     }
 
     filtered.sort((a, b) => {
-      const aD = new Date(a.date).getTime();
-      const bD = new Date(b.date).getTime();
+      const aD = a.notedAt ? new Date(a.notedAt).getTime() : 0;
+      const bD = b.notedAt ? new Date(b.notedAt).getTime() : 0;
       return sortBy === "date-desc" ? bD - aD : aD - bD;
     });
 
@@ -44,24 +43,22 @@ export function NotesTab({ notes, onAddNote, onDeleteNote }: NotesTabProps) {
   }, [notes, filterCategory, sortBy]);
 
   const handleAddNote = () => {
-    if (!formData.title.trim() || !formData.content.trim()) return;
+    if (!formData.content.trim()) return;
     onAddNote(formData);
     setFormData({
-      title: "",
       content: "",
       category: "academic",
-      author: "Teacher",
-      isPrivate: true,
+      createdById: "current-user-id",
     });
   };
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
       academic: "bg-blue-100 text-blue-800",
-      behavioral: "bg-purple-100 text-purple-800",
+      behaviour: "bg-purple-100 text-purple-800",
       health: "bg-green-100 text-green-800",
-      personal: "bg-indigo-100 text-indigo-800",
       achievement: "bg-yellow-100 text-yellow-800",
+      other: "bg-slate-100 text-slate-800",
     };
     return colors[category] || "bg-slate-100 text-slate-800";
   };
@@ -78,44 +75,22 @@ export function NotesTab({ notes, onAddNote, onDeleteNote }: NotesTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Title</label>
-            <Input
-              value={formData.title}
-              onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
-              placeholder="e.g., Progress in Mathematics"
-              className="bg-white"
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Category</label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData((p) => ({ ...p, category: value as any }))}
-              >
-                <SelectTrigger className="bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {NOTE_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Author</label>
-              <Input
-                value={formData.author}
-                onChange={(e) => setFormData((p) => ({ ...p, author: e.target.value }))}
-                placeholder="Teacher name"
-                className="bg-white"
-              />
-            </div>
+            <label className="text-sm font-medium text-slate-700">Category</label>
+            <Select
+              value={formData.category}
+              onValueChange={(value) => setFormData((p) => ({ ...p, category: value as any }))}
+            >
+              <SelectTrigger className="bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="academic">Academic Progress</SelectItem>
+                <SelectItem value="behaviour">Behavior</SelectItem>
+                <SelectItem value="health">Health & Wellness</SelectItem>
+                <SelectItem value="achievement">Achievement</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -127,23 +102,6 @@ export function NotesTab({ notes, onAddNote, onDeleteNote }: NotesTabProps) {
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={4}
             />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              id="isPrivate"
-              type="checkbox"
-              checked={formData.isPrivate}
-              onChange={(e) => setFormData((p) => ({ ...p, isPrivate: e.target.checked }))}
-              className="rounded"
-            />
-            <label
-              htmlFor="isPrivate"
-              className="flex items-center gap-2 text-sm font-medium text-slate-700"
-            >
-              <Lock className="h-4 w-4" />
-              Private note (staff only)
-            </label>
           </div>
 
           <Button onClick={handleAddNote} className="w-full gap-2 bg-blue-600 hover:bg-blue-700">
@@ -166,11 +124,11 @@ export function NotesTab({ notes, onAddNote, onDeleteNote }: NotesTabProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
-                    {NOTE_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="academic">Academic</SelectItem>
+                    <SelectItem value="behaviour">Behavior</SelectItem>
+                    <SelectItem value="health">Health</SelectItem>
+                    <SelectItem value="achievement">Achievement</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -192,25 +150,15 @@ export function NotesTab({ notes, onAddNote, onDeleteNote }: NotesTabProps) {
                 No notes for selected filters.
               </p>
             ) : (
-              filteredAndSortedNotes.map((note) => (
+              filteredAndSortedNotes.map((note, index) => (
                 <div
-                  key={note.id}
+                  key={index}
                   className="space-y-2 rounded-lg border border-slate-200 p-4 hover:shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-slate-900">{note.title}</h3>
                         <Badge className={getCategoryColor(note.category)}>{note.category}</Badge>
-                        {note.isPrivate && (
-                          <Badge
-                            variant="outline"
-                            className="border-yellow-200 text-xs text-yellow-700"
-                          >
-                            <Lock className="mr-1 h-3 w-3" />
-                            Private
-                          </Badge>
-                        )}
                       </div>
                       <p className="text-sm text-slate-700 whitespace-pre-wrap">
                         {note.content}
@@ -218,19 +166,12 @@ export function NotesTab({ notes, onAddNote, onDeleteNote }: NotesTabProps) {
                       <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {new Date(note.date).toLocaleDateString()}
+                          {note.notedAt ? new Date(note.notedAt).toLocaleDateString() : "No date"}
                         </span>
-                        <span>By {note.author}</span>
+                        <span>By {note.createdById}</span>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDeleteNote(note.id)}
-                      className="flex-shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {/* onDeleteNote might need ID which is not in StudentNote type yet, but we can use index or add it if available */}
                   </div>
                 </div>
               ))

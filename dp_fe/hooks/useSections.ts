@@ -11,6 +11,15 @@ export function useSections() {
   });
 }
 
+export function useSectionsByGrade(gradeId: string) {
+  return useQuery({
+    queryKey: [...qk.sections.all, "by-grade", gradeId],
+    queryFn: () => sectionsService.listByGrade(gradeId),
+    enabled: !!gradeId,
+    staleTime: 60 * 60 * 1000,
+  });
+}
+
 export function useCreateSection() {
   const queryClient = useQueryClient();
   const { toast } = useToast();

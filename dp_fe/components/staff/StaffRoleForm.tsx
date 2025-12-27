@@ -116,19 +116,7 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Role Description" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
 
         <div className="grid grid-cols-2 gap-4">
           <FormField

@@ -38,4 +38,18 @@ router.delete(
   ctrl.deleteAttendance
 )
 
+router.get(
+  '/stats',
+  // permit([P.ATTENDANCE.READ]),
+  validate(V.getAttendanceStatsSchema),
+  ctrl.getAttendanceStats
+)
+
+router.get(
+  '/by-range',
+  // permit([P.ATTENDANCE.READ]),
+  validate(V.listAttendanceByRangeSchema),
+  ctrl.listAttendanceByRange
+)
+
 module.exports = router

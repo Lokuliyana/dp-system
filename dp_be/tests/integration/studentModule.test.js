@@ -8,7 +8,7 @@ const env = require('../../src/config/env')
 // Mock data
 const mockUser = {
   id: new mongoose.Types.ObjectId().toString(),
-  role: 'admin',
+  role: 'super_admin',
   schoolId: new mongoose.Types.ObjectId().toString(),
   permissions: ['*'], // Assuming admin has all permissions or we bypass based on role
 }
@@ -51,6 +51,12 @@ const createStudent = async ({ gradeId, firstNameEn = 'Student', lastNameEn = 'T
     .send({
       firstNameEn,
       lastNameEn,
+      firstNameSi: 'ශිෂ්‍ය',
+      lastNameSi: 'නම',
+      fullNameSi: 'සම්පූර්ණ නම',
+      nameWithInitialsSi: 'අ. නම',
+      fullNameEn: `${firstNameEn} ${lastNameEn}`,
+      sex: 'male',
       admissionNumber: admissionNumber || `ADM-${uniqueSuffix()}`,
       admissionDate: new Date().toISOString(),
       dob: new Date('2015-01-01').toISOString(),
@@ -105,7 +111,6 @@ afterAll(async () => {
 
 describe('Student Module Integration Tests', () => {
   let gradeId
-  let sectionId
   let studentId
 
   describe('Grade Routes', () => {
@@ -216,6 +221,12 @@ describe('Student Module Integration Tests', () => {
         .send({
           firstNameEn: 'John',
           lastNameEn: 'Doe',
+          firstNameSi: 'ජෝන්',
+          lastNameSi: 'ඩෝ',
+          fullNameSi: 'ජෝන් ඩෝ',
+          nameWithInitialsSi: 'ජේ. ඩෝ',
+          fullNameEn: 'John Doe',
+          sex: 'male',
           admissionNumber: '12345',
           admissionDate: new Date().toISOString(),
           dob: new Date('2015-01-01').toISOString(),
@@ -241,6 +252,12 @@ describe('Student Module Integration Tests', () => {
         .send({
           firstNameEn: 'Jane',
           lastNameEn: 'Doe',
+          firstNameSi: 'ජේන්',
+          lastNameSi: 'ඩෝ',
+          fullNameSi: 'ජේන් ඩෝ',
+          nameWithInitialsSi: 'ජේ. ඩෝ',
+          fullNameEn: 'Jane Doe',
+          sex: 'female',
           admissionNumber: '67890',
           admissionDate: new Date().toISOString(),
           dob: new Date('2015-02-01').toISOString(),
@@ -258,8 +275,9 @@ describe('Student Module Integration Tests', () => {
       }
 
       expect(res.statusCode).toBe(200)
-      expect(Array.isArray(res.body.data)).toBe(true)
-      expect(res.body.data.length).toBeGreaterThan(0)
+      expect(res.body.data).toHaveProperty('items')
+      expect(Array.isArray(res.body.data.items)).toBe(true)
+      expect(res.body.data.items.length).toBeGreaterThan(0)
     })
 
     it('should update student basic info', async () => {
@@ -270,6 +288,12 @@ describe('Student Module Integration Tests', () => {
         .send({
           firstNameEn: 'Update',
           lastNameEn: 'Me',
+          firstNameSi: 'යාවත්කාලීන',
+          lastNameSi: 'කරන්න',
+          fullNameSi: 'යාවත්කාලීන කරන්න',
+          nameWithInitialsSi: 'යා. කරන්න',
+          fullNameEn: 'Update Me',
+          sex: 'male',
           admissionNumber: 'UP123',
           admissionDate: new Date().toISOString(),
           dob: new Date('2015-01-01').toISOString(),
@@ -301,6 +325,12 @@ describe('Student Module Integration Tests', () => {
         .send({
           firstNameEn: 'Delete',
           lastNameEn: 'Me',
+          firstNameSi: 'මකන්න',
+          lastNameSi: 'මා',
+          fullNameSi: 'මකන්න මා',
+          nameWithInitialsSi: 'ම. මා',
+          fullNameEn: 'Delete Me',
+          sex: 'male',
           admissionNumber: 'DEL123',
           admissionDate: new Date().toISOString(),
           dob: new Date('2015-01-01').toISOString(),
@@ -325,7 +355,7 @@ describe('Student Module Integration Tests', () => {
         .query({ gradeId })
         .set('Authorization', authHeader)
 
-      const found = listRes.body.data.find((s) => s.id === sId)
+      const found = listRes.body.data.items.find((s) => s.id === sId)
       expect(found).toBeUndefined()
     })
   })
@@ -349,6 +379,12 @@ describe('Student Module Integration Tests', () => {
         .send({
           firstNameEn: 'Attendance',
           lastNameEn: 'Student',
+          firstNameSi: 'පැමිණීම',
+          lastNameSi: 'ශිෂ්‍ය',
+          fullNameSi: 'පැමිණීම ශිෂ්‍ය',
+          nameWithInitialsSi: 'පැ. ශිෂ්‍ය',
+          fullNameEn: 'Attendance Student',
+          sex: 'male',
           admissionNumber: 'ATT123',
           admissionDate: new Date().toISOString(),
           dob: new Date('2015-01-01').toISOString(),
@@ -565,7 +601,7 @@ describe('Student Module Integration Tests', () => {
         .set('Authorization', authHeader)
       expect(listRes.statusCode).toBe(200)
       expect(listRes.body.data.length).toBe(1)
-      expect(listRes.body.data[0].studentId).toBe(studentId)
+      expect(listRes.body.data[0].studentId._id).toBe(studentId)
     })
 
     it('registers independent entries and rejects houseId in that mode', async () => {

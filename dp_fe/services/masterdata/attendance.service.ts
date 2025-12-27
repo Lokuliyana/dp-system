@@ -36,4 +36,23 @@ export const attendanceService = {
     return axiosInstance.delete(`${endpoints.attendance}/${id}`)
       .then(r => r.data.data as { deleted: true })
   },
+
+  getStats(startDate: string, endDate: string, gradeId?: string) {
+    return axiosInstance.get(`${endpoints.attendance}/stats`, {
+      params: { startDate, endDate, gradeId },
+    }).then(r => r.data.data as {
+      date: string
+      gradeId: string
+      present: number
+      absent: number
+      late: number
+      total: number
+    }[])
+  },
+
+  listByRange(startDate: string, endDate: string, gradeId?: string) {
+    return axiosInstance.get(`${endpoints.attendance}/by-range`, {
+      params: { startDate, endDate, gradeId },
+    }).then(r => r.data.data as Attendance[])
+  },
 }

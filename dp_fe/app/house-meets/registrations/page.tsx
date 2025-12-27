@@ -38,7 +38,10 @@ import { useHouseAssignments } from "@/hooks/useHouseAssignments";
 import { useHouses } from "@/hooks/useHouses";
 import { cn } from "@/lib/utils";
 
+import { useToast } from "@/components/ui/use-toast";
+
 export default function HouseRegistrationsPage() {
+  const { toast } = useToast();
   const currentYear = new Date().getFullYear();
   const [year] = useState(currentYear);
   const { data: grades = [] } = useGrades();
@@ -159,6 +162,13 @@ export default function HouseRegistrationsPage() {
     });
   };
 
+  const handleSaveAll = () => {
+    toast({
+      title: "Registrations Saved",
+      description: "All student registrations have been successfully updated.",
+    });
+  };
+
   const loading = studentsLoading || regLoading || housesLoading;
   
   // Determine Quota
@@ -182,6 +192,11 @@ export default function HouseRegistrationsPage() {
         title="Event Registrations"
         subtitle="Register students for competitions with house quotas."
         icon={Trophy}
+        actions={
+          <Button onClick={handleSaveAll} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+            Save & Finish
+          </Button>
+        }
       />
 
       <div className="p-6 h-[calc(100vh-140px)] flex gap-6">

@@ -9,7 +9,7 @@ const ParentStudentLink = require('../../src/models/parentStudentLink.model')
 const schoolId = new mongoose.Types.ObjectId().toString()
 const mockUser = {
   id: new mongoose.Types.ObjectId().toString(),
-  role: 'admin',
+  role: 'super_admin',
   permissions: ['*'],
   schoolId,
 }
@@ -41,6 +41,12 @@ const createStudent = async (gradeId, overrides = {}) => {
     .send({
       firstNameEn: 'Test',
       lastNameEn: unique('Student'),
+      firstNameSi: 'ශිෂ්‍ය',
+      lastNameSi: 'නම',
+      fullNameSi: 'සම්පූර්ණ නම',
+      nameWithInitialsSi: 'අ. නම',
+      fullNameEn: `Test ${unique('Student')}`,
+      sex: 'male',
       admissionNumber: unique('ADM'),
       admissionDate: new Date().toISOString(),
       dob: new Date('2010-01-01').toISOString(),

@@ -1,37 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, ChevronLeft, Search, Plus, Filter, Download } from "lucide-react";
+import { Users, ChevronLeft } from "lucide-react";
 
-import { useStudentsByGrade, useCreateStudent, useUpdateStudent } from "@/hooks/useStudents";
+import { useState } from "react";
 import { useGrades } from "@/hooks/useGrades";
+import { useStudentsByGrade, useUpdateStudent } from "@/hooks/useStudents";
 import { useSections } from "@/hooks/useSections";
-import { AdvancedTable, StatCard } from "@/components/reusable";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   LayoutController,
   DynamicPageHeader,
-  HorizontalToolbar,
-  HorizontalToolbarIcons,
 } from "@/components/layout/dynamic";
 import { StudentsMenu } from "@/components/students/students-menu";
+import { StudentListView } from "@/components/students/student-list-view";
+import { Student as MockStudent } from "@/lib/school-data";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetDescription,
 } from "@/components/ui/sheet";
 import { StudentForm } from "@/components/students/student-form";
-
 import type { Student } from "@/types/models";
-import {
-  getStudentColumns,
-  studentRowDecorations,
-} from "@/components/students/student-table-config";
 
 interface GradePageProps {
   params: {
@@ -39,21 +31,18 @@ interface GradePageProps {
   };
 }
 
-export default function GradeStudentListPage({ params }: GradePageProps) {
+export default function GradePage({ params }: GradePageProps) {
   const router = useRouter();
+  const { gradeId } = params;
   const { data: grades = [] } = useGrades();
   const { data: sections = [] } = useSections();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  const selectedGradeId = params.gradeId;
-  const grade = grades.find((g) => g.id === selectedGradeId);
-
-  // Fetch students using the real hook
-  const { data: students = [], isLoading } = useStudentsByGrade(selectedGradeId);
-  const createStudentMutation = useCreateStudent();
+  const { data: students = [], isLoading } = useStudentsByGrade(gradeId);
   const updateStudentMutation = useUpdateStudent();
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+
+  const grade = grades.find((g) => g.id === gradeId);
 
   if (isLoading) {
     return (
@@ -75,147 +64,105 @@ export default function GradeStudentListPage({ params }: GradePageProps) {
     );
   }
 
-  const handleViewStudent = (student: Student) => {
-    router.push(`/students/${selectedGradeId}/${student.id}`);
-  };
+  // Map real students to mock student interface
+  const mappedStudents: MockStudent[] = students.map(s => ({
+    id: s.id,
+    gradeId: typeof s.gradeId === 'object' ? (s.gradeId as any)._id || (s.gradeId as any).id : s.gradeId,
+    admissionNumber: s.admissionNumber || "",
+    firstName: s.firstNameSi || s.firstNameEn || "",
+    lastName: s.lastNameSi || s.lastNameEn || "",
+    email: s.email || "",
+    dateOfBirth: s.dob || "",
+    enrollmentDate: s.admissionDate || "",
+    parentName: s.fatherNameEn || s.motherNameEn || "",
+    parentPhone: s.fatherNumber || s.motherNumber || s.emergencyNumber || "",
+    address: s.addressEn || s.addressSi || "",
+    status: "active", // Default
+    academicPerformance: "average", // Default
+    talents: [],
+    notes: [],
+    phoneNumber: s.phoneNum || s.emergencyNumber || s.whatsappNumber || s.fatherNumber || s.motherNumber || "",
+    fullNameEn: s.fullNameEn || "",
+    whatsappNumber: s.whatsappNumber || "",
+  }));
 
-  const handleSaveStudent = (data: any) => {
-    if (editingStudent) {
-      updateStudentMutation.mutate({ id: editingStudent.id, payload: data }, {
-        onSuccess: () => {
-          setIsCreateModalOpen(false);
-          setEditingStudent(null);
-        },
-      });
-    } else {
-      createStudentMutation.mutate(data, {
-        onSuccess: () => {
-          setIsCreateModalOpen(false);
-        },
-      });
+  const handleEditStudent = (student: MockStudent) => {
+    // Find the real student object
+    const realStudent = students.find(s => s.id === student.id);
+    if (realStudent) {
+      setEditingStudent(realStudent);
+      setIsCreateModalOpen(true);
     }
   };
 
-  const handleEditStudent = (student: Student) => {
-    setEditingStudent(student);
-    setIsCreateModalOpen(true);
+  const handleSaveStudent = (payload: any) => {
+    if (editingStudent) {
+      updateStudentMutation.mutate(
+        { id: editingStudent.id, payload },
+        {
+          onSuccess: () => {
+            setIsCreateModalOpen(false);
+            setEditingStudent(null);
+          },
+        }
+      );
+    }
   };
 
-  // Reset editing state when modal closes
   const onOpenChange = (open: boolean) => {
     setIsCreateModalOpen(open);
     if (!open) setEditingStudent(null);
   };
-
-  const filteredStudents = students.filter(s => 
-    !searchTerm || 
-    s.firstNameEn.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.lastNameEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (s.admissionNumber && s.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
 
   return (
     <LayoutController showMainMenu showHorizontalToolbar>
       <StudentsMenu />
 
       <DynamicPageHeader
-        title={grade.nameSi || grade.nameEn}
-        subtitle={`Class Teacher: ${grade.classTeacherId ? "Assigned" : "Not Assigned"}`}
+        title={`${grade.nameSi || grade.nameEn} - Students`}
+        subtitle="Manage students in this grade."
         icon={Users}
         actions={
-          <Button variant="outline" size="sm" onClick={() => router.push("/students")}>
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Back to Grades
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => router.push("/students")}>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back to Grades
+            </Button>
+            <Sheet open={isCreateModalOpen} onOpenChange={onOpenChange}>
+              <SheetContent className="w-[600px] sm:w-[540px] overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Edit Student</SheetTitle>
+                  <SheetDescription>Update the student&apos;s details.</SheetDescription>
+                </SheetHeader>
+                <div className="mt-6">
+                  <StudentForm
+                    grades={grades.map((g) => ({
+                      id: g.id,
+                      name: g.nameSi || g.nameEn,
+                    }))}
+                    sections={sections.map((s) => ({
+                      id: s.id,
+                      name: s.nameSi || s.nameEn,
+                    }))}
+                    onSubmit={handleSaveStudent}
+                    isLoading={updateStudentMutation.isPending}
+                    initialData={editingStudent || {}}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         }
       />
 
-      <HorizontalToolbar className="px-6 py-3 border-b bg-muted/10">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search students..."
-              className="pl-8 h-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-        <HorizontalToolbarIcons>
-          <Button variant="outline" size="sm" className="h-9 gap-2">
-            <Filter className="h-4 w-4" />
-            Filter
-          </Button>
-          <Button variant="outline" size="sm" className="h-9 gap-2">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
-          <Sheet open={isCreateModalOpen} onOpenChange={onOpenChange}>
-            <SheetTrigger asChild>
-              <Button 
-                size="sm" 
-                className="h-9 gap-2"
-                onClick={() => setEditingStudent(null)}
-              >
-                <Plus className="h-4 w-4" />
-                Add Student
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="w-[600px] sm:w-[540px] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>
-                  {editingStudent ? "Edit Student" : "Add New Student"}
-                </SheetTitle>
-                <SheetDescription>
-                  {editingStudent ? "Update the student's details." : "Enter the details of the new student."}
-                </SheetDescription>
-              </SheetHeader>
-              <div className="mt-6">
-                <StudentForm 
-                  grades={grades.map(g => ({ id: g.id, name: g.nameSi || g.nameEn }))}
-                  sections={sections.map(s => ({ id: s.id, name: s.nameSi || s.nameEn }))}
-                  onSubmit={handleSaveStudent}
-                  isLoading={createStudentMutation.isPending || updateStudentMutation.isPending}
-                  initialData={editingStudent ? {
-                    ...editingStudent,
-                    gradeId: editingStudent.gradeId || selectedGradeId
-                  } : { gradeId: selectedGradeId }}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
-        </HorizontalToolbarIcons>
-      </HorizontalToolbar>
-
-      <div className="p-6 space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Total Students" value={students.length} />
-          {/* Add more stats if available in the API response or derived */}
-        </div>
-
-        <AdvancedTable<Student>
-          columns={getStudentColumns(handleViewStudent, handleEditStudent)}
-          rowDecorations={studentRowDecorations}
-          title={`${grade.nameSi || grade.nameEn} - Student Management`}
-          subtitle={`Total Students: ${students.length}`}
-          icon={<Users className="h-5 w-5 text-blue-600" />}
-          idField="id"
-          // onAddRow handled via toolbar button
-          editable
-          enableSelection
-          enableBulkActions
-          data={filteredStudents}
-          enableSearch={false}
-          enableFiltering
-          enableSorting
-          enableColumnVisibility
-          enableExport={false}
-          enableValidation
-          enableRowNumbers
-          enableStatusBar
-          pageSize={20}
-          stickyHeader
+      <div className="p-6">
+        <StudentListView 
+          students={mappedStudents} 
+          gradeId={gradeId}
+          onSelectStudent={(student) => router.push(`/students/${gradeId}/${student.id}`)}
+          onEditStudent={handleEditStudent}
+          showGradeColumn={false}
+          grades={grades.map(g => ({ id: g.id, name: g.nameSi || g.nameEn }))}
         />
       </div>
     </LayoutController>

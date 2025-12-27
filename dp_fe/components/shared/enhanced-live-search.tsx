@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import type React from "react"
@@ -202,7 +203,7 @@ export function EnhancedLiveSearch({
         {/* No Results */}
         {isOpen && searchTerm && filteredOptions.length === 0 && (
           <div className="absolute top-full z-50 mt-2 w-full rounded-lg border bg-popover p-4 text-center text-sm text-muted-foreground">
-            No results found for "{searchTerm}"
+            No results found for &quot;{searchTerm}&quot;
           </div>
         )}
       </div>

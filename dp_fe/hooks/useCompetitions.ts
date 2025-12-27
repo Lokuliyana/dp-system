@@ -137,6 +137,14 @@ export function useCompetitionResults(competitionId: string, year?: number) {
   });
 }
 
+export function useAllResults(year: number) {
+  return useQuery({
+    queryKey: ["competitionResults", "all", year],
+    queryFn: () => competitionResultsService.list({ year }),
+    enabled: !!year,
+  });
+}
+
 export function useCreateCompetitionResult(
   competitionId: string,
   year: number
@@ -175,7 +183,7 @@ export function useHousePoints(year: number) {
 /* ----- Team Selections ----- */
 export function useTeamSelection(level: "zonal" | "district" | "allisland", year: number) {
   return useQuery({
-    queryKey: qk.teamSelections.byYear(year).concat(level),
+    queryKey: [...qk.teamSelections.byYear(year), level],
     queryFn: () => teamSelectionsService.get(level, year),
     enabled: !!year && !!level,
   });
@@ -186,7 +194,7 @@ export function useSaveTeamSelection(level: "zonal" | "district" | "allisland", 
   return useMutation({
     mutationFn: (payload: SaveTeamSelectionPayload) => teamSelectionsService.save(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.teamSelections.byYear(year).concat(level) });
+      qc.invalidateQueries({ queryKey: [...qk.teamSelections.byYear(year), level] });
     },
   });
 }
@@ -204,7 +212,7 @@ export function useAutoGenerateTeamSelection(year: number) {
   return useMutation({
     mutationFn: (payload: AutoGeneratePayload) => teamSelectionsService.autoGenerate(payload),
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: qk.teamSelections.byYear(year).concat(variables.toLevel) });
+      qc.invalidateQueries({ queryKey: [...qk.teamSelections.byYear(year), variables.toLevel] });
     },
   });
 }

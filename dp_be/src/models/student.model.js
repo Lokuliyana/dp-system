@@ -32,18 +32,24 @@ const studentNoteSchema = new mongoose.Schema(
 
 const studentSchema = new mongoose.Schema(
   {
-    firstNameSi: { type: String, trim: true },
-    lastNameSi: { type: String, trim: true },
-    fullNameSi: { type: String, trim: true },
+    // --- Names ---
+    firstNameSi: { type: String, required: true, trim: true },
+    lastNameSi: { type: String, required: true, trim: true },
+    fullNameSi: { type: String, required: true, trim: true },
+    nameWithInitialsSi: { type: String, required: true, trim: true },
 
-    firstNameEn: { type: String, required: true, trim: true },
-    lastNameEn: { type: String, required: true, trim: true },
-    fullNameEn: { type: String, trim: true },
+    firstNameEn: { type: String, trim: true }, // Not strictly mandatory per user list, but usually needed
+    lastNameEn: { type: String, trim: true },
+    fullNameEn: { type: String, required: true, trim: true },
 
+    // --- Personal Details ---
     admissionNumber: { type: String, required: true, trim: true },
     admissionDate: { type: Date, required: true },
     dob: { type: Date, required: true },
+    sex: { type: String, enum: ['male', 'female'], required: true },
+    birthCertificateNumber: { type: String, trim: true },
 
+    // --- Academic ---
     gradeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Grade',
@@ -55,16 +61,30 @@ const studentSchema = new mongoose.Schema(
       ref: 'Section',
       index: true,
     },
+    admittedGrade: { type: String, trim: true }, // The grade they were admitted to
+    medium: { type: String, enum: ['sinhala', 'english', 'tamil'], default: 'sinhala' },
+    academicYear: { type: Number, index: true },
 
-    email: { type: String, trim: true, lowercase: true },
-    phoneNum: { type: String, trim: true },
+    // --- Contact ---
     addressSi: { type: String, trim: true },
     addressEn: { type: String, trim: true },
+    email: { type: String, trim: true, lowercase: true },
+    phoneNum: { type: String, trim: true }, // General phone
+    whatsappNumber: { type: String, trim: true },
+    emergencyNumber: { type: String, trim: true },
 
+    // --- Parent Details ---
+    motherNameEn: { type: String, trim: true },
+    motherNumber: { type: String, trim: true },
+    motherOccupation: { type: String, trim: true },
+
+    fatherNameEn: { type: String, trim: true },
+    fatherNumber: { type: String, trim: true },
+    fatherOccupation: { type: String, trim: true },
+
+    // --- Legacy / Extra ---
     emergencyContacts: { type: [emergencyContactSchema], default: [] },
     notes: { type: [studentNoteSchema], default: [] },
-
-    academicYear: { type: Number, index: true },
 
     schoolId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -78,9 +98,14 @@ const studentSchema = new mongoose.Schema(
 studentSchema.index({ schoolId: 1, admissionNumber: 1 }, { unique: true })
 
 studentSchema.pre('save', async function setFullNames() {
-  this.fullNameEn = `${this.firstNameEn} ${this.lastNameEn}`.trim()
-  if (this.firstNameSi || this.lastNameSi) {
-    this.fullNameSi = `${this.firstNameSi || ''} ${this.lastNameSi || ''}`.trim()
+  // Only set fullNameEn from parts if it's not already set
+  if (!this.fullNameEn && this.firstNameEn && this.lastNameEn) {
+    this.fullNameEn = `${this.firstNameEn} ${this.lastNameEn}`.trim()
+  }
+
+  // Only set fullNameSi from parts if it's not already set
+  if (!this.fullNameSi && this.firstNameSi && this.lastNameSi) {
+    this.fullNameSi = `${this.firstNameSi} ${this.lastNameSi}`.trim()
   }
 })
 

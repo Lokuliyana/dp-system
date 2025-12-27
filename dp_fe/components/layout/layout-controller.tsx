@@ -113,20 +113,20 @@ export function LayoutController({
         </div>
 
         {/* Horizontal Tab Navigation */}
-        <div className="border-b border-slate-200 bg-white px-6 py-0 flex gap-1 overflow-x-auto">
+        <div className="border-b border-slate-200 bg-white px-6 py-0 flex gap-4 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTabId(tab.id)}
-              className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${
+              className={`px-1 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${
                 activeTabId === tab.id
-                  ? "border-b-blue-600 text-blue-600"
+                  ? "border-b-purple-600 text-purple-600"
                   : "border-b-transparent text-slate-600 hover:text-slate-900"
               }`}
             >
-              {tab.icon}
+              {tab.icon && <span className={activeTabId === tab.id ? "text-purple-600" : "text-slate-500"}>{tab.icon}</span>}
               {tab.label}
-              {tab.badge && <Badge className="ml-1 bg-blue-100 text-blue-700">{tab.badge}</Badge>}
+              {tab.badge && <Badge className="ml-1 bg-purple-100 text-purple-700">{tab.badge}</Badge>}
             </button>
           ))}
         </div>

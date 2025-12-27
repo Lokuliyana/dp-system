@@ -37,6 +37,12 @@ export const authService = {
       .then(r => r.data.data as { accessToken: string; refreshToken: string })
   },
 
+  me() {
+    return axiosInstance
+      .get(endpoints.auth.users + "/me")
+      .then(r => r.data.data as AppUser)
+  },
+
   listUsers() {
     return axiosInstance
       .get(endpoints.auth.users)

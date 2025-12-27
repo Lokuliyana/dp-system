@@ -13,6 +13,8 @@ router.post('/refresh', ctrl.refresh)
 router.use(auth)
 router.use(injectTenant)
 
+router.get('/me', ctrl.me)
+
 /* ---- ADMIN USER CRUD ---- */
 router.post(
   '/',

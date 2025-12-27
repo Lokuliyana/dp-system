@@ -36,3 +36,19 @@ exports.listAttendanceByStudentSchema = z.object({
 exports.deleteAttendanceSchema = z.object({
   params: z.object({ id: objectId }),
 })
+
+exports.getAttendanceStatsSchema = z.object({
+  query: z.object({
+    startDate: z.string().min(1),
+    endDate: z.string().min(1),
+    gradeId: objectId.optional(),
+  }),
+})
+
+exports.listAttendanceByRangeSchema = z.object({
+  query: z.object({
+    startDate: z.string().min(1),
+    endDate: z.string().min(1),
+    gradeId: objectId.optional(),
+  }),
+})

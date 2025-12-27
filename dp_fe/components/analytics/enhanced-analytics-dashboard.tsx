@@ -42,7 +42,7 @@ export function EnhancedAnalyticsDashboard({ students }: EnhancedAnalyticsDashbo
     return {
       id: s.id,
       name: `${s.firstName} ${s.lastName}`,
-      rollNumber: s.rollNumber,
+      rollNumber: s.admissionNumber,
       grade: GRADES.find((g) => g.id === s.gradeId)?.name || "Unknown",
       attendance: attendanceRate,
       risk: attendanceRate < 75 ? "high" : attendanceRate < 85 ? "medium" : "low",
@@ -304,7 +304,7 @@ export function EnhancedAnalyticsDashboard({ students }: EnhancedAnalyticsDashbo
                       <tr>
                         <th className="px-4 py-3 text-left font-semibold">Student Name</th>
                         <th className="px-4 py-3 text-center font-semibold">Grade</th>
-                        <th className="px-4 py-3 text-center font-semibold">Roll No</th>
+                        <th className="px-4 py-3 text-center font-semibold">Admission No</th>
                         <th className="px-4 py-3 text-center font-semibold">Attendance %</th>
                         <th className="px-4 py-3 text-center font-semibold">Status</th>
                       </tr>
@@ -734,7 +734,7 @@ export function EnhancedAnalyticsDashboard({ students }: EnhancedAnalyticsDashbo
                   </li>
                   <li>Establish mentorship pairs with top performers</li>
                   <li>Plan talent showcase events to celebrate student achievements</li>
-                  <li>Review curriculum effectiveness for "Needs Improvement" group</li>
+                  <li>Review curriculum effectiveness for &quot;Needs Improvement&quot; group</li>
                 </ul>
               </div>
             </CardContent>

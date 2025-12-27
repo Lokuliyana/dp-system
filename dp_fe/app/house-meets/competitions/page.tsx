@@ -37,10 +37,10 @@ const emptyForm = {
   nameEn: "",
   nameSi: "",
   squadId: "",
-  scope: "open" as Scope,
+  scope: "grade" as Scope,
   gradeIds: [] as string[],
   sectionIds: [] as string[],
-  isMainCompetition: false,
+  isMainCompetition: true,
   year: new Date().getFullYear(),
 };
 
@@ -49,10 +49,10 @@ export default function CompetitionsPage() {
     nameEn: "",
     nameSi: "",
     squadId: "",
-    scope: "open" as Scope,
+    scope: "grade" as Scope,
     gradeIds: [] as string[],
     sectionIds: [] as string[],
-    isMainCompetition: false,
+    isMainCompetition: true,
     active: true,
     participationType: "individual" as "individual" | "team",
     teamConfig: { minSize: 1, maxSize: 1 },
@@ -131,10 +131,10 @@ export default function CompetitionsPage() {
       nameEn: "",
       nameSi: "",
       squadId: "",
-      scope: "open",
+      scope: "grade",
       gradeIds: [],
       sectionIds: [],
-      isMainCompetition: false,
+      isMainCompetition: true,
       active: true,
       participationType: "individual",
       teamConfig: { minSize: 1, maxSize: 1 },
@@ -271,7 +271,7 @@ export default function CompetitionsPage() {
                 <div className="border p-3 rounded-md bg-slate-50 space-y-3">
                   <Label className="font-semibold">Personal Awards</Label>
                   <p className="text-xs text-muted-foreground">
-                    Define awards like "Best Actor", "Best Speaker" etc.
+                    Define awards like &quot;Best Actor&quot;, &quot;Best Speaker&quot; etc.
                   </p>
                   <div className="flex gap-2">
                     <Input
@@ -411,10 +411,10 @@ export default function CompetitionsPage() {
                   nameEn: "",
                   nameSi: "",
                   squadId: "",
-                  scope: "open",
+                  scope: "grade",
                   gradeIds: [],
                   sectionIds: [],
-                  isMainCompetition: false,
+                  isMainCompetition: true,
                   active: true,
                   participationType: "individual",
                   teamConfig: { minSize: 1, maxSize: 1 },

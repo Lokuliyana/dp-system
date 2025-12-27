@@ -18,6 +18,14 @@ exports.listSections = asyncHandler(async (req, res) => {
   res.json(ApiResponse.ok(items))
 })
 
+exports.listSectionsByGrade = asyncHandler(async (req, res) => {
+  const items = await sectionService.listSectionsByGrade({
+    schoolId: req.schoolId,
+    gradeId: req.query.gradeId
+  })
+  res.json(ApiResponse.ok(items))
+})
+
 exports.updateSection = asyncHandler(async (req, res) => {
   const section = await sectionService.updateSection({
     schoolId: req.schoolId,

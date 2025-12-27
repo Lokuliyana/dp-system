@@ -1,24 +1,25 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { Student } from "@/lib/school-data";
+import type { Student } from "@/types/models";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { Calendar, TrendingUp, AlertCircle, CheckCircle, XCircle } from "lucide-react";
 
 interface AttendanceRecord {
   date: string;
-  status: "present" | "absent";
+  status: "present" | "absent" | "leave";
   remarks?: string;
 }
 
 interface AttendanceTabProps {
   student: Student;
+  attendanceData?: AttendanceRecord[];
 }
 
-export function AttendanceTab({ student }: AttendanceTabProps) {
+export function AttendanceTab({ student, attendanceData }: AttendanceTabProps) {
   // For now: generate synthetic demo data; later you can replace with real records via props
-  const [attendanceRecords] = useState<AttendanceRecord[]>(() => {
+  const [syntheticAttendance] = useState<AttendanceRecord[]>(() => {
     const records: AttendanceRecord[] = [];
     const today = new Date();
     for (let i = 90; i >= 0; i--) {
@@ -31,12 +32,14 @@ export function AttendanceTab({ student }: AttendanceTabProps) {
       const status = random > 0.92 ? "leave" : random > 0.85 ? "absent" : "present";
       records.push({
         date: date.toISOString().split("T")[0],
-        status,
+        status: status as any,
         remarks: status === "leave" ? "Medical Leave" : undefined,
       });
     }
     return records;
   });
+
+  const attendanceRecords = attendanceData || syntheticAttendance;
 
   const [filterStatus, setFilterStatus] = useState<"all" | "present" | "absent">("all");
 

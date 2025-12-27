@@ -29,6 +29,7 @@ const appUserSchema = new mongoose.Schema(
     },
 
     isActive: { type: Boolean, default: true },
+    permissions: { type: [String], default: [] },
   },
   baseSchemaOptions
 )

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Student } from "@/lib/school-data";
+import type { Student } from "@/types/models";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Badge } from "@/components/ui";
 import { Button } from "@/components/ui";
@@ -26,7 +26,7 @@ import {
 export interface ClubMembership {
   id: string;
   name: string;
-  role: "member" | "secretary" | "president" | "vice-president";
+  role: string;
   year: number;
   isActive: boolean;
 }

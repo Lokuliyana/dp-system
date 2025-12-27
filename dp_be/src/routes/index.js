@@ -28,6 +28,7 @@ router.use('/promotion', require('./promotion.routes'))
 router.use('/parents', require('./parent.routes'))
 router.use('/parent-student-links', require('./parentStudentLink.routes'))
 router.use('/reports', require('./report.routes'))
-// router.use('/app-users', require('./appUser.routes'))
+router.use('/permissions', require('./permission.routes'))
+router.use('/app-users', require('./appUser.routes'))
 
 module.exports = router

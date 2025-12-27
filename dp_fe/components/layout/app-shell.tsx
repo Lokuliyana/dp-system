@@ -1,4 +1,3 @@
-// components/common/app-shell.tsx
 "use client";
 
 import type { ReactNode } from "react";
@@ -7,7 +6,9 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from "@/components/ui";
-import { MainNavigation } from "@/components/layout";
+import { MainNavigation, MobileBottomNav, MobileHeader } from "@/components/layout";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface AppShellProps {
   children: ReactNode;
@@ -18,23 +19,38 @@ interface AppShellProps {
  * Handles sidebar, chrome, and top header – pages only render their content.
  */
 export function AppShell({ children }: AppShellProps) {
+  const isMobile = useIsMobile();
+
   return (
     <SidebarProvider defaultOpen>
-      {/* Left sidebar navigation */}
-      <MainNavigation />
+      {/* Desktop Sidebar */}
+      {!isMobile && <MainNavigation />}
 
       {/* Main area */}
-      <SidebarInset>
-        {/* Top bar */}
-        <header className="flex h-12 items-center gap-2 border-b bg-white px-4">
-          <SidebarTrigger />
-          {/* Optional: breadcrumb / page title component here */}
-        </header>
+      <SidebarInset className="flex flex-col min-h-screen">
+        {/* Desktop Header */}
+        {!isMobile && (
+          <header className="flex h-10 items-center gap-2 border-b bg-white px-4 sticky top-0 z-30">
+            <SidebarTrigger className="h-7 w-7" />
+            <div className="flex-1" />
+            {/* Add user profile / search here for desktop */}
+            <div className="h-7 w-7 rounded-full bg-slate-100 border" />
+          </header>
+        )}
+
+        {/* Mobile Header */}
+        {isMobile && <MobileHeader />}
 
         {/* Scrollable content area */}
-        <div className="flex-1 overflow-auto bg-slate-50">
+        <main className={cn(
+          "flex-1 overflow-auto bg-slate-50/50",
+          isMobile ? "pb-20 px-4 py-6" : "p-6"
+        )}>
           {children}
-        </div>
+        </main>
+
+        {/* Mobile Bottom Navigation */}
+        {isMobile && <MobileBottomNav />}
       </SidebarInset>
     </SidebarProvider>
   );

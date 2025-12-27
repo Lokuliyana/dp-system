@@ -11,9 +11,11 @@ import { StaffRoleForm } from "@/components/staff/StaffRoleForm";
 import { CreateStaffRolePayload } from "@/services/masterdata/staffRoles.service";
 import { DeleteConfirmationModal } from "@/components/reusable";
 import { LevelHierarchyView, Level, LevelItem } from "@/components/soluna-components/level-hierarchy-view";
+import { ResponsiveTabs } from "@/components/ui";
 import type { StaffRole, Teacher } from "@/types/models";
 
 export default function StaffRolesPage() {
+  const [activeTab, setActiveTab] = useState("list");
   const { data: roles = [], isLoading: isLoadingRoles } = useStaffRoles();
   const { data: teachers = [], isLoading: isLoadingTeachers } = useTeachers();
   
@@ -114,19 +116,17 @@ export default function StaffRolesPage() {
         }
       />
 
-      <div className="p-6 space-y-6">
-        <Tabs defaultValue="list" className="w-full">
+      <div className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex items-center justify-between mb-4">
-            <TabsList>
-              <TabsTrigger value="list" className="gap-2">
-                <LayoutList className="h-4 w-4" />
-                List View
-              </TabsTrigger>
-              <TabsTrigger value="hierarchy" className="gap-2">
-                <ListTree className="h-4 w-4" />
-                Hierarchy View
-              </TabsTrigger>
-            </TabsList>
+            <ResponsiveTabs
+              items={[
+                { value: "list", label: "List View", icon: LayoutList },
+                { value: "hierarchy", label: "Hierarchy View", icon: ListTree },
+              ]}
+              value={activeTab}
+              onValueChange={setActiveTab}
+            />
           </div>
 
           <TabsContent value="list">

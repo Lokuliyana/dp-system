@@ -9,12 +9,13 @@ function permit(requiredPermissions = []) {
       return next(new ApiError(401, 'Unauthorized'))
     }
 
-    const userRole = req.user.role
-    const allowed = rolePermissions[userRole] || []
+    // Super Admin bypass
+    if (req.user.role === 'superadmin') return next()
 
-    if (allowed.includes('*')) return next()
-
-    const hasAll = requiredPermissions.every((p) => allowed.includes(p))
+    const userPermissions = req.user.permissions || []
+    
+    // Check if user has ALL required permissions
+    const hasAll = requiredPermissions.every((p) => userPermissions.includes(p))
 
     if (!hasAll) {
       return next(new ApiError(403, 'Forbidden'))

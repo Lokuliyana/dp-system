@@ -7,36 +7,71 @@ import { Button } from "@/components/ui"
 import { Input } from "@/components/ui"
 import { Badge } from "@/components/ui"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui"
-import { ChevronLeft, ChevronRight, Search, Mail, Phone } from "lucide-react"
+import { ChevronLeft, ChevronRight, Search, Mail, Phone, Calendar, MoreVertical, Eye, Edit } from "lucide-react"
+import { format } from "date-fns"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface StudentListViewProps {
   students: Student[]
-  gradeId: string
+  gradeId?: string
   onSelectStudent?: (student: Student) => void
+  onEditStudent?: (student: Student) => void
   selectedStudentId?: string
+  showGradeColumn?: boolean
+  // Server-side pagination props
+  totalItems?: number
+  currentPage?: number
+  onPageChange?: (page: number) => void
+  itemsPerPage?: number
+  grades?: { id: string; name: string }[]
 }
 
-export function StudentListView({ students, gradeId, onSelectStudent, selectedStudentId }: StudentListViewProps) {
+export function StudentListView({ 
+  students, 
+  gradeId, 
+  onSelectStudent, 
+  onEditStudent,
+  selectedStudentId,
+  showGradeColumn = false,
+  totalItems,
+  currentPage: externalPage,
+  onPageChange,
+  itemsPerPage = 10,
+  grades = GRADES
+}: StudentListViewProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [performanceFilter, setPerformanceFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState<"name" | "roll" | "performance">("roll")
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
+  const [internalPage, setInternalPage] = useState(1)
 
-  const grade = GRADES.find((g) => g.id === gradeId)
+  const isServerSide = typeof totalItems === 'number' && typeof externalPage === 'number';
+  const currentPage = isServerSide ? externalPage : internalPage;
 
-  // Filter students
+  const grade = gradeId ? grades.find((g) => g.id === gradeId) : null
+
+  // Filter students (Client-side only if not server-side)
   const filteredStudents = useMemo(() => {
-    let filtered = students.filter((s) => s.gradeId === gradeId)
+    if (isServerSide) return students;
+
+    let filtered = students;
+    
+    if (gradeId) {
+      filtered = filtered.filter((s) => s.gradeId === gradeId)
+    }
 
     // Apply search
     if (searchTerm) {
       filtered = filtered.filter(
         (s) =>
-          `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.rollNumber.toString().includes(searchTerm),
+          (s.fullNameEn && s.fullNameEn.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (s.whatsappNumber && s.whatsappNumber.includes(searchTerm)) ||
+          s.admissionNumber.toString().includes(searchTerm),
       )
     }
 
@@ -65,16 +100,29 @@ export function StudentListView({ students, gradeId, onSelectStudent, selectedSt
           return perfOrder[a.academicPerformance] - perfOrder[b.academicPerformance]
         case "roll":
         default:
-          return a.rollNumber - b.rollNumber
+          return a.admissionNumber.localeCompare(b.admissionNumber)
       }
     })
 
     return filtered
-  }, [students, gradeId, searchTerm, statusFilter, performanceFilter, sortBy])
+  }, [students, gradeId, searchTerm, statusFilter, performanceFilter, sortBy, isServerSide])
 
-  // Paginate
-  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage)
-  const paginatedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  // Paginate (Client-side only)
+  const totalPages = isServerSide 
+    ? Math.ceil((totalItems || 0) / itemsPerPage)
+    : Math.ceil(filteredStudents.length / itemsPerPage)
+
+  const displayStudents = isServerSide
+    ? students
+    : filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  const handlePageChange = (newPage: number) => {
+    if (isServerSide && onPageChange) {
+      onPageChange(newPage);
+    } else {
+      setInternalPage(newPage);
+    }
+  }
 
   const getPerformanceBadgeColor = (performance: string) => {
     switch (performance) {
@@ -111,83 +159,87 @@ export function StudentListView({ students, gradeId, onSelectStudent, selectedSt
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">{grade?.name}</h2>
-          <p className="text-slate-600 text-sm mt-1">{filteredStudents.length} students found</p>
+          <h2 className="text-2xl font-bold text-slate-900">{grade ? grade.name : "All Students"}</h2>
+          <p className="text-slate-600 text-sm mt-1">
+            {isServerSide ? totalItems : filteredStudents.length} students found
+          </p>
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Search */}
-            <div className="lg:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Search by name, email, or roll number..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value)
-                  setCurrentPage(1)
+      {/* Filters and Search - Only show if not server-side or if we implement server-side search later */}
+      {!isServerSide && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Search */}
+              <div className="lg:col-span-2 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search by name, admission no, or whatsapp..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value)
+                    setInternalPage(1)
+                  }}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => {
+                  setStatusFilter(value)
+                  setInternalPage(1)
                 }}
-                className="pl-10"
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="transferred">Transferred</SelectItem>
+                  <SelectItem value="graduated">Graduated</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Performance Filter */}
+              <Select
+                value={performanceFilter}
+                onValueChange={(value) => {
+                  setPerformanceFilter(value)
+                  setInternalPage(1)
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Performance" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Levels</SelectItem>
+                  <SelectItem value="excellent">Excellent</SelectItem>
+                  <SelectItem value="good">Good</SelectItem>
+                  <SelectItem value="average">Average</SelectItem>
+                  <SelectItem value="needs-improvement">Needs Improvement</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Sort */}
+              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="roll">Roll Number</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="performance">Performance</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-
-            {/* Status Filter */}
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value)
-                setCurrentPage(1)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="transferred">Transferred</SelectItem>
-                <SelectItem value="graduated">Graduated</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Performance Filter */}
-            <Select
-              value={performanceFilter}
-              onValueChange={(value) => {
-                setPerformanceFilter(value)
-                setCurrentPage(1)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Performance" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
-                <SelectItem value="excellent">Excellent</SelectItem>
-                <SelectItem value="good">Good</SelectItem>
-                <SelectItem value="average">Average</SelectItem>
-                <SelectItem value="needs-improvement">Needs Improvement</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Sort */}
-            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="roll">Roll Number</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="performance">Performance</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Student List */}
       <Card>
@@ -196,17 +248,19 @@ export function StudentListView({ students, gradeId, onSelectStudent, selectedSt
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Roll</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Email</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Admission No</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">First Name (Si)</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Last Name (Si)</th>
+                  {showGradeColumn && (
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Grade</th>
+                  )}
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Phone</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold text-slate-900">Performance</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold text-slate-900">Status</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">DOB</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-slate-900">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {paginatedStudents.map((student) => (
+                {displayStudents.map((student) => (
                   <tr
                     key={student.id}
                     className={`border-b border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer ${
@@ -214,41 +268,55 @@ export function StudentListView({ students, gradeId, onSelectStudent, selectedSt
                     }`}
                     onClick={() => onSelectStudent?.(student)}
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900 w-12">{student.rollNumber}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900 w-32">{student.admissionNumber}</td>
                     <td className="px-6 py-4 text-sm text-slate-900 font-medium">
-                      {student.firstName} {student.lastName}
+                      {student.firstName}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {student.email}
-                      </div>
+                    <td className="px-6 py-4 text-sm text-slate-900 font-medium">
+                      {student.lastName}
                     </td>
+                    {showGradeColumn && (
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        {grades.find(g => g.id === student.gradeId)?.name || student.gradeId}
+                      </td>
+                    )}
                     <td className="px-6 py-4 text-sm text-slate-600">
                       <div className="flex items-center gap-1">
                         <Phone className="h-3 w-3" />
-                        {student.phoneNumber}
+                        {student.phoneNumber || "-"}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <Badge className={getPerformanceBadgeColor(student.academicPerformance)}>
-                        {student.academicPerformance.replace("-", " ")}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <Badge className={getStatusBadgeColor(student.status)}>{student.status}</Badge>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {student.dateOfBirth ? format(new Date(student.dateOfBirth), "MMM d, yyyy") : "-"}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onSelectStudent?.(student)
-                        }}
-                        variant="outline"
-                        size="sm"
-                      >
-                        View
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation()
+                            onSelectStudent?.(student)
+                          }}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation()
+                            onEditStudent?.(student)
+                          }}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Student
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -256,7 +324,7 @@ export function StudentListView({ students, gradeId, onSelectStudent, selectedSt
             </table>
           </div>
 
-          {paginatedStudents.length === 0 && (
+          {displayStudents.length === 0 && (
             <div className="py-12 text-center text-slate-600">No students found matching your filters.</div>
           )}
         </CardContent>
@@ -267,11 +335,11 @@ export function StudentListView({ students, gradeId, onSelectStudent, selectedSt
         <div className="flex items-center justify-between">
           <p className="text-sm text-slate-600">
             Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-            {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length} students
+            {Math.min(currentPage * itemsPerPage, isServerSide ? (totalItems || 0) : filteredStudents.length)} of {isServerSide ? totalItems : filteredStudents.length} students
           </p>
           <div className="flex gap-2">
             <Button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               variant="outline"
               size="sm"
@@ -282,7 +350,7 @@ export function StudentListView({ students, gradeId, onSelectStudent, selectedSt
               Page {currentPage} of {totalPages}
             </span>
             <Button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
               variant="outline"
               size="sm"
@@ -295,3 +363,4 @@ export function StudentListView({ students, gradeId, onSelectStudent, selectedSt
     </div>
   )
 }
+

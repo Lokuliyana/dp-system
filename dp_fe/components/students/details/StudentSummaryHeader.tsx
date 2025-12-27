@@ -17,12 +17,14 @@ interface StudentSummaryHeaderStats {
 
 interface StudentSummaryHeaderProps {
   student: Student;
+  gradeName?: string;
   stats?: StudentSummaryHeaderStats;
   onBack?: () => void;
 }
 
 export const StudentSummaryHeader = memo(function StudentSummaryHeader({
   student,
+  gradeName,
   stats,
   onBack,
 }: StudentSummaryHeaderProps) {
@@ -63,7 +65,7 @@ export const StudentSummaryHeader = memo(function StudentSummaryHeader({
             </div>
 
             <p className="text-sm text-slate-600">
-              Grade <span className="font-semibold">{student.gradeId}</span>{" "}
+              Grade <span className="font-semibold">{gradeName || student.gradeId}</span>{" "}
               <span className="mx-1">•</span>
               Admission No <span className="font-semibold">{student.admissionNumber}</span>
             </p>

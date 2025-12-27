@@ -17,6 +17,14 @@ import { CreateTeacherPayload } from "@/services/masterdata/teachers.service";
 import { useStaffRoles } from "@/hooks/useStaffRoles";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useGrades } from "@/hooks/useGrades";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const teacherSchema = z.object({
   firstNameSi: z.string().optional(),
@@ -32,19 +40,27 @@ const teacherSchema = z.object({
   status: z.enum(["active", "inactive"]).optional(),
   qualificationsInput: z.string().optional(),
   nic: z.string().optional(),
+  assignedGradeId: z.string().optional().nullable(),
 });
 
+interface TeacherFormValues extends CreateTeacherPayload {
+  qualificationsInput?: string;
+  nic?: string;
+  assignedGradeId?: string | null;
+}
+
 interface TeacherFormProps {
-  defaultValues?: Partial<CreateTeacherPayload>;
-  onSubmit: (data: CreateTeacherPayload) => void;
+  defaultValues?: Partial<TeacherFormValues>;
+  onSubmit: (data: TeacherFormValues) => void;
   isLoading?: boolean;
   onCancel: () => void;
 }
 
 export function TeacherForm({ defaultValues, onSubmit, isLoading, onCancel }: TeacherFormProps) {
   const { data: roles = [] } = useStaffRoles();
+  const { data: grades = [] } = useGrades();
 
-  const form = useForm<CreateTeacherPayload>({
+  const form = useForm<TeacherFormValues>({
     resolver: zodResolver(teacherSchema),
     defaultValues: {
       firstNameSi: "",
@@ -58,20 +74,24 @@ export function TeacherForm({ defaultValues, onSubmit, isLoading, onCancel }: Te
       qualificationsInput: defaultValues?.qualifications?.join(", ") ?? "",
       status: "active",
       dateJoined: new Date().toISOString(),
+      assignedGradeId: null,
       ...defaultValues,
     },
   });
 
-  const handleSubmit = (values: CreateTeacherPayload) => {
-    if ((values as any).qualificationsInput) {
-      const parts = (values as any).qualificationsInput
+  const selectedRoleIds = form.watch("roleIds") || [];
+  const showGradeAssignment = roles.some(r => selectedRoleIds.includes(r.id) && r.gradeBased);
+
+  const handleSubmit = (values: TeacherFormValues) => {
+    if (values.qualificationsInput) {
+      const parts = values.qualificationsInput
         .split(",")
         .map((p: string) => p.trim())
         .filter(Boolean);
       values.qualifications = parts;
     }
-    delete (values as any).qualificationsInput;
-    delete (values as any).nic;
+    delete values.qualificationsInput;
+    delete values.nic;
     onSubmit(values);
   };
 
@@ -281,6 +301,38 @@ export function TeacherForm({ defaultValues, onSubmit, isLoading, onCancel }: Te
             </FormItem>
           )}
         />
+
+        {showGradeAssignment && (
+          <FormField
+            control={form.control}
+            name="assignedGradeId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assigned Grade (Grade Head)</FormLabel>
+                <Select
+                  onValueChange={(val) => field.onChange(val === "unassigned" ? null : val)}
+                  defaultValue={field.value as string || undefined}
+                  value={field.value as string || undefined}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a grade" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {grades.map((grade) => (
+                      <SelectItem key={grade.id} value={grade.id}>
+                        {grade.nameEn} ({grade.nameSi})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>

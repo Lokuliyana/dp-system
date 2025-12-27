@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Users, Edit, Printer, Trash2, User, Calendar, FileText, Star, Trophy } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { useStudent360, useDeleteStudent } from "@/hooks/useStudents";
 import { useGrades } from "@/hooks/useGrades";
+import { useClubPositions } from "@/hooks/useClubs";
 import { Button } from "@/components/ui/button";
 import {
   LayoutController,
@@ -37,6 +39,7 @@ export default function StudentDetailPage({ params }: StudentPageProps) {
 
   const { data: grades = [] } = useGrades();
   const { data: student360, isLoading } = useStudent360(studentId);
+  const { data: positions = [] } = useClubPositions();
   const deleteStudentMutation = useDeleteStudent(gradeId);
 
   const grade = grades.find((g) => g.id === gradeId);
@@ -107,49 +110,57 @@ export default function StudentDetailPage({ params }: StudentPageProps) {
 
       <VerticalToolbar>
         <Button
-          variant={activeTab === "basic" ? "secondary" : "ghost"}
+          variant="ghost"
           size="icon"
           title="Basic Info"
           onClick={() => setActiveTab("basic")}
+          className={cn(activeTab === "basic" ? "text-purple-600 bg-purple-50" : "text-slate-500")}
         >
           <User className="h-4 w-4" />
         </Button>
         <Button
-          variant={activeTab === "attendance" ? "secondary" : "ghost"}
+          variant="ghost"
           size="icon"
           title="Attendance"
           onClick={() => setActiveTab("attendance")}
+          className={cn(activeTab === "attendance" ? "text-purple-600 bg-purple-50" : "text-slate-500")}
         >
           <Calendar className="h-4 w-4" />
         </Button>
         <Button
-          variant={activeTab === "notes" ? "secondary" : "ghost"}
+          variant="ghost"
           size="icon"
           title="Notes"
           onClick={() => setActiveTab("notes")}
+          className={cn(activeTab === "notes" ? "text-purple-600 bg-purple-50" : "text-slate-500")}
         >
           <FileText className="h-4 w-4" />
         </Button>
         <Button
-          variant={activeTab === "talents" ? "secondary" : "ghost"}
+          variant="ghost"
           size="icon"
           title="Talents"
           onClick={() => setActiveTab("talents")}
+          className={cn(activeTab === "talents" ? "text-purple-600 bg-purple-50" : "text-slate-500")}
         >
           <Star className="h-4 w-4" />
         </Button>
         <Button
-          variant={activeTab === "roles" ? "secondary" : "ghost"}
+          variant="ghost"
           size="icon"
           title="Roles & Activities"
           onClick={() => setActiveTab("roles")}
+          className={cn(activeTab === "roles" ? "text-purple-600 bg-purple-50" : "text-slate-500")}
         >
           <Trophy className="h-4 w-4" />
         </Button>
       </VerticalToolbar>
 
       <div className="p-6 space-y-8">
-        <StudentSummaryHeader student={student as Student} />
+        <StudentSummaryHeader 
+          student={student as Student} 
+          gradeName={grade?.nameEn || grade?.nameSi}
+        />
 
         <div className="pt-2">
           {activeTab === "basic" && <BasicInfoSection student={student as Student} onSave={() => {}} />}
@@ -175,7 +186,17 @@ export default function StudentDetailPage({ params }: StudentPageProps) {
           {activeTab === "roles" && (
             <RolesAndActivitiesTab
               student={student as Student}
-              clubs={clubs || []}
+              clubs={(clubs || []).map((c: any) => {
+                const member = c.members?.find((m: any) => m.studentId === studentId);
+                const position = positions.find((p) => p.id === member?.positionId);
+                return {
+                  id: c.id,
+                  name: c.nameEn,
+                  role: position ? position.nameEn : "Member",
+                  year: c.year,
+                  isActive: true,
+                };
+              })}
               activities={competitions || []}
               houseHistory={houseHistory || []}
               houseWins={[]} // Add if available in 360

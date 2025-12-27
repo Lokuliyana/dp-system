@@ -36,44 +36,51 @@ exports.getZonalSuggestions = async ({ schoolId, year }) => {
   const mains = await Competition.find({
     schoolId,
     year: y,
-    // isMainCompetition: true, // Removed per user clarification: Main != Zonal qualifier
+    // isMainCompetition: true, // Fetch all for now as per requirement
   }).lean()
+  const allComps = await Competition.find({ schoolId }).lean()
+  console.error('DEBUG: all comps count', allComps.length)
+  console.error('DEBUG: all comps years', allComps.map(c => c.year))
+  console.error('DEBUG: target year', y, typeof y)
+  console.error('DEBUG: getZonalSuggestions params', { schoolId, year: y })
+  console.error('DEBUG: mains count', mains.length)
 
   const mainCompetitionIds = mains.map((c) => c._id)
+  console.log('DEBUG: mains', mains.length, mainCompetitionIds)
 
-  const firstPlaces = await CompetitionResult.find({
+  // Fetch top 5 places for all competitions to allow alternates
+  const results = await CompetitionResult.find({
     schoolId,
     year: y,
     competitionId: { $in: mainCompetitionIds },
-    place: 1,
+    place: { $lte: 5 }, // Get top 5
     studentId: { $ne: null },
-  }).lean()
+  })
+    .sort({ competitionId: 1, place: 1 })
+    .populate('studentId', 'firstNameEn lastNameEn admissionNumber') // Populate for frontend display
+    .lean()
 
-  if (firstPlaces.length) {
-    return firstPlaces.map((r) => ({
+  if (results.length > 0) {
+    return results.map(r => ({
       competitionId: r.competitionId,
       studentId: r.studentId,
-      place: 1,
+      place: r.place
     }))
   }
 
-  // fallback: registered students for main competitions
-  const regs = await CompetitionRegistration.find({
+  // Fallback: if no results, return registrations
+  const registrations = await CompetitionRegistration.find({
     schoolId,
     year: y,
     competitionId: { $in: mainCompetitionIds },
-  }).lean()
+  })
+    .populate('studentId', 'firstNameEn lastNameEn admissionNumber')
+    .lean()
 
-  // pick first registered per competition
-  const picked = {}
-  for (const r of regs) {
-    const cid = String(r.competitionId)
-    if (!picked[cid]) picked[cid] = r.studentId
-  }
-
-  return Object.entries(picked).map(([competitionId, studentId]) => ({
-    competitionId,
-    studentId,
+  return registrations.map(r => ({
+    competitionId: r.competitionId,
+    studentId: r.studentId,
+    place: undefined
   }))
 }
 
@@ -115,7 +122,9 @@ exports.getSelection = async ({ schoolId, level, year }) => {
     schoolId,
     level,
     year: Number(year),
-  }).lean()
+  })
+    .populate('entries.studentId', 'firstNameEn lastNameEn admissionNumber')
+    .lean()
 
   return doc || null
 }
@@ -160,9 +169,9 @@ exports.autoGenerateNextLevel = async ({
 
   if (!prev) throw new ApiError(404, 'Previous level selection not found')
 
-  // Use only 1st place entries (or entries without place if not set yet)
+  // Use only 1st place entries
   const nextEntries = prev.entries
-    .filter((e) => e.place === 1 || e.place === undefined)
+    .filter((e) => e.place === 1)
     .map((e) => ({
       competitionId: e.competitionId,
       studentId: e.studentId,

@@ -8,7 +8,7 @@ const env = require('../../src/config/env')
 const schoolId = new mongoose.Types.ObjectId().toString()
 const mockUser = {
   id: new mongoose.Types.ObjectId().toString(),
-  role: 'admin',
+  role: 'super_admin',
   permissions: ['*'],
   schoolId,
 }
@@ -56,6 +56,12 @@ const createStudent = async (gradeId, overrides = {}) => {
     .send({
       firstNameEn: 'Stu',
       lastNameEn: unique('Dent'),
+      firstNameSi: 'ශිෂ්‍ය',
+      lastNameSi: 'නම',
+      fullNameSi: 'සම්පූර්ණ නම',
+      nameWithInitialsSi: 'අ. නම',
+      fullNameEn: `Stu ${unique('Dent')}`,
+      sex: 'male',
       admissionNumber: unique('ADM'),
       admissionDate: new Date().toISOString(),
       dob: new Date('2012-01-01').toISOString(),
@@ -171,8 +177,8 @@ describe('Team selection zonal/district/allisland pipeline', () => {
       .set('Authorization', authHeader)
 
     expect(suggestionsRes.statusCode).toBe(200)
-    expect(suggestionsRes.body.data).toHaveLength(1)
-    expect(suggestionsRes.body.data[0].studentId).toBe(studentOne)
+    expect(suggestionsRes.body.data).toHaveLength(2)
+    expect(suggestionsRes.body.data[0].studentId._id).toBe(studentOne)
 
     const saveZonalRes = await request(app)
       .post(`${env.apiPrefix}/team-selections`)
@@ -180,10 +186,13 @@ describe('Team selection zonal/district/allisland pipeline', () => {
       .send({
         level: 'zonal',
         year,
-        entries: suggestionsRes.body.data,
+        entries: suggestionsRes.body.data.map(e => ({
+          ...e,
+          studentId: e.studentId._id
+        })),
       })
     expect(saveZonalRes.statusCode).toBe(200)
-    expect(saveZonalRes.body.data.totalMarks).toBe(5)
+    expect(saveZonalRes.body.data.totalMarks).toBe(9)
 
     const autoDistrictRes = await request(app)
       .post(`${env.apiPrefix}/team-selections/auto-generate`)
@@ -258,7 +267,7 @@ describe('Team selection zonal/district/allisland pipeline', () => {
 
     expect(suggestionsRes.statusCode).toBe(200)
     expect(suggestionsRes.body.data).toHaveLength(1)
-    expect(suggestionsRes.body.data[0].studentId).toBe(studentId)
+    expect(suggestionsRes.body.data[0].studentId._id).toBe(studentId)
     expect(suggestionsRes.body.data[0].competitionId).toBe(competitionId)
   })
 })

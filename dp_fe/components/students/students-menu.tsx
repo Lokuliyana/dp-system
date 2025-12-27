@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Users, GraduationCap, Settings, Layers } from "lucide-react";
+import { LayoutDashboard, Users, GraduationCap, UserPlus, Layers } from "lucide-react";
 import { MainMenu, MainMenuTitle, MainMenuItem } from "@/components/layout/dynamic";
 import { useGrades } from "@/hooks/useGrades";
 
@@ -13,9 +13,14 @@ export function StudentsMenu() {
       <MainMenuItem
         items={[
           {
-            text: "Students",
-            href: "/students",
+            text: "All Students",
+            href: "/students/all",
             icon: <Users className="h-4 w-4" />,
+          },
+          {
+            text: "By Grade",
+            href: "/students",
+            icon: <Layers className="h-4 w-4" />,
           },
         ]}
       />
@@ -36,21 +41,6 @@ export function StudentsMenu() {
         ]}
       />
 
-      <MainMenuTitle>Configuration</MainMenuTitle>
-      <MainMenuItem
-        items={[
-          {
-            text: "Grades",
-            href: "/students/grades",
-            icon: <Settings className="h-4 w-4" />,
-          },
-          {
-            text: "Sections",
-            href: "/students/sections",
-            icon: <Layers className="h-4 w-4" />,
-          },
-        ]}
-      />
     </MainMenu>
   );
 }

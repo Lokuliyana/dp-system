@@ -3,6 +3,7 @@
 import React, { ReactNode, useEffect } from "react";
 import { useInnerLayoutControls } from "./context";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import {
@@ -30,11 +31,13 @@ export interface MenuBarProps extends React.ComponentProps<"div"> {
 
 export const HorizontalToolbar = React.forwardRef<HTMLDivElement, MenuBarProps>(
   ({ children, className, ...props }, ref) => {
+    const isMobile = useIsMobile();
     return (
       <HorizontalToolbarWrapper>
         <div
           className={cn(
-            "w-full flex items-center gap-2 justify-between",
+            "w-full flex gap-2 justify-between",
+            isMobile ? "flex-col items-stretch" : "flex-row items-center",
             className
           )}
           ref={ref}
@@ -66,10 +69,15 @@ export const HorizontalToolbarIcons = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div">
 >(({ className, ...props }, ref) => {
+  const isMobile = useIsMobile();
   return (
     <div
       ref={ref}
-      className={cn("flex items-center gap-2", className)}
+      className={cn(
+        "flex items-center gap-2",
+        isMobile ? "flex-wrap" : "flex-row",
+        className
+      )}
       {...props}
     />
   );
@@ -95,7 +103,7 @@ export const VerticalToolbar = React.forwardRef<HTMLDivElement, MenuBarProps>(
       <VerticalToolbarWrapper>
         <div
           className={cn(
-            "w-full flex flex-col items-center gap-4 py-2",
+            "w-full flex flex-col items-center gap-2 py-2",
             className
           )}
           ref={ref}
@@ -126,7 +134,7 @@ export const MainMenu = React.forwardRef<HTMLDivElement, MenuBarProps>(
   ({ children, className, ...props }, ref) => {
     return (
       <MainMenuWrapper>
-        <div className={cn("w-full py-2", className)} ref={ref} {...props}>
+        <div className={cn("w-full", className)} ref={ref} {...props}>
           {children}
         </div>
       </MainMenuWrapper>
@@ -142,7 +150,7 @@ export const MainMenuTitle = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn("px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider", className)}
+      className={cn("px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider", className)}
       {...props}
     />
   );
@@ -163,28 +171,28 @@ interface MainMenuItemProps extends React.ComponentProps<"div"> {
 export const MainMenuItem = React.forwardRef<HTMLDivElement, MainMenuItemProps>(
   ({ items, className, ...props }, ref) => {
     return (
-      <div ref={ref} className={cn("space-y-1 px-2", className)} {...props}>
+      <div ref={ref} className={cn("space-y-0.5", className)} {...props}>
         {items.map((item, index) => (
           <div key={index}>
             {item.subMenus && item.subMenus.length > 0 ? (
               <Collapsible className="group/collapsible">
-                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground">
+                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
                   <div className="flex items-center gap-2">
-                    {item.icon}
+                    {item.icon && <span className="opacity-70">{item.icon}</span>}
                     {item.text}
                   </div>
                   <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="pl-4 pt-1">
+                <CollapsibleContent className="pl-3 pt-0.5">
                   <MainMenuItem items={item.subMenus} />
                 </CollapsibleContent>
               </Collapsible>
             ) : (
               <Link
                 href={item.href}
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
               >
-                {item.icon}
+                {item.icon && <span className="opacity-70">{item.icon}</span>}
                 {item.text}
               </Link>
             )}
