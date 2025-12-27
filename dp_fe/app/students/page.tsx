@@ -202,9 +202,9 @@ export default function StudentsPage() {
       />
 
       {/* 3. Content */}
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Search Bar */}
-        <div className="relative max-w-md">
+        <div className="relative max-w-md w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
           <Input
             placeholder="Search grades..."
@@ -218,7 +218,7 @@ export default function StudentsPage() {
         <Accordion type="multiple" className="space-y-4" defaultValue={sections.map(s => s.id)}>
           {gradesBySection.map(({ section, grades }) => (
             <AccordionItem key={section.id} value={section.id} className="border rounded-lg bg-white px-4">
-              <div className="flex items-center justify-between py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-4 sm:gap-0">
                 <AccordionTrigger className="hover:no-underline py-0 flex-1">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
@@ -233,7 +233,7 @@ export default function StudentsPage() {
                     </div>
                   </div>
                 </AccordionTrigger>
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-4 justify-end">
                   <Button 
                     size="sm" 
                     variant="outline" 

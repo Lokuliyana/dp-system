@@ -88,9 +88,9 @@ export default function GradesManagementPage() {
         }
       />
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Search Bar */}
-        <div className="relative max-w-md">
+        <div className="relative max-w-md w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
           <Input
             placeholder="Search grades by name (En/Si)..."
@@ -116,7 +116,7 @@ export default function GradesManagementPage() {
                 filteredGrades.map((grade) => (
                   <div
                     key={grade.id}
-                    className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-slate-50 transition-colors gap-4 sm:gap-0"
                   >
                     <div>
                       <p className="font-medium text-slate-900">{grade.nameSi}</p>
@@ -127,7 +127,7 @@ export default function GradesManagementPage() {
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-4 justify-end">
                       <Button
                         variant="ghost"
                         size="icon"

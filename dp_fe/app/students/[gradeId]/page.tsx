@@ -130,7 +130,7 @@ export default function GradePage({ params }: GradePageProps) {
               Back to Grades
             </Button>
             <Sheet open={isCreateModalOpen} onOpenChange={onOpenChange}>
-              <SheetContent className="w-[600px] sm:w-[540px] overflow-y-auto">
+              <SheetContent className="w-full sm:w-[540px] overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle>Edit Student</SheetTitle>
                   <SheetDescription>Update the student&apos;s details.</SheetDescription>
@@ -156,7 +156,7 @@ export default function GradePage({ params }: GradePageProps) {
         }
       />
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <StudentListView 
           students={mappedStudents} 
           gradeId={gradeId}

@@ -136,7 +136,7 @@ export default function UsersPage() {
   )
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">User Management</h2>
@@ -163,46 +163,48 @@ export default function UsersPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Permissions</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+          <div className="overflow-x-auto">
+            <Table className="min-w-[800px]">
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">Loading...</TableCell>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Permissions</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : filteredUsers?.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.fullName}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell><Badge variant="outline">{user.role}</Badge></TableCell>
-                  <TableCell>
-                    <Badge variant={user.isActive ? "default" : "secondary"}>
-                      {user.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="bg-slate-100">
-                      {(user.permissions?.length || 0)} Custom
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">Loading...</TableCell>
+                  </TableRow>
+                ) : filteredUsers?.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.fullName}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell><Badge variant="outline">{user.role}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant={user.isActive ? "default" : "secondary"}>
+                        {user.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="bg-slate-100">
+                        {(user.permissions?.length || 0)} Custom
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

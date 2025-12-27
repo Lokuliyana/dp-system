@@ -52,7 +52,7 @@ export default function AddStudentPage() {
         }
       />
 
-      <div className="p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 space-y-6">
           <Card>
             <CardHeader>

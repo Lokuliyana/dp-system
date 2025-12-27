@@ -44,7 +44,7 @@ export function AppShell({ children }: AppShellProps) {
         {/* Scrollable content area */}
         <main className={cn(
           "flex-1 overflow-auto bg-slate-50/50",
-          isMobile ? "pb-20 px-4 py-6" : "p-6"
+          isMobile ? "pb-20" : ""
         )}>
           {children}
         </main>

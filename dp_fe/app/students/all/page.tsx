@@ -94,12 +94,12 @@ export default function UniversalStudentListPage() {
       />
 
       <HorizontalToolbar className="px-4 py-2">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 max-w-md w-full sm:w-auto">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by name, admission no, or whatsapp..."
-              className="pl-8 h-9 text-sm"
+              className="pl-8 h-9 text-sm w-full"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -127,7 +127,7 @@ export default function UniversalStudentListPage() {
             Add Student
           </Button>
           <Sheet open={isCreateModalOpen} onOpenChange={onOpenChange}>
-            <SheetContent className="w-[600px] sm:w-[540px] overflow-y-auto">
+            <SheetContent className="w-full sm:w-[540px] overflow-y-auto">
               <SheetHeader>
                 <SheetTitle>Edit Student</SheetTitle>
                 <SheetDescription>Update the student&apos;s details.</SheetDescription>
@@ -152,7 +152,7 @@ export default function UniversalStudentListPage() {
         </HorizontalToolbarIcons>
       </HorizontalToolbar>
 
-      <div className="p-6 pt-0 space-y-6">
+      <div className="p-4 sm:p-6 pt-0 space-y-6">
         <StudentListView
           students={students.map(s => ({
             id: s.id,

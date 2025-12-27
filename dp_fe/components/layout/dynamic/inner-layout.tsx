@@ -108,7 +108,7 @@ export function InnerLayout({ children }: InnerLayoutProps) {
                     onClick={() => setIsInnerNavOpen(false)}
                   />
                   
-                  <CollapsibleContent className="relative bg-white border-b shadow-2xl pointer-events-auto max-h-[70vh] overflow-y-auto">
+                  <CollapsibleContent className="relative bg-white border-b shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto">
                     <div className="p-4 space-y-6">
                       {showMainMenu && (
                         <div className="space-y-2">
