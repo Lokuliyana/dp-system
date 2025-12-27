@@ -16,6 +16,9 @@ const swaggerSpec = require('./docs/swagger')
 
 const app = express()
 
+// Trust the first proxy (Vercel/Heroku/etc)
+app.set('trust proxy', 1)
+
 const morgan = require('morgan')
 app.use(morgan('dev'))
 
