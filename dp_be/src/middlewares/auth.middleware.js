@@ -10,12 +10,9 @@ module.exports = async (req, _res, next) => {
 
   // Skip auth for public endpoints
   if (PUBLIC_PATHS.includes(req.path)) {
-    console.log(`[Auth] Public path: ${req.path}`)
     req.user = null
     return next()
   }
-
-  console.log(`[Auth] Checking path: ${req.path}, Method: ${req.method}`)
 
   const header = req.headers.authorization
 

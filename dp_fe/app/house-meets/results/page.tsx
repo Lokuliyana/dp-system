@@ -110,8 +110,7 @@ export default function HouseResultsPage() {
         filtered = filtered.filter(r => {
             const s = r.studentId as any; // Populated
             return (
-                s.firstNameEn?.toLowerCase().includes(lower) ||
-                s.lastNameEn?.toLowerCase().includes(lower) ||
+                (s.nameWithInitialsSi && s.nameWithInitialsSi.toLowerCase().includes(lower)) ||
                 s.admissionNumber?.includes(lower)
             );
         });
@@ -366,7 +365,7 @@ export default function HouseResultsPage() {
                                                                 const s = reg.studentId as any;
                                                                 return (
                                                                     <SelectItem key={s.id || s._id} value={s.id || s._id}>
-                                                                        {s.firstNameEn} {s.lastNameEn} ({s.admissionNumber})
+                                                                        {s.nameWithInitialsSi || s.firstNameEn} ({s.admissionNumber})
                                                                     </SelectItem>
                                                                 );
                                                             })}
@@ -408,7 +407,7 @@ export default function HouseResultsPage() {
                                             return (
                                                 <TableRow key={s.id || s._id}>
                                                     <TableCell>
-                                                        <div className="font-medium">{s.firstNameSi || s.firstNameEn} {s.lastNameSi || s.lastNameEn}</div>
+                                                        <div className="font-medium">{s.nameWithInitialsSi || s.firstNameEn}</div>
                                                         <div className="text-xs text-slate-500">{s.admissionNumber}</div>
                                                     </TableCell>
                                                     <TableCell>

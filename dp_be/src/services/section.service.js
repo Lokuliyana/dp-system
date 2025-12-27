@@ -23,7 +23,7 @@ exports.createSection = async ({ schoolId, payload, userId }) => {
 
 exports.listSections = async ({ schoolId }) => {
   const items = await Section.find({ schoolId })
-    .sort({ nameEn: 1 })
+    .sort({ createdAt: -1 })
     .lean()
   return items.map(item => ({ ...item, id: item._id }))
 }

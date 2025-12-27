@@ -4,17 +4,21 @@ const mongoose = require('mongoose')
 const app = require('../../src/app')
 const setup = require('../setup')
 const env = require('../../src/config/env')
+const AppUser = require('../../src/models/appUser.model')
 
 // Mock data
+let authHeader
 const mockUser = {
-  id: new mongoose.Types.ObjectId().toString(),
+  _id: new mongoose.Types.ObjectId(),
   role: 'super_admin',
-  schoolId: new mongoose.Types.ObjectId().toString(),
-  permissions: ['*'], // Assuming admin has all permissions or we bypass based on role
+  schoolId: new mongoose.Types.ObjectId(),
+  permissions: ['*'],
+  isActive: true,
+  name: 'Test Admin',
+  email: 'testadmin@example.com',
+  password: 'password123',
+  roleId: new mongoose.Types.ObjectId()
 }
-
-const token = jwt.sign(mockUser, env.jwtAccessSecret, { expiresIn: '1h' })
-const authHeader = `Bearer ${token}`
 const uniqueSuffix = () => new mongoose.Types.ObjectId().toString().slice(-6)
 
 const createGrade = async (level = 1) => {
@@ -99,6 +103,19 @@ const createCompetition = async ({ gradeId, squadId, year = 2024, name = 'Compet
 
 beforeAll(async () => {
   await setup.connect()
+  
+  const token = jwt.sign({ 
+    id: mockUser._id.toString(), 
+    role: mockUser.role, 
+    permissions: mockUser.permissions, 
+    schoolId: mockUser.schoolId 
+  }, env.jwtAccessSecret, { expiresIn: '1h' })
+  
+  authHeader = `Bearer ${token}`
+})
+
+beforeEach(async () => {
+  await AppUser.create(mockUser)
 })
 
 afterEach(async () => {

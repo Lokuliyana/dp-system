@@ -38,15 +38,8 @@ exports.getZonalSuggestions = async ({ schoolId, year }) => {
     year: y,
     // isMainCompetition: true, // Fetch all for now as per requirement
   }).lean()
-  const allComps = await Competition.find({ schoolId }).lean()
-  console.error('DEBUG: all comps count', allComps.length)
-  console.error('DEBUG: all comps years', allComps.map(c => c.year))
-  console.error('DEBUG: target year', y, typeof y)
-  console.error('DEBUG: getZonalSuggestions params', { schoolId, year: y })
-  console.error('DEBUG: mains count', mains.length)
 
   const mainCompetitionIds = mains.map((c) => c._id)
-  console.log('DEBUG: mains', mains.length, mainCompetitionIds)
 
   // Fetch top 5 places for all competitions to allow alternates
   const results = await CompetitionResult.find({

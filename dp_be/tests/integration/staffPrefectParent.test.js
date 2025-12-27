@@ -5,17 +5,22 @@ const app = require('../../src/app')
 const setup = require('../setup')
 const env = require('../../src/config/env')
 const ParentStudentLink = require('../../src/models/parentStudentLink.model')
+const AppUser = require('../../src/models/appUser.model')
 
 const schoolId = new mongoose.Types.ObjectId().toString()
+let authHeader
+
 const mockUser = {
-  id: new mongoose.Types.ObjectId().toString(),
+  _id: new mongoose.Types.ObjectId(),
   role: 'super_admin',
   permissions: ['*'],
   schoolId,
+  isActive: true,
+  name: 'Test Admin',
+  email: 'testadmin@example.com',
+  password: 'password123',
+  roleId: new mongoose.Types.ObjectId()
 }
-
-const token = jwt.sign(mockUser, env.jwtAccessSecret, { expiresIn: '1h' })
-const authHeader = `Bearer ${token}`
 
 let counter = 0
 const unique = (prefix) => `${prefix}-${Date.now()}-${++counter}`
@@ -61,6 +66,19 @@ const createStudent = async (gradeId, overrides = {}) => {
 
 beforeAll(async () => {
   await setup.connect()
+  
+  const token = jwt.sign({ 
+    id: mockUser._id.toString(), 
+    role: mockUser.role, 
+    permissions: mockUser.permissions, 
+    schoolId: mockUser.schoolId 
+  }, env.jwtAccessSecret, { expiresIn: '1h' })
+  
+  authHeader = `Bearer ${token}`
+})
+
+beforeEach(async () => {
+  await AppUser.create(mockUser)
 })
 
 afterEach(async () => {

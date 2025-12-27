@@ -261,7 +261,7 @@ export type CompetitionHouseRule = BaseDoc & {
 export type CompetitionRegistration = BaseDoc & {
   competitionId: Id;
 
-  studentId: Id | { id: Id; firstNameEn: string; lastNameEn: string; admissionNumber: string };
+  studentId: Id | { id: Id; firstNameEn: string; lastNameEn: string; admissionNumber: string; nameWithInitialsSi?: string };
   gradeId: Id;
   houseId?: Id | null;
 

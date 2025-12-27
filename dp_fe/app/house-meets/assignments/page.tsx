@@ -243,7 +243,7 @@ export default function HouseAssignmentsPage() {
                             <div className="flex items-center gap-3 min-w-0 flex-1">
                               <div className="min-w-0">
                                 <p className="font-medium text-sm text-slate-900 truncate">
-                                  {student.firstNameEn} {student.lastNameEn}
+                                  {student.nameWithInitialsSi}
                                 </p>
                                 <p className="text-[11px] text-slate-500">
                                   ID: {student.admissionNumber}
@@ -336,7 +336,7 @@ function HouseBox({
                       {houseCode}
                     </span>
                     <span className="text-xs font-medium text-slate-700 truncate">
-                      {student.firstNameEn} {student.lastNameEn}
+                      {student.nameWithInitialsSi}
                     </span>
                   </div>
                   <button

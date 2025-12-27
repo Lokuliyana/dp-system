@@ -16,6 +16,9 @@ const swaggerSpec = require('./docs/swagger')
 
 const app = express()
 
+const morgan = require('morgan')
+app.use(morgan('dev'))
+
 app.use(cors) // 2nd
 app.use(express.json({ limit: '1mb' })) // 3rd
 app.use(rateLimit) // 4th

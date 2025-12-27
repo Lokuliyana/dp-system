@@ -17,14 +17,22 @@ if (!process.env.PORT && !process.env.SERVER_PORT) {
   console.warn('No PORT or SERVER_PORT defined in env, defaulting to 5000')
 }
 
+const nodeEnv = process.env.NODE_ENV || 'development'
+const mongoUri = process.env.MONGO_URI || 
+  (nodeEnv === 'production' ? process.env.MONGO_URI_CLUSTER : process.env.MONGO_URI_LOCAL)
+
+if (!mongoUri) {
+  throw new ApiError(500, 'Missing env: MONGO_URI or (MONGO_URI_LOCAL/MONGO_URI_CLUSTER)')
+}
+
 const env = {
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
   port: Number(process.env.SERVER_PORT || process.env.PORT),
   apiPrefix: process.env.API_PREFIX || '/api/v1',
   apiBaseUrl: process.env.API_BASE_URL || `http://localhost:${Number(process.env.PORT || 5000)}`,
   appName: process.env.APP_NAME || 'AnandaDp',
 
-  mongoUri: process.env.MONGO_URI,
+  mongoUri,
   mongoDbName: process.env.MONGO_DB_NAME || 'school_system',
   mongoPoolSize: Number(process.env.MONGO_POOL_SIZE || 10),
 

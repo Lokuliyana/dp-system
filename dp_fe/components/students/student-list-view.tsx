@@ -70,6 +70,7 @@ export function StudentListView({
       filtered = filtered.filter(
         (s) =>
           (s.fullNameEn && s.fullNameEn.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (s.nameWithInitialsSi && s.nameWithInitialsSi.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (s.whatsappNumber && s.whatsappNumber.includes(searchTerm)) ||
           s.admissionNumber.toString().includes(searchTerm),
       )
@@ -89,7 +90,7 @@ export function StudentListView({
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "name":
-          return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
+          return (a.nameWithInitialsSi || "").localeCompare(b.nameWithInitialsSi || "")
         case "performance":
           const perfOrder = {
             excellent: 0,
@@ -249,8 +250,7 @@ export function StudentListView({
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Admission No</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">First Name (Si)</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Last Name (Si)</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Name w/ Initials (Si)</th>
                   {showGradeColumn && (
                     <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Grade</th>
                   )}
@@ -270,10 +270,7 @@ export function StudentListView({
                   >
                     <td className="px-6 py-4 text-sm font-medium text-slate-900 w-32">{student.admissionNumber}</td>
                     <td className="px-6 py-4 text-sm text-slate-900 font-medium">
-                      {student.firstName}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-900 font-medium">
-                      {student.lastName}
+                      {student.nameWithInitialsSi || student.fullNameEn}
                     </td>
                     {showGradeColumn && (
                       <td className="px-6 py-4 text-sm text-slate-600">

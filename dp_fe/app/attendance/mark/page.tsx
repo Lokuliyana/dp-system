@@ -172,7 +172,7 @@ export default function MarkAttendancePage() {
                     >
                       <div className="flex flex-col">
                         <span className="font-medium text-slate-900 text-base">
-                          {student.nameWithInitialsSi || student.fullNameEn}
+                          {student.nameWithInitialsSi}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {student.admissionNumber}

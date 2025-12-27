@@ -160,6 +160,7 @@ export default function UniversalStudentListPage() {
             admissionNumber: s.admissionNumber || "",
             firstName: s.firstNameSi || s.firstNameEn || "",
             lastName: s.lastNameSi || s.lastNameEn || "",
+            nameWithInitialsSi: s.nameWithInitialsSi || "",
             email: s.email || "",
             dateOfBirth: s.dob || "",
             enrollmentDate: s.admissionDate || "",

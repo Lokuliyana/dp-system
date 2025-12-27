@@ -118,6 +118,7 @@ export default function SectionStudentsPage({ params }: SectionStudentsPageProps
   const filteredStudents = students.filter(s => 
     !searchTerm || 
     (s.fullNameEn && s.fullNameEn.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (s.nameWithInitialsSi && s.nameWithInitialsSi.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (s.admissionNumber && s.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (s.whatsappNumber && s.whatsappNumber.includes(searchTerm))
   );

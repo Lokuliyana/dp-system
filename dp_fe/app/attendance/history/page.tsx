@@ -198,7 +198,7 @@ export default function AttendanceHistoryPage() {
                       {filteredStudents.map((student, idx) => (
                         <tr key={student.id} className={cn("hover:bg-slate-50 transition-colors", idx % 2 === 0 ? "bg-white" : "bg-slate-50/30")}>
                           <td className="sticky left-0 z-10 bg-white border-b border-r px-4 py-2 font-medium text-slate-900 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                            {student.nameWithInitialsSi || student.fullNameEn}
+                            {student.nameWithInitialsSi}
                           </td>
                           <td className="sticky left-[200px] z-10 bg-white border-b border-r px-4 py-2 text-slate-500 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                             {student.admissionNumber}

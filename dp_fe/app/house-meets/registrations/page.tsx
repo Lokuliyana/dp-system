@@ -117,7 +117,7 @@ export default function HouseRegistrationsPage() {
   const registeredIds = useMemo(() => {
     const ids = new Set<string>();
     registrations.forEach((r) => {
-        const sid = typeof r.studentId === 'object' ? (r.studentId as any)._id || (r.studentId as any).id : r.studentId;
+        const sid = r.studentId && typeof r.studentId === 'object' ? (r.studentId as any)._id || (r.studentId as any).id : r.studentId;
         ids.add(sid);
     });
     return ids;
@@ -129,8 +129,8 @@ export default function HouseRegistrationsPage() {
         (s) =>
           !registeredIds.has(s.id) &&
           (search === "" ||
-            s.firstNameEn.toLowerCase().includes(search.toLowerCase()) ||
-            s.lastNameEn.toLowerCase().includes(search.toLowerCase()))
+            (s.nameWithInitialsSi && s.nameWithInitialsSi.toLowerCase().includes(search.toLowerCase())) ||
+            s.admissionNumber.toLowerCase().includes(search.toLowerCase()))
       ),
     [students, registeredIds, search]
   );
@@ -315,11 +315,11 @@ export default function HouseRegistrationsPage() {
                                     >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-semibold text-slate-500 shrink-0">
-                                        {(student.firstNameSi || student.firstNameEn).charAt(0)}
+                                        {(student.nameWithInitialsSi || "").charAt(0)}
                                         </div>
                                         <div className="min-w-0">
                                         <p className="text-sm font-medium text-slate-900 truncate">
-                                            {student.firstNameSi || student.firstNameEn} {student.lastNameSi || student.lastNameEn}
+                                            {student.nameWithInitialsSi}
                                         </p>
                                         <p className="text-[11px] text-slate-500">
                                             #{student.admissionNumber}
@@ -375,11 +375,11 @@ export default function HouseRegistrationsPage() {
                                     >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-semibold text-slate-500 shrink-0">
-                                        {(student.firstNameSi || student.firstNameEn).charAt(0)}
+                                        {(student.nameWithInitialsSi || "").charAt(0)}
                                         </div>
                                         <div className="min-w-0">
                                         <p className="text-sm font-medium text-slate-900 truncate">
-                                            {student.firstNameSi || student.firstNameEn} {student.lastNameSi || student.lastNameEn}
+                                            {student.nameWithInitialsSi}
                                         </p>
                                         <p className="text-[11px] text-slate-500">
                                             #{student.admissionNumber}
@@ -474,7 +474,7 @@ export default function HouseRegistrationsPage() {
                                     >
                                         <span className="truncate max-w-[150px]">
                                         {student
-                                            ? `${(student as any).firstNameSi || student.firstNameEn} ${(student as any).lastNameSi || student.lastNameEn}`
+                                            ? ((student as any).nameWithInitialsSi || student.nameWithInitialsSi || "Unknown")
                                             : "Loading..."}
                                         </span>
                                         <button
@@ -529,7 +529,7 @@ export default function HouseRegistrationsPage() {
                                   >
                                     <span className="truncate max-w-[150px]">
                                       {student
-                                        ? `${(student as any).firstNameSi || student.firstNameEn} ${(student as any).lastNameSi || student.lastNameEn}`
+                                        ? ((student as any).nameWithInitialsSi || student.nameWithInitialsSi || "Unknown")
                                         : "Loading..."}
                                     </span>
                                     <button

@@ -35,6 +35,7 @@ export interface Student {
   talents: Talent[]
   notes: StudentNote[]
   phoneNumber: string
+  nameWithInitialsSi: string
   fullNameEn?: string
   whatsappNumber?: string
 }
@@ -90,12 +91,15 @@ export function generateSampleStudents(): Student[] {
 
   GRADES.forEach((grade) => {
     for (let i = 1; i <= 35; i++) {
+      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
+      const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
       students.push({
         id: `${grade.id}-student-${i}`,
         gradeId: grade.id,
         admissionNumber: `25/${String(i).padStart(4, "0")}`,
-        firstName: firstNames[Math.floor(Math.random() * firstNames.length)],
-        lastName: lastNames[Math.floor(Math.random() * lastNames.length)],
+        firstName: firstName,
+        lastName: lastName,
+        nameWithInitialsSi: `${firstName.charAt(0)}. ${lastName}`,
         email: `student${i}@school.edu`,
         dateOfBirth: new Date(
           2010 + Math.random() * 4,

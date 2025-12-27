@@ -20,20 +20,12 @@ export const getStudentColumns = (
     frozen: true,
   },
   {
-    key: "fullNameEn",
-    label: "Full Name (En)",
-    type: "text",
-    sortable: true,
-    filterable: true,
-    width: "200px",
-  },
-  {
     key: "nameWithInitialsSi",
     label: "Name w/ Initials (Si)",
     type: "text",
     sortable: true,
     filterable: true,
-    width: "200px",
+    width: "250px",
   },
   {
     key: "sex",

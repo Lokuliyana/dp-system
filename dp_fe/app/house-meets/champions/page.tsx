@@ -151,7 +151,7 @@ export default function ChampionsPage() {
   const getStudentName = (student: any) => {
     if (!student) return "Unknown";
     if (typeof student === 'string') return student; // Should be populated but fallback
-    return `${student.firstNameEn} ${student.lastNameEn}`;
+    return student.nameWithInitialsSi || `${student.firstNameEn} ${student.lastNameEn}`;
   };
 
   const getStudentId = (student: any) => {
