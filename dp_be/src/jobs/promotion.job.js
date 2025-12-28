@@ -1,6 +1,6 @@
 const cron = require('node-cron')
 const env = require('../config/env')
-const promotionService = require('../services/promotion.service')
+const promotionService = require('../services/student/promotion.service')
 const logger = require('../config/logger')
 
 /**

@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs')
-const School = require('../models/school.model')
-const Role = require('../models/role.model')
-const AppUser = require('../models/appUser.model')
+const School = require('../models/system/school.model')
+const Role = require('../models/system/role.model')
+const AppUser = require('../models/system/appUser.model')
 
 async function seedAdmin() {
   try {

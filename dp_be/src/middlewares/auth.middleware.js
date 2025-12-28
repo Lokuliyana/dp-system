@@ -26,8 +26,8 @@ module.exports = async (req, _res, next) => {
     const decoded = jwt.verify(token, env.jwtAccessSecret)
     
     // Fetch full user to get latest permissions
-    const AppUser = require('../models/appUser.model')
-    const user = await AppUser.findById(decoded.id).lean()
+    const AppUser = require('../models/system/appUser.model')
+    const user = await AppUser.findById(decoded.id).populate('roleId').lean()
     
     if (!user) {
       return next(new ApiError(401, 'User not found'))

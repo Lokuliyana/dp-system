@@ -1,0 +1,346 @@
+{
+  "recostructedRawPermissions": [
+    "student.student.create",
+    "student.student.read",
+    "student.student.update",
+    "student.student.delete",
+    "student.attendance.create",
+    "student.attendance.read",
+    "student.attendance.update",
+    "student.attendance.delete",
+    "student.parent.create",
+    "student.parent.read",
+    "student.parent.update",
+    "student.parent.delete",
+    "student.parent_student_link.create",
+    "student.parent_student_link.read",
+    "student.parent_student_link.update",
+    "student.parent_student_link.delete",
+    "student.student_talent.create",
+    "student.student_talent.read",
+    "student.student_talent.update",
+    "student.student_talent.delete",
+    "student.exam_result.create",
+    "student.exam_result.read",
+    "student.exam_result.update",
+    "student.exam_result.delete",
+    "student.promotion.create",
+    "student.promotion.read",
+    "student.promotion.update",
+    "student.promotion.delete",
+    "student.report.create",
+    "student.report.read",
+    "student.report.update",
+    "student.report.delete",
+    "staff.teacher.create",
+    "staff.teacher.read",
+    "staff.teacher.update",
+    "staff.teacher.delete",
+    "staff.staff_role.create",
+    "staff.staff_role.read",
+    "staff.staff_role.update",
+    "staff.staff_role.delete",
+    "staff.prefect.create",
+    "staff.prefect.read",
+    "staff.prefect.update",
+    "staff.prefect.delete",
+    "staff.prefect_position.create",
+    "staff.prefect_position.read",
+    "staff.prefect_position.update",
+    "staff.prefect_position.delete",
+    "housemeets.house.create",
+    "housemeets.house.read",
+    "housemeets.house.update",
+    "housemeets.house.delete",
+    "housemeets.competition.create",
+    "housemeets.competition.read",
+    "housemeets.competition.update",
+    "housemeets.competition.delete",
+    "housemeets.competition_house_rule.create",
+    "housemeets.competition_house_rule.read",
+    "housemeets.competition_house_rule.update",
+    "housemeets.competition_house_rule.delete",
+    "housemeets.competition_registration.create",
+    "housemeets.competition_registration.read",
+    "housemeets.competition_registration.update",
+    "housemeets.competition_registration.delete",
+    "housemeets.competition_result.create",
+    "housemeets.competition_result.read",
+    "housemeets.competition_result.update",
+    "housemeets.competition_result.delete",
+    "housemeets.competition_team.create",
+    "housemeets.competition_team.read",
+    "housemeets.competition_team.update",
+    "housemeets.competition_team.delete",
+    "housemeets.student_house_assignment.create",
+    "housemeets.student_house_assignment.read",
+    "housemeets.student_house_assignment.update",
+    "housemeets.student_house_assignment.delete",
+    "housemeets.teacher_house_assignment.create",
+    "housemeets.teacher_house_assignment.read",
+    "housemeets.teacher_house_assignment.update",
+    "housemeets.teacher_house_assignment.delete",
+    "housemeets.team_selection.create",
+    "housemeets.team_selection.read",
+    "housemeets.team_selection.update",
+    "housemeets.team_selection.delete",
+    "activities.club.create",
+    "activities.club.read",
+    "activities.club.update",
+    "activities.club.delete",
+    "activities.club_position.create",
+    "activities.club_position.read",
+    "activities.club_position.update",
+    "activities.club_position.delete",
+    "activities.event.create",
+    "activities.event.read",
+    "activities.event.update",
+    "activities.event.delete",
+    "activities.event_registration.create",
+    "activities.event_registration.read",
+    "activities.event_registration.update",
+    "activities.event_registration.delete",
+    "activities.squad.create",
+    "activities.squad.read",
+    "activities.squad.update",
+    "activities.squad.delete",
+    "system.app_user.create",
+    "system.app_user.read",
+    "system.app_user.update",
+    "system.app_user.delete",
+    "system.role.create",
+    "system.role.read",
+    "system.role.update",
+    "system.role.delete",
+    "system.permission.create",
+    "system.permission.read",
+    "system.permission.update",
+    "system.permission.delete",
+    "system.school.create",
+    "system.school.read",
+    "system.school.update",
+    "system.school.delete",
+    "system.section.create",
+    "system.section.read",
+    "system.section.update",
+    "system.section.delete",
+    "system.grade.create",
+    "system.grade.read",
+    "system.grade.update",
+    "system.grade.delete",
+    "system.grading_schema.create",
+    "system.grading_schema.read",
+    "system.grading_schema.update",
+    "system.grading_schema.delete"
+  ],
+  "reconstructedHigherarchy": {
+    "STUDENT": {
+      "STUDENT": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "ATTENDANCE": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "PARENT": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "PARENT_STUDENT_LINK": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "STUDENT_TALENT": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "EXAM_RESULT": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "PROMOTION": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "REPORT": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    },
+    "STAFF": {
+      "TEACHER": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "STAFF_ROLE": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "PREFECT": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "PREFECT_POSITION": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    },
+    "HOUSEMEETS": {
+      "HOUSE": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "COMPETITION": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "COMPETITION_HOUSE_RULE": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "COMPETITION_REGISTRATION": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "COMPETITION_RESULT": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "COMPETITION_TEAM": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "STUDENT_HOUSE_ASSIGNMENT": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "TEACHER_HOUSE_ASSIGNMENT": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "TEAM_SELECTION": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    },
+    "ACTIVITIES": {
+      "CLUB": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "CLUB_POSITION": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "EVENT": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "EVENT_REGISTRATION": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "SQUAD": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    },
+    "SYSTEM": {
+      "APP_USER": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "ROLE": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "PERMISSION": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "SCHOOL": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "SECTION": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "GRADE": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "GRADING_SCHEMA": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    }
+  }
+}

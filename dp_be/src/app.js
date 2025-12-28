@@ -3,7 +3,7 @@ const cors = require('./config/cors')
 const rateLimit = require('./config/rateLimit')
 const env = require('./config/env')
 
-const appUsersRoutes = require('./routes/appUser.routes')
+const appUsersRoutes = require('./routes/system/appUser.routes')
 const routes = require('./routes')
 const notFound = require('./middlewares/notFound.middleware')
 const errorHandler = require('./middlewares/error.middleware')

@@ -1,0 +1,45 @@
+{
+  "STUDENT": [
+    "STUDENT",
+    "ATTENDANCE",
+    "PARENT",
+    "PARENT_STUDENT_LINK",
+    "STUDENT_TALENT",
+    "EXAM_RESULT",
+    "PROMOTION",
+    "REPORT"
+  ],
+  "STAFF": [
+    "TEACHER",
+    "STAFF_ROLE",
+    "PREFECT",
+    "PREFECT_POSITION"
+  ],
+  "HOUSEMEETS": [
+    "HOUSE",
+    "COMPETITION",
+    "COMPETITION_HOUSE_RULE",
+    "COMPETITION_REGISTRATION",
+    "COMPETITION_RESULT",
+    "COMPETITION_TEAM",
+    "STUDENT_HOUSE_ASSIGNMENT",
+    "TEACHER_HOUSE_ASSIGNMENT",
+    "TEAM_SELECTION"
+  ],
+  "ACTIVITIES": [
+    "CLUB",
+    "CLUB_POSITION",
+    "EVENT",
+    "EVENT_REGISTRATION",
+    "SQUAD"
+  ],
+  "SYSTEM": [
+    "APP_USER",
+    "ROLE",
+    "PERMISSION",
+    "SCHOOL",
+    "SECTION",
+    "GRADE",
+    "GRADING_SCHEMA"
+  ]
+}
