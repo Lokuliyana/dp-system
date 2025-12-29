@@ -7,6 +7,7 @@ exports.createAppUserSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
     roleId: objectId,
+    permissions: z.array(z.string()).optional(),
   }),
 })
 
@@ -18,6 +19,7 @@ exports.updateAppUserSchema = z.object({
     password: z.string().min(6).optional(),
     roleId: objectId.optional(),
     isActive: z.boolean().optional(),
+    permissions: z.array(z.string()).optional(),
   }),
 })
 

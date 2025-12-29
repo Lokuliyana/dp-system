@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const app = require('../../src/app')
 const setup = require('../setup')
 const env = require('../../src/config/env')
-const AppUser = require('../../src/models/appUser.model')
+const AppUser = require('../../src/models/system/appUser.model')
 
 // Mock data
 let authHeader
@@ -115,6 +115,18 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
+  // Ensure we have a valid role first
+  const Role = require('../../src/models/system/role.model')
+  let role = await Role.findOne({ name: 'super_admin' })
+  if (!role) {
+    role = await Role.create({
+      name: 'super_admin',
+      schoolId: mockUser.schoolId,
+      permissions: ['*']
+    })
+  }
+  
+  mockUser.roleId = role._id
   await AppUser.create(mockUser)
 })
 

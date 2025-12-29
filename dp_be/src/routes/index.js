@@ -30,5 +30,6 @@ router.use('/parent-student-links', require('./student/parentStudentLink.routes'
 router.use('/reports', require('./student/report.routes'))
 router.use('/permissions', require('./system/permission.routes'))
 router.use('/app-users', require('./system/appUser.routes'))
+router.use('/roles', require('./system/role.routes'))
 
 module.exports = router

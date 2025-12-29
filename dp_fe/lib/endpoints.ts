@@ -3,6 +3,7 @@ export const endpoints = {
     login: "/app-users/login",
     refresh: "/app-users/refresh",
     users: "/app-users",
+    roles: "/roles",
   },
 
   sections: "/sections",

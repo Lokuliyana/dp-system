@@ -9,7 +9,6 @@ exports.createStudent = asyncHandler(async (req, res) => {
     userId: req.user.id,
   })
   res.status(201).json(ApiResponse.created(doc))
-  res.status(201).json(ApiResponse.created(doc))
 })
 
 exports.bulkImportStudents = asyncHandler(async (req, res) => {

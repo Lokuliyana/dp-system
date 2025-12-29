@@ -26,7 +26,7 @@ function generateTokens(appUser) {
 /* -------------------- AUTH -------------------- */
 
 exports.login = async ({ email, password }) => {
-  const user = await AppUser.findOne({ email }).lean()
+  const user = await AppUser.findOne({ email })
   if (!user) throw new ApiError(401, 'Invalid email or password')
 
   const ok = await bcrypt.compare(password, user.password)
@@ -39,7 +39,7 @@ exports.login = async ({ email, password }) => {
 exports.refresh = async ({ token }) => {
   try {
     const decoded = jwt.verify(token, env.jwtRefreshSecret)
-    const user = await AppUser.findById(decoded.id).lean()
+    const user = await AppUser.findById(decoded.id)
     if (!user) throw new ApiError(401, 'Invalid refresh token')
 
     return generateTokens(user)
@@ -77,7 +77,6 @@ exports.listAppUsers = async ({ schoolId }) => {
   return await AppUser.find({ schoolId })
     .select('-password')
     .sort({ name: 1 })
-    .lean()
 }
 
 exports.updateAppUser = async ({ schoolId, id, payload, userId }) => {

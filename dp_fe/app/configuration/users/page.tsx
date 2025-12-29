@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useAppUsers, useCreateAppUser, useUpdateAppUser, useDeleteAppUser } from "@/hooks/useAuth"
+import { useState, useEffect } from "react"
+import { useAppUsers, useCreateAppUser, useUpdateAppUser, useDeleteAppUser, useRoles } from "@/hooks/useAuth"
 import { PermissionSelector } from "@/components/auth/permission-selector"
 import { 
   Button, 
@@ -28,9 +28,14 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetFooter
+  SheetFooter,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui"
-import { Plus, Pencil, Trash2, Shield, Search } from "lucide-react"
+import { Plus, Pencil, Trash2, Shield, Search, Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -41,7 +46,7 @@ const userSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
   password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
-  roleId: z.string().min(1, "Role is required"), // We might need to fetch roles too
+  roleId: z.string().min(1, "Role is required"),
   isActive: z.boolean().default(true),
   permissions: z.array(z.string()).default([]),
 })
@@ -50,6 +55,7 @@ type UserFormValues = z.infer<typeof userSchema>
 
 export default function UsersPage() {
   const { data: users, isLoading } = useAppUsers()
+  const { data: roles, isLoading: isRolesLoading } = useRoles()
   const createUser = useCreateAppUser()
   const updateUser = useUpdateAppUser()
   const deleteUser = useDeleteAppUser()
@@ -64,11 +70,18 @@ export default function UsersPage() {
       name: "",
       email: "",
       password: "",
-      roleId: "658d557335602e001f300002", // TODO: Fetch roles and use a select. Hardcoded for now or need a role selector.
+      roleId: "",
       isActive: true,
       permissions: [],
     },
   })
+
+  // Set default role if available and creating new user
+  useEffect(() => {
+    if (!editingUser && roles && roles.length > 0 && !form.getValues("roleId")) {
+      form.setValue("roleId", roles[0].id)
+    }
+  }, [roles, editingUser, form])
 
   const onSubmit = (data: UserFormValues) => {
     const payload = {
@@ -85,7 +98,9 @@ export default function UsersPage() {
           setEditingUser(null)
           form.reset()
         },
-        onError: (err) => toast.error("Failed to update user")
+        onError: (err: any) => {
+          toast.error(err?.response?.data?.message || "Failed to update user")
+        }
       })
     } else {
       if (!data.password) {
@@ -99,18 +114,33 @@ export default function UsersPage() {
           setIsSheetOpen(false)
           form.reset()
         },
-        onError: (err) => toast.error("Failed to create user")
+        onError: (err: any) => {
+          toast.error(err?.response?.data?.message || "Failed to create user")
+        }
       })
     }
   }
 
   const handleEdit = (user: AppUser) => {
     setEditingUser(user)
+    
+    // Handle potential populated roleId (object) or string ID
+    let safeRoleId = "";
+    if (user.roleId) {
+        if (typeof user.roleId === 'object' && (user.roleId as any)._id) {
+            safeRoleId = (user.roleId as any)._id;
+        } else if (typeof user.roleId === 'object' && (user.roleId as any).id) {
+            safeRoleId = (user.roleId as any).id;
+        } else {
+            safeRoleId = String(user.roleId);
+        }
+    }
+
     form.reset({
-      name: user.fullName || "", // API returns fullName? Type says fullName.
+      name: user.name || "",
       email: user.email,
       password: "",
-      roleId: "658d557335602e001f300002", // Placeholder
+      roleId: safeRoleId,
       isActive: user.isActive,
       permissions: user.permissions || [],
     })
@@ -123,7 +153,7 @@ export default function UsersPage() {
       name: "",
       email: "",
       password: "",
-      roleId: "658d557335602e001f300002",
+      roleId: roles && roles.length > 0 ? roles[0].id : "",
       isActive: true,
       permissions: [],
     })
@@ -131,9 +161,17 @@ export default function UsersPage() {
   }
 
   const filteredUsers = users?.filter(u => 
-    u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const onInvalid = (errors: any) => {
+    console.error("Form errors:", errors)
+    const firstError = Object.values(errors)[0] as any;
+    if (firstError) {
+        toast.error(firstError.message || "Please check the form for errors")
+    }
+  }
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -182,9 +220,14 @@ export default function UsersPage() {
                   </TableRow>
                 ) : filteredUsers?.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.fullName}</TableCell>
+                    <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell><Badge variant="outline">{user.role}</Badge></TableCell>
+                    <TableCell>
+                        {/* Try to find role name from roles list if available, else fallback to user.role */}
+                        <Badge variant="outline">
+                            {roles?.find(r => r.id === user.roleId)?.name || "Unknown Role"}
+                        </Badge>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={user.isActive ? "default" : "secondary"}>
                         {user.isActive ? "Active" : "Inactive"}
@@ -225,6 +268,7 @@ export default function UsersPage() {
                   value={form.watch("name")} 
                   onChange={(e) => form.setValue("name", e.target.value)}
                 />
+                {form.formState.errors.name && <p className="text-xs text-red-500">{form.formState.errors.name.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Email</Label>
@@ -232,10 +276,31 @@ export default function UsersPage() {
                   value={form.watch("email")} 
                   onChange={(e) => form.setValue("email", e.target.value)}
                 />
+                {form.formState.errors.email && <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select 
+                    value={form.watch("roleId")} 
+                    onValueChange={(val) => form.setValue("roleId", val)}
+                    disabled={isRolesLoading}
+                >
+                    <SelectTrigger>
+                        <SelectValue placeholder={isRolesLoading ? "Loading roles..." : "Select a role"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {roles?.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                                {role.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                {form.formState.errors.roleId && <p className="text-xs text-red-500">{form.formState.errors.roleId.message}</p>}
+              </div>
               <div className="space-y-2">
                 <Label>Password {editingUser && "(Leave blank to keep current)"}</Label>
                 <Input 
@@ -243,14 +308,16 @@ export default function UsersPage() {
                   value={form.watch("password")} 
                   onChange={(e) => form.setValue("password", e.target.value)}
                 />
+                 {form.formState.errors.password && <p className="text-xs text-red-500">{form.formState.errors.password.message}</p>}
               </div>
-              <div className="flex items-center space-x-2 pt-8">
+            </div>
+            
+            <div className="flex items-center space-x-2">
                 <Switch 
                   checked={form.watch("isActive")}
                   onCheckedChange={(c) => form.setValue("isActive", c)}
                 />
                 <Label>Active Account</Label>
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -266,7 +333,7 @@ export default function UsersPage() {
 
           <SheetFooter>
             <Button variant="outline" onClick={() => setIsSheetOpen(false)}>Cancel</Button>
-            <Button onClick={form.handleSubmit(onSubmit)}>Save Changes</Button>
+            <Button onClick={form.handleSubmit(onSubmit, onInvalid)}>Save Changes</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

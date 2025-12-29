@@ -26,7 +26,7 @@ router.post(
 
 router.get(
   '/',
-  authGuard('settings.user.read'),
+  authGuard(),
   ctrl.listAppUsers
 )
 

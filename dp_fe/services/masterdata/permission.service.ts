@@ -9,6 +9,6 @@ export const permissionService = {
   listPermissions() {
     return axiosInstance
       .get(endpoints.permissions)
-      .then(r => r.data.data as PermissionMap)
+      .then(r => r.data.data)
   },
 }

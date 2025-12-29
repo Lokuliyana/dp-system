@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const app = require('../../src/app')
 const setup = require('../setup')
 const env = require('../../src/config/env')
-const AppUser = require('../../src/models/appUser.model')
+const AppUser = require('../../src/models/system/appUser.model')
 
 const schoolId = new mongoose.Types.ObjectId().toString()
 let authHeader

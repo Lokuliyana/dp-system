@@ -567,11 +567,18 @@ export type UserRole =
   | "viewer";
 
 export type AppUser = BaseDoc & {
-  fullName: string;
+  name: string;
   email: string;
-  role: UserRole;
+  role?: string;
+  roleId: Id;
   isActive: boolean;
   permissions?: string[];
+};
+
+export type Role = BaseDoc & {
+  name: string;
+  description?: string;
+  permissions: string[];
 };
 
 /* -------------------- REPORT OUTPUTS (F38–F42) -------------------- */

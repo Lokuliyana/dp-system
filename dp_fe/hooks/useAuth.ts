@@ -54,3 +54,13 @@ export function useDeleteAppUser() {
     },
   })
 }
+
+import { roleService } from "@/services/masterdata/role.service"
+
+export function useRoles() {
+  return useQuery({
+    queryKey: ["roles"],
+    queryFn: () => roleService.list(),
+  })
+}
+

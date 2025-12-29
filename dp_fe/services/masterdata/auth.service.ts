@@ -18,10 +18,12 @@ export type CreateAppUserPayload = {
   email: string
   password: string
   roleId: string
+  permissions?: string[]
 }
 
 export type UpdateAppUserPayload = Partial<CreateAppUserPayload> & {
   isActive?: boolean
+  permissions?: string[]
 }
 
 export const authService = {

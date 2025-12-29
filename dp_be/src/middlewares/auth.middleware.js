@@ -37,6 +37,8 @@ module.exports = async (req, _res, next) => {
       return next(new ApiError(401, 'User is inactive'))
     }
 
+    // Since we use lean(), we need to manually set .id if controllers rely on it
+    user.id = user._id.toString()
     req.user = user
     return next()
   } catch (err) {
