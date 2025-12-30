@@ -7,17 +7,28 @@ const appUserSchema = new mongoose.Schema(
 
     email: {
       type: String,
-      required: true,
       lowercase: true,
       trim: true,
+      index: true,
+    },
+
+    phone: {
+      type: String,
+      trim: true,
+      index: true,
     },
 
     password: { type: String, required: true },
 
-    roleId: {
+    roleIds: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Role',
-      required: true,
+      index: true,
+    }],
+
+    teacherId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Teacher',
       index: true,
     },
 
@@ -30,13 +41,20 @@ const appUserSchema = new mongoose.Schema(
 
     isActive: { type: Boolean, default: true },
     permissions: { type: [String], default: [] },
+    restrictedGradeIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Grade' }],
   },
   baseSchemaOptions
 )
 
 appUserSchema.index(
   { schoolId: 1, email: 1 },
-  { unique: true }
+  { unique: true, sparse: true }
+)
+
+appUserSchema.index(
+  { schoolId: 1, phone: 1 },
+  { unique: true, sparse: true }
 )
 
 module.exports = mongoose.model('AppUser', appUserSchema)
+

@@ -241,10 +241,23 @@ exports.listStudents = async ({
   sex,
   birthYear,
   admittedYear,
+  restrictedGradeIds,
 }) => {
   const q = { schoolId }
 
-  if (gradeId) q.gradeId = gradeId
+  if (restrictedGradeIds) {
+    const mongoose = require('mongoose')
+    const allowedIds = restrictedGradeIds.map(id => new mongoose.Types.ObjectId(id))
+    if (gradeId) {
+      q.gradeId = restrictedGradeIds.includes(gradeId.toString()) ? gradeId : { $in: [] }
+    } else {
+      q.gradeId = { $in: allowedIds }
+    }
+  } else if (gradeId) {
+    q.gradeId = gradeId
+  }
+
+
   if (sectionId) q.sectionId = sectionId
   if (academicYear) q.academicYear = Number(academicYear)
   if (sex) q.sex = sex
@@ -296,8 +309,22 @@ exports.listStudents = async ({
   }
 }
 
-exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear }) => {
-  const q = { schoolId, gradeId }
+exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear, restrictedGradeIds }) => {
+  const q = { schoolId }
+
+  if (restrictedGradeIds) {
+    const mongoose = require('mongoose')
+    const allowedIds = restrictedGradeIds.map(id => new mongoose.Types.ObjectId(id))
+    if (gradeId) {
+      q.gradeId = restrictedGradeIds.includes(gradeId.toString()) ? gradeId : { $in: [] }
+    } else {
+      q.gradeId = { $in: allowedIds }
+    }
+  } else if (gradeId) {
+    q.gradeId = gradeId
+  }
+
+
   if (academicYear) q.academicYear = Number(academicYear)
 
   const items = await Student.find(q)
@@ -307,6 +334,7 @@ exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear }) => {
 
   return items.map((item) => ({ ...item, id: item._id }))
 }
+
 
 exports.updateStudentBasicInfo = async ({ schoolId, id, payload, userId }) => {
   try {

@@ -6,6 +6,7 @@ const roleSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true, index: true },
     description: { type: String },
     permissions: { type: [String], default: [] },
+    singleGraded: { type: Boolean, default: false },
     schoolId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'School',

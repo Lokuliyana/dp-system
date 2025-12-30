@@ -15,9 +15,11 @@ exports.listRegistrations = asyncHandler(async (req, res) => {
   const items = await service.listRegistrations({
     schoolId: req.schoolId,
     filters: req.query,
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
 })
+
 
 exports.deleteRegistration = asyncHandler(async (req, res) => {
   await service.deleteRegistration({

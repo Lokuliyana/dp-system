@@ -26,6 +26,7 @@ exports.listAttendanceByDate = asyncHandler(async (req, res) => {
     schoolId: req.schoolId,
     date: req.query.date,
     gradeId: req.query.gradeId,
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
 })
@@ -53,6 +54,7 @@ exports.getAttendanceStats = asyncHandler(async (req, res) => {
     startDate: req.query.startDate,
     endDate: req.query.endDate,
     gradeId: req.query.gradeId,
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(stats))
 })
@@ -63,6 +65,8 @@ exports.listAttendanceByRange = asyncHandler(async (req, res) => {
     startDate: req.query.startDate,
     endDate: req.query.endDate,
     gradeId: req.query.gradeId,
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
 })
+

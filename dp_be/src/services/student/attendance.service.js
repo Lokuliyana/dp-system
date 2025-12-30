@@ -32,12 +32,24 @@ exports.updateAttendance = async ({ schoolId, id, payload, userId }) => {
   return updated.toJSON()
 }
 
-exports.listAttendanceByDate = async ({ schoolId, date, gradeId }) => {
+exports.listAttendanceByDate = async ({ schoolId, date, gradeId, restrictedGradeIds }) => {
   const q = {
     schoolId,
     date: new Date(date),
   }
-  if (gradeId) q.gradeId = gradeId
+  
+  if (restrictedGradeIds) {
+    const mongoose = require('mongoose')
+    const allowedIds = restrictedGradeIds.map(id => new mongoose.Types.ObjectId(id))
+    if (gradeId) {
+      q.gradeId = restrictedGradeIds.includes(gradeId.toString()) ? gradeId : { $in: [] }
+    } else {
+      q.gradeId = { $in: allowedIds }
+    }
+  } else if (gradeId) {
+    q.gradeId = gradeId
+  }
+
 
   const items = await Attendance.find(q).sort({ studentId: 1 }).lean()
 
@@ -67,12 +79,21 @@ exports.deleteAttendance = async ({ schoolId, id }) => {
   return true
 }
 
-exports.getAttendanceStats = async ({ schoolId, startDate, endDate, gradeId }) => {
+exports.getAttendanceStats = async ({ schoolId, startDate, endDate, gradeId, restrictedGradeIds }) => {
   const match = {
     schoolId,
     date: { $gte: new Date(startDate), $lte: new Date(endDate) }
   }
-  if (gradeId) match.gradeId = gradeId
+  
+  if (restrictedGradeIds) {
+    if (gradeId) {
+      match.gradeId = restrictedGradeIds.includes(gradeId.toString()) ? gradeId : { $in: [] }
+    } else {
+      match.gradeId = { $in: restrictedGradeIds }
+    }
+  } else if (gradeId) {
+    match.gradeId = gradeId
+  }
 
   const stats = await Attendance.aggregate([
     { $match: match },
@@ -123,12 +144,22 @@ exports.getAttendanceStats = async ({ schoolId, startDate, endDate, gradeId }) =
   }))
 }
 
-exports.listAttendanceByRange = async ({ schoolId, startDate, endDate, gradeId }) => {
+exports.listAttendanceByRange = async ({ schoolId, startDate, endDate, gradeId, restrictedGradeIds }) => {
   const q = {
     schoolId,
     date: { $gte: new Date(startDate), $lte: new Date(endDate) }
   }
-  if (gradeId) q.gradeId = gradeId
+  
+  if (restrictedGradeIds) {
+    if (gradeId) {
+      q.gradeId = restrictedGradeIds.includes(gradeId.toString()) ? gradeId : { $in: [] }
+    } else {
+      q.gradeId = { $in: restrictedGradeIds }
+    }
+  } else if (gradeId) {
+    q.gradeId = gradeId
+  }
+
 
   const items = await Attendance.find(q).sort({ date: 1, studentId: 1 }).lean()
   return items

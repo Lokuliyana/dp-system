@@ -14,6 +14,7 @@ import {
   DynamicPageHeader,
   HorizontalToolbar,
   HorizontalToolbarIcons,
+  VerticalToolbar,
 } from "@/components/layout/dynamic";
 import { StudentsMenu } from "@/components/students/students-menu";
 import { StudentListView } from "@/components/students/student-list-view";
@@ -84,14 +85,47 @@ export default function UniversalStudentListPage() {
   };
 
   return (
-    <LayoutController showMainMenu showHorizontalToolbar>
+    <LayoutController showMainMenu showHorizontalToolbar showVerticalToolbar>
       <StudentsMenu />
 
       <DynamicPageHeader
-        title="Universal Student View"
-        subtitle="Search and manage all students across the school."
+        title="සියලුම සිසු​න් - Students"
+        subtitle="Manage students in all Grades."
         icon={Users}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-9 text-sm gap-2 px-3"
+              onClick={() => {}} // Add export logic if needed
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+            <BulkImportModal />
+            <Button 
+              size="sm" 
+              className="h-9 text-sm gap-2 px-4 bg-purple-600 hover:bg-purple-700"
+              onClick={() => router.push("/students/add")}
+            >
+              <Plus className="h-4 w-4" />
+              Add Student
+            </Button>
+          </div>
+        }
       />
+
+      <VerticalToolbar>
+        <Button
+          variant="ghost"
+          size="icon"
+          title="All Students"
+          className="text-purple-600 bg-purple-50"
+        >
+          <Users className="h-4 w-4" />
+        </Button>
+      </VerticalToolbar>
 
       <HorizontalToolbar className="px-4 py-2">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 max-w-md w-full sm:w-auto">
@@ -112,19 +146,6 @@ export default function UniversalStudentListPage() {
           <Button variant="outline" size="sm" className="h-9 text-sm gap-2 px-3">
             <Filter className="h-4 w-4" />
             Filter
-          </Button>
-          <Button variant="outline" size="sm" className="h-9 text-sm gap-2 px-3">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
-          <BulkImportModal />
-          <Button 
-            size="sm" 
-            className="h-9 text-sm gap-2 px-4"
-            onClick={() => router.push("/students/add")}
-          >
-            <Plus className="h-4 w-4" />
-            Add Student
           </Button>
           <Sheet open={isCreateModalOpen} onOpenChange={onOpenChange}>
             <SheetContent className="w-full sm:w-[540px] overflow-y-auto">
@@ -183,6 +204,7 @@ export default function UniversalStudentListPage() {
           onPageChange={setPage}
           itemsPerPage={limit}
           grades={grades.map(g => ({ id: g.id, name: g.nameSi || g.nameEn }))}
+          hideHeader={true}
         />
       </div>
     </LayoutController>

@@ -14,9 +14,11 @@ exports.reportGrade = asyncHandler(async (req, res) => {
   const data = await service.reportGrade({
     schoolId: req.schoolId,
     gradeId: req.params.id,
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(data))
 })
+
 
 exports.reportTeacher = asyncHandler(async (req, res) => {
   const data = await service.reportTeacher({

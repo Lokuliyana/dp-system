@@ -66,13 +66,22 @@ exports.bulkAssign = async ({ schoolId, assignments, year, userId }) => {
   return Promise.all(operations)
 }
 
-exports.listHouseAssignments = async ({ schoolId, filters }) => {
+exports.listHouseAssignments = async ({ schoolId, filters, restrictedGradeIds }) => {
   const q = { schoolId }
 
   if (filters.year) q.year = Number(filters.year)
-  if (filters.gradeId) q.gradeId = filters.gradeId
   if (filters.houseId) q.houseId = filters.houseId
   if (filters.studentId) q.studentId = filters.studentId
+
+  if (restrictedGradeIds) {
+    if (filters.gradeId) {
+      q.gradeId = restrictedGradeIds.includes(filters.gradeId.toString()) ? filters.gradeId : { $in: [] }
+    } else {
+      q.gradeId = { $in: restrictedGradeIds }
+    }
+  } else if (filters.gradeId) {
+    q.gradeId = filters.gradeId
+  }
 
   const items = await StudentHouseAssignment.find(q)
     .sort({ year: -1 })
@@ -80,3 +89,4 @@ exports.listHouseAssignments = async ({ schoolId, filters }) => {
 
   return items
 }
+

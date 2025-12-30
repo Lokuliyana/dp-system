@@ -568,9 +568,11 @@ export type UserRole =
 
 export type AppUser = BaseDoc & {
   name: string;
-  email: string;
+  email?: string;
+  phone?: string;
   role?: string;
-  roleId: Id;
+  roleIds: Id[];
+  teacherId?: Id;
   isActive: boolean;
   permissions?: string[];
 };
@@ -579,6 +581,7 @@ export type Role = BaseDoc & {
   name: string;
   description?: string;
   permissions: string[];
+  singleGraded: boolean;
 };
 
 /* -------------------- REPORT OUTPUTS (F38–F42) -------------------- */

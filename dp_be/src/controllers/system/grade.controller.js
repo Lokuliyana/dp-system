@@ -20,9 +20,11 @@ exports.listGradesWithStats = asyncHandler(async (req, res) => {
   const items = await gradeService.listGradesWithStats({
     schoolId: req.schoolId,
     year: req.query.year,
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
 })
+
 
 exports.updateGrade = asyncHandler(async (req, res, next) => {
   if (!req.user) {

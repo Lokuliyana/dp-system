@@ -34,6 +34,8 @@ exports.listExamResultsByGrade = asyncHandler(async (req, res) => {
     schoolId: req.schoolId,
     gradeId: req.params.gradeId,
     filters: req.query || {},
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
 })
+

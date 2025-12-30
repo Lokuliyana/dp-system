@@ -29,6 +29,7 @@ interface StudentListViewProps {
   onPageChange?: (page: number) => void
   itemsPerPage?: number
   grades?: { id: string; name: string }[]
+  hideHeader?: boolean
 }
 
 export function StudentListView({ 
@@ -42,7 +43,8 @@ export function StudentListView({
   currentPage: externalPage,
   onPageChange,
   itemsPerPage = 10,
-  grades = GRADES
+  grades = GRADES,
+  hideHeader = false
 }: StudentListViewProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -158,14 +160,16 @@ export function StudentListView({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">{grade ? grade.name : "All Students"}</h2>
-          <p className="text-slate-600 text-sm mt-1">
-            {isServerSide ? totalItems : filteredStudents.length} students found
-          </p>
+      {!hideHeader && (
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">{grade ? grade.name : "All Students"}</h2>
+            <p className="text-slate-600 text-sm mt-1">
+              {isServerSide ? totalItems : filteredStudents.length} students found
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Filters and Search - Only show if not server-side or if we implement server-side search later */}
       {!isServerSide && (

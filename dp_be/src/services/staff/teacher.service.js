@@ -1,5 +1,55 @@
 const Teacher = require('../../models/staff/teacher.model')
+const Role = require('../../models/system/role.model')
+const AppUser = require('../../models/system/appUser.model')
 const ApiError = require('../../utils/apiError')
+const bcrypt = require('bcryptjs')
+
+async function syncAppUser(teacher, schoolId, userId) {
+  // 1. Find or create "Staff" role
+  let staffRole = await Role.findOne({ schoolId, name: 'Staff' })
+  if (!staffRole) {
+    staffRole = await Role.create({
+      name: 'Staff',
+      description: 'Default role for staff members',
+      singleGraded: true,
+      schoolId,
+      createdById: userId,
+    })
+  }
+
+  // 2. Find existing AppUser for this teacher
+  let appUser = await AppUser.findOne({ teacherId: teacher._id, schoolId })
+
+  const userData = {
+    name: `${teacher.firstNameEn} ${teacher.lastNameEn}`.trim(),
+    email: teacher.email || undefined,
+    phone: teacher.phone || undefined,
+    roleIds: [staffRole._id],
+    teacherId: teacher._id,
+    schoolId,
+    isActive: teacher.status === 'active',
+  }
+
+  if (appUser) {
+    // Update existing user
+    // We don't change password on sync
+    await AppUser.findOneAndUpdate(
+      { _id: appUser._id },
+      { ...userData, updatedById: userId },
+      { runValidators: true }
+    )
+  } else {
+    // Create new user
+    const defaultPassword = teacher.firstNameEn.toLowerCase()
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10)
+
+    await AppUser.create({
+      ...userData,
+      password: hashedPassword,
+      createdById: userId,
+    })
+  }
+}
 
 exports.createTeacher = async ({ schoolId, payload, userId }) => {
   const doc = await Teacher.create({
@@ -7,6 +57,10 @@ exports.createTeacher = async ({ schoolId, payload, userId }) => {
     schoolId,
     createdById: userId,
   })
+
+  // Sync AppUser
+  await syncAppUser(doc, schoolId, userId)
+
   return doc.toJSON()
 }
 
@@ -41,14 +95,23 @@ exports.updateTeacher = async ({ schoolId, id, payload, userId }) => {
   )
 
   if (!updated) throw new ApiError(404, 'Teacher not found')
+
+  // Sync AppUser
+  await syncAppUser(updated, schoolId, userId)
+
   return updated.toJSON()
 }
 
 exports.deleteTeacher = async ({ schoolId, id }) => {
   const deleted = await Teacher.findOneAndDelete({ _id: id, schoolId })
   if (!deleted) throw new ApiError(404, 'Teacher not found')
+
+  // Delete associated AppUser
+  await AppUser.findOneAndDelete({ teacherId: id, schoolId })
+
   return true
 }
+
 
 /**
  * Append a past role entry.

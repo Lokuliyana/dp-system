@@ -29,6 +29,7 @@ import type { Grade, Section } from "@/types/models";
 import {
   LayoutController,
   DynamicPageHeader,
+  VerticalToolbar,
 } from "@/components/layout/dynamic";
 import { StudentsMenu } from "@/components/students/students-menu";
 
@@ -166,7 +167,7 @@ export default function StudentsPage() {
   }
 
   return (
-    <LayoutController showMainMenu showHorizontalToolbar>
+    <LayoutController showMainMenu showHorizontalToolbar showVerticalToolbar>
       {/* 1. Sidebar: Global Navigation */}
       <StudentsMenu />
 
@@ -177,7 +178,6 @@ export default function StudentsPage() {
         icon={Users}
         actions={
           <div className="flex items-center gap-2">
-
             <Button 
               variant="outline"
               className="gap-2" 
@@ -189,7 +189,7 @@ export default function StudentsPage() {
               <Layers className="h-4 w-4" />
               Add Section
             </Button>
-            <Button className="gap-2" onClick={() => {
+            <Button className="gap-2 bg-purple-600 hover:bg-purple-700" onClick={() => {
               setEditingGrade(null);
               setTargetSectionId(null);
               setIsGradeModalOpen(true);
@@ -200,6 +200,17 @@ export default function StudentsPage() {
           </div>
         }
       />
+
+      <VerticalToolbar>
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Student Management"
+          className="text-purple-600 bg-purple-50"
+        >
+          <Layers className="h-4 w-4" />
+        </Button>
+      </VerticalToolbar>
 
       {/* 3. Content */}
       <div className="p-4 sm:p-6 space-y-6">

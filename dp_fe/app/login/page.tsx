@@ -17,7 +17,7 @@ import {
 import { Label } from "@/components/ui";
 
 type FormState = {
-  email: string;
+  identifier: string;
   password: string;
 };
 
@@ -27,7 +27,7 @@ function LoginForm() {
   const redirectTo = searchParams.get("redirect") || "/dashboard";
 
   const [form, setForm] = React.useState<FormState>({
-    email: "admin@gmail.com",
+    identifier: "admin@gmail.com",
     password: "admin123",
   });
 
@@ -44,7 +44,7 @@ function LoginForm() {
     e.preventDefault();
     setErrMsg(null);
     loginMut.mutate({
-      email: form.email.trim().toLowerCase(),
+      identifier: form.identifier.trim(),
       password: form.password,
     }, {
       onSuccess: (data) => {
@@ -63,7 +63,7 @@ function LoginForm() {
         const msg =
           e?.response?.data?.message ||
           e?.message ||
-          "Login failed. Check email/password.";
+          "Login failed. Check credentials.";
         setErrMsg(msg);
       },
     });
@@ -110,10 +110,10 @@ function LoginForm() {
               <div className="grid grid-cols-1 gap-2 text-sm">
                 <div className="flex items-center justify-between group p-2 hover:bg-white rounded transition-colors cursor-pointer" onClick={() => {
                   navigator.clipboard.writeText("admin@gmail.com");
-                  setForm(p => ({ ...p, email: "admin@gmail.com" }));
+                  setForm(p => ({ ...p, identifier: "admin@gmail.com" }));
                 }}>
                   <div className="flex items-center gap-2 text-slate-600">
-                    <span className="font-medium text-slate-900">Email:</span>
+                    <span className="font-medium text-slate-900">Login:</span>
                     <span className="font-mono">admin@gmail.com</span>
                   </div>
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
@@ -133,19 +133,20 @@ function LoginForm() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="identifier">Email or Phone Number</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="name@example.com"
-                  value={form.email}
-                  onChange={(e) => onChange("email", e.target.value)}
+                  id="identifier"
+                  type="text"
+                  autoComplete="username"
+                  placeholder="Email or phone number"
+                  value={form.identifier}
+                  onChange={(e) => onChange("identifier", e.target.value)}
                   disabled={loginMut.isPending}
                   required
                   className="h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
                 />
               </div>
+
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">

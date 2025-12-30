@@ -76,8 +76,19 @@ exports.listExamResultsByStudent = async ({ schoolId, studentId, filters }) => {
 }
 
 // View sheet(s) for grade (optionally filter)
-exports.listExamResultsByGrade = async ({ schoolId, gradeId, filters }) => {
-  const q = { schoolId, gradeId }
+exports.listExamResultsByGrade = async ({ schoolId, gradeId, filters, restrictedGradeIds }) => {
+  const q = { schoolId }
+
+  if (restrictedGradeIds) {
+    if (gradeId) {
+      q.gradeId = restrictedGradeIds.includes(gradeId.toString()) ? gradeId : { $in: [] }
+    } else {
+      q.gradeId = { $in: restrictedGradeIds }
+    }
+  } else if (gradeId) {
+    q.gradeId = gradeId
+  }
+
   if (filters.year) q.year = Number(filters.year)
   if (filters.term) q.term = Number(filters.term)
 
@@ -87,3 +98,4 @@ exports.listExamResultsByGrade = async ({ schoolId, gradeId, filters }) => {
 
   return sheets
 }
+

@@ -27,7 +27,9 @@ module.exports = async (req, _res, next) => {
     
     // Fetch full user to get latest permissions
     const AppUser = require('../models/system/appUser.model')
-    const user = await AppUser.findById(decoded.id).populate('roleId').lean()
+    require('../models/system/role.model') // Ensure Role model is registered for populate
+    const user = await AppUser.findById(decoded.id).populate('roleIds').lean()
+
     
     if (!user) {
       return next(new ApiError(401, 'User not found'))
@@ -40,7 +42,80 @@ module.exports = async (req, _res, next) => {
     // Since we use lean(), we need to manually set .id if controllers rely on it
     user.id = user._id.toString()
     req.user = user
+
+    // Handle Grade Restriction
+    // A user is restricted ONLY IF all their system roles are singleGraded.
+    // Fallback to roleId if roleIds is empty (for backward compatibility)
+    let systemRoles = user.roleIds || []
+    if (systemRoles.length === 0 && user.roleId) {
+      const Role = require('../models/system/role.model')
+      const r = await Role.findById(user.roleId).lean()
+      if (r) systemRoles = [r]
+    }
+
+    const isSystemRestricted = systemRoles.length > 0 && systemRoles.every(r => r.singleGraded)
+    // console.log(`[AUTH] isSystemRestricted: ${isSystemRestricted}, teacherId: ${user.teacherId}`)
+
+    if (isSystemRestricted && user.teacherId) {
+      const Teacher = require('../models/staff/teacher.model')
+      const Grade = require('../models/system/grade.model')
+      const StaffRole = require('../models/staff/staffRole.model')
+
+      const teacher = await Teacher.findById(user.teacherId).lean()
+      // console.log(`[AUTH] Teacher found: ${!!teacher}`)
+      if (teacher) {
+        // Fetch StaffRoles
+        const staffRoles = await StaffRole.find({ _id: { $in: teacher.roleIds || [] } }).lean()
+        // console.log(`[AUTH] Staff roles found: ${staffRoles.length}`)
+        
+        // A user is restricted if they have no staff roles OR all their staff roles are singleGraded.
+        const isStaffRestricted = staffRoles.every(sr => sr.singleGraded)
+        // console.log(`[AUTH] isStaffRestricted: ${isStaffRestricted}`)
+
+
+        if (isStaffRestricted) {
+          const gradeIds = new Set()
+
+          // 1. Grades from StaffRoles
+          staffRoles.forEach(sr => {
+            sr.gradesEffected?.forEach(gid => gradeIds.add(gid.toString()))
+          })
+
+          // 2. Grade where teacher is Class Teacher
+          const classGrades = await Grade.find({ classTeacherId: teacher._id }).select('_id').lean()
+          classGrades.forEach(g => gradeIds.add(g._id.toString()))
+
+          const finalGradeIds = Array.from(gradeIds)
+          req.user.restrictedGradeIds = finalGradeIds
+          console.log(`[AUTH] User ${user.name} restricted to grades: ${finalGradeIds.join(', ')}`)
+
+
+          // Sync to DB if changed (optional optimization, but helps with user's request)
+          const currentStored = (user.restrictedGradeIds || []).map(id => id.toString()).sort()
+          const newOnes = [...finalGradeIds].sort()
+          
+          if (JSON.stringify(currentStored) !== JSON.stringify(newOnes)) {
+            AppUser.updateOne({ _id: user._id }, { $set: { restrictedGradeIds: finalGradeIds } }).exec()
+          }
+        } else {
+          // If not restricted anymore, clear it
+          if (user.restrictedGradeIds?.length > 0) {
+            AppUser.updateOne({ _id: user._id }, { $unset: { restrictedGradeIds: 1 } }).exec()
+          }
+          req.user.restrictedGradeIds = undefined
+        }
+      }
+    } else if (user.restrictedGradeIds?.length > 0) {
+      // Not restricted by roles, but has stored grades? Clear them.
+      AppUser.updateOne({ _id: user._id }, { $unset: { restrictedGradeIds: 1 } }).exec()
+      req.user.restrictedGradeIds = undefined
+    }
+
+
+
+
     return next()
+
   } catch (err) {
     return next(new ApiError(401, 'Invalid or expired token'))
   }

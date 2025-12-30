@@ -35,6 +35,7 @@ exports.listStudents = asyncHandler(async (req, res) => {
     sex: req.query.sex,
     birthYear: req.query.birthYear,
     admittedYear: req.query.admittedYear,
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(data))
 })
@@ -44,9 +45,11 @@ exports.listStudentsByGrade = asyncHandler(async (req, res) => {
     schoolId: req.schoolId,
     gradeId: req.query.gradeId,
     academicYear: req.query.academicYear,
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
 })
+
 
 exports.updateStudentBasicInfo = asyncHandler(async (req, res) => {
   const doc = await service.updateStudentBasicInfo({

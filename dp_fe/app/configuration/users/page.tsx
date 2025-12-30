@@ -44,11 +44,15 @@ import type { AppUser } from "@/types/models"
 
 const userSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email"),
+  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
   password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
-  roleId: z.string().min(1, "Role is required"),
+  roleIds: z.array(z.string()).min(1, "At least one role is required"),
   isActive: z.boolean().default(true),
   permissions: z.array(z.string()).default([]),
+}).refine(data => data.email || data.phone, {
+  message: "Either email or phone must be provided",
+  path: ["email"],
 })
 
 type UserFormValues = z.infer<typeof userSchema>
@@ -69,23 +73,19 @@ export default function UsersPage() {
     defaultValues: {
       name: "",
       email: "",
+      phone: "",
       password: "",
-      roleId: "",
+      roleIds: [],
       isActive: true,
       permissions: [],
     },
   })
 
-  // Set default role if available and creating new user
-  useEffect(() => {
-    if (!editingUser && roles && roles.length > 0 && !form.getValues("roleId")) {
-      form.setValue("roleId", roles[0].id)
-    }
-  }, [roles, editingUser, form])
-
   const onSubmit = (data: UserFormValues) => {
     const payload = {
       ...data,
+      email: data.email || undefined,
+      phone: data.phone || undefined,
       // If editing and password is empty, remove it so it doesn't overwrite
       password: data.password || undefined, 
     }
@@ -107,8 +107,7 @@ export default function UsersPage() {
         toast.error("Password is required for new users")
         return
       }
-      // Need to ensure password is string
-      createUser.mutate({ ...data, password: data.password! }, {
+      createUser.mutate({ ...payload, password: data.password! }, {
         onSuccess: () => {
           toast.success("User created successfully")
           setIsSheetOpen(false)
@@ -124,23 +123,18 @@ export default function UsersPage() {
   const handleEdit = (user: AppUser) => {
     setEditingUser(user)
     
-    // Handle potential populated roleId (object) or string ID
-    let safeRoleId = "";
-    if (user.roleId) {
-        if (typeof user.roleId === 'object' && (user.roleId as any)._id) {
-            safeRoleId = (user.roleId as any)._id;
-        } else if (typeof user.roleId === 'object' && (user.roleId as any).id) {
-            safeRoleId = (user.roleId as any).id;
-        } else {
-            safeRoleId = String(user.roleId);
-        }
-    }
+    const safeRoleIds = (user.roleIds || []).map(r => {
+      if (typeof r === 'object' && (r as any)._id) return (r as any)._id;
+      if (typeof r === 'object' && (r as any).id) return (r as any).id;
+      return String(r);
+    });
 
     form.reset({
       name: user.name || "",
-      email: user.email,
+      email: user.email || "",
+      phone: user.phone || "",
       password: "",
-      roleId: safeRoleId,
+      roleIds: safeRoleIds,
       isActive: user.isActive,
       permissions: user.permissions || [],
     })
@@ -152,18 +146,22 @@ export default function UsersPage() {
     form.reset({
       name: "",
       email: "",
+      phone: "",
       password: "",
-      roleId: roles && roles.length > 0 ? roles[0].id : "",
+      roleIds: roles && roles.length > 0 ? [roles[0].id] : [],
       isActive: true,
       permissions: [],
     })
     setIsSheetOpen(true)
   }
 
+
   const filteredUsers = users?.filter(u => 
     u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.phone?.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
 
   const onInvalid = (errors: any) => {
     console.error("Form errors:", errors)
@@ -206,7 +204,7 @@ export default function UsersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Email / Phone</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Permissions</TableHead>
@@ -221,13 +219,21 @@ export default function UsersPage() {
                 ) : filteredUsers?.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.email || user.phone || "-"}</TableCell>
+
                     <TableCell>
-                        {/* Try to find role name from roles list if available, else fallback to user.role */}
-                        <Badge variant="outline">
-                            {roles?.find(r => r.id === user.roleId)?.name || "Unknown Role"}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1">
+                          {(user.roleIds || []).map(rid => {
+                            const role = roles?.find(r => r.id === (typeof rid === 'object' ? (rid as any).id || (rid as any)._id : rid));
+                            return (
+                              <Badge key={typeof rid === 'object' ? (rid as any).id || (rid as any)._id : rid} variant="outline">
+                                {role?.name || "Unknown"}
+                              </Badge>
+                            );
+                          })}
+                        </div>
                     </TableCell>
+
                     <TableCell>
                       <Badge variant={user.isActive ? "default" : "secondary"}>
                         {user.isActive ? "Active" : "Inactive"}
@@ -261,7 +267,7 @@ export default function UsersPage() {
           </SheetHeader>
           
           <div className="space-y-6 py-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Full Name</Label>
                 <Input 
@@ -278,28 +284,46 @@ export default function UsersPage() {
                 />
                 {form.formState.errors.email && <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>}
               </div>
+              <div className="space-y-2">
+                <Label>Phone Number</Label>
+                <Input 
+                  value={form.watch("phone")} 
+                  onChange={(e) => form.setValue("phone", e.target.value)}
+                />
+                {form.formState.errors.phone && <p className="text-xs text-red-500">{form.formState.errors.phone.message}</p>}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Role</Label>
-                <Select 
-                    value={form.watch("roleId")} 
-                    onValueChange={(val) => form.setValue("roleId", val)}
-                    disabled={isRolesLoading}
-                >
-                    <SelectTrigger>
-                        <SelectValue placeholder={isRolesLoading ? "Loading roles..." : "Select a role"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {roles?.map((role) => (
-                            <SelectItem key={role.id} value={role.id}>
-                                {role.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                {form.formState.errors.roleId && <p className="text-xs text-red-500">{form.formState.errors.roleId.message}</p>}
+                <Label>Roles</Label>
+                <div className="grid grid-cols-1 gap-2 border rounded-md p-3 bg-slate-50/50 max-h-40 overflow-y-auto">
+                  {isRolesLoading ? (
+                    <p className="text-xs text-muted-foreground">Loading roles...</p>
+                  ) : roles?.map((role) => (
+                    <div key={role.id} className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox"
+                        id={`role-${role.id}`}
+                        checked={form.watch("roleIds")?.includes(role.id)}
+                        onChange={(e) => {
+                          const current = form.getValues("roleIds") || [];
+                          if (e.target.checked) {
+                            form.setValue("roleIds", [...current, role.id]);
+                          } else {
+                            form.setValue("roleIds", current.filter(id => id !== role.id));
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <Label htmlFor={`role-${role.id}`} className="text-sm font-normal cursor-pointer">
+                        {role.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {form.formState.errors.roleIds && <p className="text-xs text-red-500">{form.formState.errors.roleIds.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Password {editingUser && "(Leave blank to keep current)"}</Label>
@@ -311,6 +335,7 @@ export default function UsersPage() {
                  {form.formState.errors.password && <p className="text-xs text-red-500">{form.formState.errors.password.message}</p>}
               </div>
             </div>
+
             
             <div className="flex items-center space-x-2">
                 <Switch 

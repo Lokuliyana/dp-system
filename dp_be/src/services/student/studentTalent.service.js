@@ -24,10 +24,17 @@ exports.createStudentTalent = async ({ schoolId, payload, userId }) => {
   }
 }
 
-exports.listStudentTalents = async ({ schoolId, filters }) => {
+exports.listStudentTalents = async ({ schoolId, filters, restrictedGradeIds }) => {
   const q = { schoolId }
 
-  if (filters.studentId) q.studentId = filters.studentId
+  if (filters.studentId) {
+    q.studentId = filters.studentId
+  } else if (restrictedGradeIds) {
+    const Student = require('../../models/student/student.model')
+    const students = await Student.find({ schoolId, gradeId: { $in: restrictedGradeIds } }).select('_id').lean()
+    q.studentId = { $in: students.map(s => s._id) }
+  }
+
   if (filters.year) q.year = Number(filters.year)
 
   const items = await StudentTalent.find(q)
@@ -36,6 +43,7 @@ exports.listStudentTalents = async ({ schoolId, filters }) => {
 
   return items
 }
+
 
 exports.updateStudentTalent = async ({ schoolId, id, payload, userId }) => {
   try {

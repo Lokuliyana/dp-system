@@ -30,9 +30,14 @@ exports.reportStudent = async ({ schoolId, studentId }) => {
   }
 }
 
-exports.reportGrade = async ({ schoolId, gradeId }) => {
+exports.reportGrade = async ({ schoolId, gradeId, restrictedGradeIds }) => {
+  if (restrictedGradeIds && !restrictedGradeIds.includes(gradeId.toString())) {
+    throw new ApiError(403, 'You do not have permission to view reports for this grade')
+  }
+
   const grade = await Grade.findOne({ _id: gradeId, schoolId }).lean()
   if (!grade) throw new ApiError(404, 'Grade not found')
+
 
   const studentCount = await Student.countDocuments({ schoolId, gradeId })
 

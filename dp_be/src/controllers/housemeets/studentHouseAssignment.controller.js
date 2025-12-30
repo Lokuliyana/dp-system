@@ -39,6 +39,8 @@ exports.listHouseAssignments = asyncHandler(async (req, res) => {
   const items = await service.listHouseAssignments({
     schoolId: req.schoolId,
     filters: req.query || {},
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
 })
+

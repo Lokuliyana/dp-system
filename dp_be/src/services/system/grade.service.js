@@ -22,12 +22,17 @@ exports.createGrade = async ({ schoolId, payload, userId }) => {
   }
 }
 
-exports.listGradesWithStats = async ({ schoolId, year }) => {
+exports.listGradesWithStats = async ({ schoolId, year, restrictedGradeIds }) => {
   const y = year ? Number(year) : null
   const sid = new mongoose.Types.ObjectId(schoolId)
 
+  const match = { schoolId: sid }
+  if (restrictedGradeIds) {
+    match._id = { $in: restrictedGradeIds.map(id => new mongoose.Types.ObjectId(id)) }
+  }
+
   const pipeline = [
-    { $match: { schoolId: sid } },
+    { $match: match },
     { $sort: { level: 1 } },
 
     // lookup students for counts without requiring Student model yet
@@ -61,6 +66,7 @@ exports.listGradesWithStats = async ({ schoolId, year }) => {
   const items = await Grade.aggregate(pipeline)
   return items.map(item => ({ ...item, id: item._id }))
 }
+
 
 exports.updateGrade = async ({ schoolId, id, payload, userId }) => {
   try {

@@ -137,14 +137,23 @@ exports.registerStudent = async ({ schoolId, payload, userId }) => {
   }
 }
 
-exports.listRegistrations = async ({ schoolId, filters }) => {
+exports.listRegistrations = async ({ schoolId, filters, restrictedGradeIds }) => {
   const q = { schoolId }
 
   if (filters.competitionId) q.competitionId = filters.competitionId
   if (filters.year) q.year = Number(filters.year)
   if (filters.mode) q.mode = filters.mode
-  if (filters.gradeId) q.gradeId = filters.gradeId
   if (filters.houseId) q.houseId = filters.houseId
+
+  if (restrictedGradeIds) {
+    if (filters.gradeId) {
+      q.gradeId = restrictedGradeIds.includes(filters.gradeId.toString()) ? filters.gradeId : { $in: [] }
+    } else {
+      q.gradeId = { $in: restrictedGradeIds }
+    }
+  } else if (filters.gradeId) {
+    q.gradeId = filters.gradeId
+  }
 
   const items = await CompetitionRegistration.find(q)
     .populate('studentId', 'firstNameEn lastNameEn admissionNumber')
@@ -153,6 +162,7 @@ exports.listRegistrations = async ({ schoolId, filters }) => {
 
   return items
 }
+
 
 exports.deleteRegistration = async ({ schoolId, id }) => {
   const deleted = await CompetitionRegistration.findOneAndDelete({

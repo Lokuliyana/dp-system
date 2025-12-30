@@ -15,9 +15,11 @@ exports.listStudentTalents = asyncHandler(async (req, res) => {
   const items = await service.listStudentTalents({
     schoolId: req.schoolId,
     filters: req.query || {},
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
 })
+
 
 exports.updateStudentTalent = asyncHandler(async (req, res) => {
   const doc = await service.updateStudentTalent({

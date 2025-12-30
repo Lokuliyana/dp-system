@@ -21,14 +21,23 @@ exports.createSection = async ({ schoolId, payload, userId }) => {
   }
 }
 
-exports.listSections = async ({ schoolId }) => {
-  const items = await Section.find({ schoolId })
+exports.listSections = async ({ schoolId, restrictedGradeIds }) => {
+  const q = { schoolId }
+  if (restrictedGradeIds) {
+    q.assignedGradeIds = { $in: restrictedGradeIds }
+  }
+
+  const items = await Section.find(q)
     .sort({ createdAt: -1 })
     .lean()
   return items.map(item => ({ ...item, id: item._id }))
 }
 
-exports.listSectionsByGrade = async ({ schoolId, gradeId }) => {
+exports.listSectionsByGrade = async ({ schoolId, gradeId, restrictedGradeIds }) => {
+  if (restrictedGradeIds && !restrictedGradeIds.includes(gradeId.toString())) {
+    return []
+  }
+
   const items = await Section.find({
     schoolId,
     assignedGradeIds: gradeId
@@ -37,6 +46,7 @@ exports.listSectionsByGrade = async ({ schoolId, gradeId }) => {
     .lean()
   return items.map(item => ({ ...item, id: item._id }))
 }
+
 
 exports.updateSection = async ({ schoolId, id, payload, userId }) => {
   try {

@@ -3,7 +3,7 @@ import { endpoints } from "@/lib/endpoints"
 import type { AppUser } from "@/types/models"
 
 export type LoginPayload = {
-  email: string
+  identifier: string
   password: string
 }
 
@@ -15,11 +15,14 @@ export type LoginResponse = {
 
 export type CreateAppUserPayload = {
   name: string
-  email: string
+  email?: string
+  phone?: string
   password: string
-  roleId: string
+  roleIds: string[]
+  teacherId?: string
   permissions?: string[]
 }
+
 
 export type UpdateAppUserPayload = Partial<CreateAppUserPayload> & {
   isActive?: boolean

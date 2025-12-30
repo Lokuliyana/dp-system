@@ -9,7 +9,7 @@ function generateTokens(appUser) {
   const payload = {
     id: appUser._id,
     schoolId: appUser.schoolId,
-    roleId: appUser.roleId,
+    roleIds: appUser.roleIds,
   }
 
   const accessToken = jwt.sign(payload, env.jwtAccessSecret, {
@@ -25,12 +25,17 @@ function generateTokens(appUser) {
 
 /* -------------------- AUTH -------------------- */
 
-exports.login = async ({ email, password }) => {
-  const user = await AppUser.findOne({ email })
-  if (!user) throw new ApiError(401, 'Invalid email or password')
+exports.login = async ({ identifier, password }) => {
+  const user = await AppUser.findOne({
+    $or: [
+      { email: identifier.toLowerCase() },
+      { phone: identifier }
+    ]
+  })
+  if (!user) throw new ApiError(401, 'Invalid credentials')
 
   const ok = await bcrypt.compare(password, user.password)
-  if (!ok) throw new ApiError(401, 'Invalid email or password')
+  if (!ok) throw new ApiError(401, 'Invalid credentials')
 
   const tokens = generateTokens(user)
   return { user, ...tokens }
@@ -51,20 +56,31 @@ exports.refresh = async ({ token }) => {
 /* -------------------- CRUD -------------------- */
 
 exports.createAppUser = async ({ schoolId, payload, userId }) => {
-  const existing = await AppUser.findOne({
-    schoolId,
-    email: payload.email.toLowerCase(),
-  })
+  const query = { schoolId, $or: [] }
+  if (payload.email) query.$or.push({ email: payload.email.toLowerCase() })
+  if (payload.phone) query.$or.push({ phone: payload.phone })
 
-  if (existing) throw new ApiError(409, 'User with email already exists')
+  if (query.$or.length > 0) {
+    const existing = await AppUser.findOne(query)
+    if (existing) {
+      if (payload.email && existing.email === payload.email.toLowerCase()) {
+        throw new ApiError(409, 'User with email already exists')
+      }
+      if (payload.phone && existing.phone === payload.phone) {
+        throw new ApiError(409, 'User with phone already exists')
+      }
+    }
+  }
 
   const hashed = await bcrypt.hash(payload.password, 10)
 
   const doc = await AppUser.create({
     name: payload.name,
-    email: payload.email.toLowerCase(),
+    email: payload.email ? payload.email.toLowerCase() : undefined,
+    phone: payload.phone,
     password: hashed,
-    roleId: payload.roleId,
+    roleIds: payload.roleIds || [],
+    teacherId: payload.teacherId,
     permissions: payload.permissions || [],
     schoolId,
     createdById: userId,
@@ -82,6 +98,7 @@ exports.listAppUsers = async ({ schoolId }) => {
 exports.updateAppUser = async ({ schoolId, id, payload, userId }) => {
   const update = { ...payload }
 
+  if (payload.email) update.email = payload.email.toLowerCase()
   if (payload.password) {
     update.password = await bcrypt.hash(payload.password, 10)
   }
@@ -96,6 +113,8 @@ exports.updateAppUser = async ({ schoolId, id, payload, userId }) => {
 
   return updated.toJSON()
 }
+
+
 
 exports.deleteAppUser = async ({ schoolId, id }) => {
   const deleted = await AppUser.findOneAndDelete({ _id: id, schoolId })

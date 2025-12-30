@@ -13,7 +13,8 @@ exports.createSection = asyncHandler(async (req, res) => {
 
 exports.listSections = asyncHandler(async (req, res) => {
   const items = await sectionService.listSections({
-    schoolId: req.schoolId
+    schoolId: req.schoolId,
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
 })
@@ -21,10 +22,12 @@ exports.listSections = asyncHandler(async (req, res) => {
 exports.listSectionsByGrade = asyncHandler(async (req, res) => {
   const items = await sectionService.listSectionsByGrade({
     schoolId: req.schoolId,
-    gradeId: req.query.gradeId
+    gradeId: req.query.gradeId,
+    restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
 })
+
 
 exports.updateSection = asyncHandler(async (req, res) => {
   const section = await sectionService.updateSection({
