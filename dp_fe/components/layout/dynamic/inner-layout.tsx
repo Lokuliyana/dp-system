@@ -135,18 +135,18 @@ export function InnerLayout({ children }: InnerLayoutProps) {
           <div className="flex-1 flex min-h-0 overflow-hidden">
             {/* Desktop Sidebars - COMPACTED */}
             {!isMobile && showMainMenu && (
-              <div className="w-[180px] bg-muted/20 border-r border-border flex-shrink-0 overflow-y-auto">
+              <div className="w-[220px] bg-muted/20 border-r border-border flex-shrink-0 overflow-y-auto">
                 {mainMenuActions}
               </div>
-            )}
+            ) /* Increased from 180px */}
 
             <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
               {/* Desktop Horizontal Toolbar - COMPACTED */}
               {!isMobile && showHorizontalToolbar && (
-                <div className="w-full flex items-center px-4 py-1.5 bg-background border-b border-border min-h-[44px]">
+                <div className="w-full flex items-center px-6 py-2 bg-background border-b border-border min-h-[56px]">
                   {horizontalToolbarActions}
                 </div>
-              )}
+              ) /* Increased from 44px and px-4 to px-6 */}
 
               <div className="flex-1 flex min-h-0 overflow-hidden">
                 {/* Desktop Vertical Toolbar - COMPACTED */}
@@ -158,10 +158,10 @@ export function InnerLayout({ children }: InnerLayoutProps) {
 
                 {/* Desktop Inner Sidebar - COMPACTED */}
                 {!isMobile && showSidebar && (
-                  <div className="w-[200px] bg-background border-r border-border flex-shrink-0 overflow-hidden flex flex-col">
+                  <div className="w-[240px] bg-background border-r border-border flex-shrink-0 overflow-hidden flex flex-col">
                     {sidebarActions}
                   </div>
-                )}
+                ) /* Increased from 200px */}
 
                 {/* CONTENT AREA */}
                 <div className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden">

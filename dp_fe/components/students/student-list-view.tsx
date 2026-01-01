@@ -29,7 +29,16 @@ interface StudentListViewProps {
   onPageChange?: (page: number) => void
   itemsPerPage?: number
   grades?: { id: string; name: string }[]
-  hideHeader?: boolean
+  // External filter props
+  showFilters?: boolean
+  searchTerm?: string
+  onSearchChange?: (value: string) => void
+  statusFilter?: string
+  onStatusChange?: (value: string) => void
+  performanceFilter?: string
+  onPerformanceChange?: (value: string) => void
+  sortBy?: "name" | "roll" | "performance"
+  onSortChange?: (value: "name" | "roll" | "performance") => void
 }
 
 export function StudentListView({ 
@@ -44,13 +53,26 @@ export function StudentListView({
   onPageChange,
   itemsPerPage = 10,
   grades = GRADES,
-  hideHeader = false
+  showFilters = false,
+  searchTerm: externalSearchTerm,
+  onSearchChange,
+  statusFilter: externalStatusFilter,
+  onStatusChange,
+  performanceFilter: externalPerformanceFilter,
+  onPerformanceChange,
+  sortBy: externalSortBy,
+  onSortChange
 }: StudentListViewProps) {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [performanceFilter, setPerformanceFilter] = useState<string>("all")
-  const [sortBy, setSortBy] = useState<"name" | "roll" | "performance">("roll")
+  const [internalSearchTerm, setInternalSearchTerm] = useState("")
+  const [internalStatusFilter, setStatusFilter] = useState<string>("all")
+  const [internalPerformanceFilter, setPerformanceFilter] = useState<string>("all")
+  const [internalSortBy, setSortBy] = useState<"name" | "roll" | "performance">("roll")
   const [internalPage, setInternalPage] = useState(1)
+
+  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
+  const statusFilter = externalStatusFilter !== undefined ? externalStatusFilter : internalStatusFilter;
+  const performanceFilter = externalPerformanceFilter !== undefined ? externalPerformanceFilter : internalPerformanceFilter;
+  const sortBy = externalSortBy !== undefined ? externalSortBy : internalSortBy;
 
   const isServerSide = typeof totalItems === 'number' && typeof externalPage === 'number';
   const currentPage = isServerSide ? externalPage : internalPage;
@@ -160,19 +182,17 @@ export function StudentListView({
   return (
     <div className="space-y-4">
       {/* Header */}
-      {!hideHeader && (
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">{grade ? grade.name : "All Students"}</h2>
-            <p className="text-slate-600 text-sm mt-1">
-              {isServerSide ? totalItems : filteredStudents.length} students found
-            </p>
-          </div>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">{grade ? grade.name : "All Students"}</h2>
+          <p className="text-slate-600 text-sm mt-1">
+            {isServerSide ? totalItems : filteredStudents.length} students found
+          </p>
         </div>
-      )}
+      </div>
 
-      {/* Filters and Search - Only show if not server-side or if we implement server-side search later */}
-      {!isServerSide && (
+      {/* Filters and Search */}
+      {(!isServerSide || showFilters) && (
         <Card>
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -183,8 +203,12 @@ export function StudentListView({
                   placeholder="Search by name, admission no, or whatsapp..."
                   value={searchTerm}
                   onChange={(e) => {
-                    setSearchTerm(e.target.value)
-                    setInternalPage(1)
+                    if (onSearchChange) {
+                      onSearchChange(e.target.value)
+                    } else {
+                      setInternalSearchTerm(e.target.value)
+                      setInternalPage(1)
+                    }
                   }}
                   className="pl-10"
                 />
@@ -194,8 +218,12 @@ export function StudentListView({
               <Select
                 value={statusFilter}
                 onValueChange={(value) => {
-                  setStatusFilter(value)
-                  setInternalPage(1)
+                  if (onStatusChange) {
+                    onStatusChange(value)
+                  } else {
+                    setStatusFilter(value)
+                    setInternalPage(1)
+                  }
                 }}
               >
                 <SelectTrigger>
@@ -214,8 +242,12 @@ export function StudentListView({
               <Select
                 value={performanceFilter}
                 onValueChange={(value) => {
-                  setPerformanceFilter(value)
-                  setInternalPage(1)
+                  if (onPerformanceChange) {
+                    onPerformanceChange(value)
+                  } else {
+                    setPerformanceFilter(value)
+                    setInternalPage(1)
+                  }
                 }}
               >
                 <SelectTrigger>
@@ -231,7 +263,16 @@ export function StudentListView({
               </Select>
 
               {/* Sort */}
-              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+              <Select 
+                value={sortBy} 
+                onValueChange={(value: any) => {
+                  if (onSortChange) {
+                    onSortChange(value)
+                  } else {
+                    setSortBy(value)
+                  }
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>

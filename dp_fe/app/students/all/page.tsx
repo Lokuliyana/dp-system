@@ -2,19 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Search, Filter, Download, Plus } from "lucide-react";
+import { Users, Download, Plus } from "lucide-react";
 
 import { useStudents, useUpdateStudent } from "@/hooks/useStudents";
 import { useGrades } from "@/hooks/useGrades";
 import { useSections } from "@/hooks/useSections";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   LayoutController,
   DynamicPageHeader,
-  HorizontalToolbar,
-  HorizontalToolbarIcons,
-  VerticalToolbar,
 } from "@/components/layout/dynamic";
 import { StudentsMenu } from "@/components/students/students-menu";
 import { StudentListView } from "@/components/students/student-list-view";
@@ -85,95 +81,56 @@ export default function UniversalStudentListPage() {
   };
 
   return (
-    <LayoutController showMainMenu showHorizontalToolbar showVerticalToolbar>
+    <LayoutController showMainMenu showHorizontalToolbar>
       <StudentsMenu />
 
       <DynamicPageHeader
-        title="සියලුම සිසු​න් - Students"
-        subtitle="Manage students in all Grades."
+        title="Universal Student View"
+        subtitle="Search and manage all students across the school."
         icon={Users}
         actions={
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-9 text-sm gap-2 px-3"
-              onClick={() => {}} // Add export logic if needed
-            >
+            <Button variant="outline" size="sm" className="h-9 text-sm gap-2 px-3">
               <Download className="h-4 w-4" />
               Export
             </Button>
             <BulkImportModal />
             <Button 
               size="sm" 
-              className="h-9 text-sm gap-2 px-4 bg-purple-600 hover:bg-purple-700"
+              className="h-9 text-sm gap-2 px-4"
               onClick={() => router.push("/students/add")}
             >
               <Plus className="h-4 w-4" />
               Add Student
             </Button>
+            <Sheet open={isCreateModalOpen} onOpenChange={onOpenChange}>
+              <SheetContent className="w-full sm:w-[540px] overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Edit Student</SheetTitle>
+                  <SheetDescription>Update the student&apos;s details.</SheetDescription>
+                </SheetHeader>
+                <div className="mt-6">
+                  <StudentForm
+                    grades={grades.map((g) => ({
+                      id: g.id,
+                      name: g.nameSi || g.nameEn,
+                    }))}
+                    sections={sections.map((s) => ({
+                      id: s.id,
+                      name: s.nameSi || s.nameEn,
+                    }))}
+                    onSubmit={handleSaveStudent}
+                    isLoading={updateStudentMutation.isPending}
+                    initialData={editingStudent || {}}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         }
       />
 
-      <VerticalToolbar>
-        <Button
-          variant="ghost"
-          size="icon"
-          title="All Students"
-          className="text-purple-600 bg-purple-50"
-        >
-          <Users className="h-4 w-4" />
-        </Button>
-      </VerticalToolbar>
-
-      <HorizontalToolbar className="px-4 py-2">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 max-w-md w-full sm:w-auto">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, admission no, or whatsapp..."
-              className="pl-8 h-9 text-sm w-full"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
-        </div>
-        <HorizontalToolbarIcons>
-          <Button variant="outline" size="sm" className="h-9 text-sm gap-2 px-3">
-            <Filter className="h-4 w-4" />
-            Filter
-          </Button>
-          <Sheet open={isCreateModalOpen} onOpenChange={onOpenChange}>
-            <SheetContent className="w-full sm:w-[540px] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Edit Student</SheetTitle>
-                <SheetDescription>Update the student&apos;s details.</SheetDescription>
-              </SheetHeader>
-              <div className="mt-6">
-                <StudentForm
-                  grades={grades.map((g) => ({
-                    id: g.id,
-                    name: g.nameSi || g.nameEn,
-                  }))}
-                  sections={sections.map((s) => ({
-                    id: s.id,
-                    name: s.nameSi || s.nameEn,
-                  }))}
-                  onSubmit={handleSaveStudent}
-                  isLoading={updateStudentMutation.isPending}
-                  initialData={editingStudent || {}}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
-        </HorizontalToolbarIcons>
-      </HorizontalToolbar>
-
-      <div className="p-4 sm:p-6 pt-0 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <StudentListView
           students={students.map(s => ({
             id: s.id,
@@ -204,7 +161,12 @@ export default function UniversalStudentListPage() {
           onPageChange={setPage}
           itemsPerPage={limit}
           grades={grades.map(g => ({ id: g.id, name: g.nameSi || g.nameEn }))}
-          hideHeader={true}
+          showFilters={true}
+          searchTerm={search}
+          onSearchChange={(val) => {
+            setSearch(val);
+            setPage(1);
+          }}
         />
       </div>
     </LayoutController>

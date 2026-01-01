@@ -104,20 +104,25 @@ export function MainNavigation() {
           if (!items || items.length === 0) return null;
 
           return (
-            <SidebarGroup key={groupKey} className="py-1 px-2">
-              <SidebarGroupLabel className="h-4 text-[9px] uppercase tracking-widest font-bold text-slate-400/80 px-2">
+            <SidebarGroup key={groupKey} className="py-2 px-3">
+              <SidebarGroupLabel className="h-6 text-[10px] uppercase tracking-widest font-bold text-slate-400/80 px-2 mb-1">
                 {GROUP_LABELS[groupKey]}
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu className="gap-0.5">
+                <SidebarMenu className="gap-1">
                   {items.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item.href);
                     return (
                       <SidebarMenuItem key={item.id}>
-                        <SidebarMenuButton asChild isActive={active} tooltip={item.label} className="h-8 text-[13px] px-2">
+                        <SidebarMenuButton 
+                          asChild 
+                          isActive={active} 
+                          tooltip={item.label} 
+                          className="h-10 text-sm px-3 transition-all duration-200"
+                        >
                           <Link href={item.href}>
-                            <Icon className="!size-4.5" />
+                            <Icon className="!size-5" />
                             <span className="font-semibold">{item.label}</span>
                           </Link>
                         </SidebarMenuButton>

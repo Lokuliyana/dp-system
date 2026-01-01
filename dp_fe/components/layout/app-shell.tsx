@@ -30,11 +30,11 @@ export function AppShell({ children }: AppShellProps) {
       <SidebarInset className="flex flex-col min-h-screen">
         {/* Desktop Header */}
         {!isMobile && (
-          <header className="flex h-10 items-center gap-2 border-b bg-white px-4 sticky top-0 z-30">
-            <SidebarTrigger className="h-7 w-7" />
+          <header className="flex h-14 items-center gap-4 border-b bg-white px-6 sticky top-0 z-30 shadow-sm/5">
+            <SidebarTrigger className="h-9 w-9" />
             <div className="flex-1" />
             {/* Add user profile / search here for desktop */}
-            <div className="h-7 w-7 rounded-full bg-slate-100 border" />
+            <div className="h-9 w-9 rounded-full bg-slate-100 border shadow-sm" />
           </header>
         )}
 

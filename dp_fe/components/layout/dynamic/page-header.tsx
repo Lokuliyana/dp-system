@@ -29,30 +29,30 @@ export function DynamicPageHeader({
   }, [title, setPageTitle]);
 
   return (
-    <HorizontalToolbar className={cn("h-11 px-4", className)}>
-      <div className="flex items-center gap-3">
+    <HorizontalToolbar className={cn("h-16 px-6", className)}>
+      <div className="flex items-center gap-4">
         {Icon && (
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
-            <Icon className="h-4 w-4" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-sm">
+            <Icon className="h-5 w-5" />
           </div>
         )}
         
         <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <HorizontalToolbarTitle className="text-sm font-bold tracking-tight">
+          <div className="flex items-center gap-3">
+            <HorizontalToolbarTitle className="text-base font-bold tracking-tight">
               {title}
             </HorizontalToolbarTitle>
             {subtitle && (
               <>
-                <Separator orientation="vertical" className="h-3 mx-1" />
-                <span className="text-[11px] font-medium text-muted-foreground">{subtitle}</span>
+                <Separator orientation="vertical" className="h-4 mx-1" />
+                <span className="text-xs font-medium text-muted-foreground/80">{subtitle}</span>
               </>
             )}
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {actions}
       </div>
     </HorizontalToolbar>

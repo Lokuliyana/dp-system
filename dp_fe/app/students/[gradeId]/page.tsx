@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutController,
   DynamicPageHeader,
-  VerticalToolbar,
 } from "@/components/layout/dynamic";
 import { StudentsMenu } from "@/components/students/students-menu";
 import { StudentListView } from "@/components/students/student-list-view";
@@ -117,7 +116,7 @@ export default function GradePage({ params }: GradePageProps) {
   };
 
   return (
-    <LayoutController showMainMenu showHorizontalToolbar showVerticalToolbar>
+    <LayoutController showMainMenu showHorizontalToolbar>
       <StudentsMenu />
 
       <DynamicPageHeader
@@ -157,17 +156,6 @@ export default function GradePage({ params }: GradePageProps) {
         }
       />
 
-      <VerticalToolbar>
-        <Button
-          variant="ghost"
-          size="icon"
-          title="Grade Students"
-          className="text-purple-600 bg-purple-50"
-        >
-          <Users className="h-4 w-4" />
-        </Button>
-      </VerticalToolbar>
-
       <div className="p-4 sm:p-6">
         <StudentListView 
           students={mappedStudents} 
@@ -176,7 +164,6 @@ export default function GradePage({ params }: GradePageProps) {
           onEditStudent={handleEditStudent}
           showGradeColumn={false}
           grades={grades.map(g => ({ id: g.id, name: g.nameSi || g.nameEn }))}
-          hideHeader={true}
         />
       </div>
     </LayoutController>
