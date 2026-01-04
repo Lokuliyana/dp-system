@@ -181,16 +181,6 @@ export function StudentListView({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">{grade ? grade.name : "All Students"}</h2>
-          <p className="text-slate-600 text-sm mt-1">
-            {isServerSide ? totalItems : filteredStudents.length} students found
-          </p>
-        </div>
-      </div>
-
       {/* Filters and Search */}
       {(!isServerSide || showFilters) && (
         <Card>

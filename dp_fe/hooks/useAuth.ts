@@ -9,11 +9,13 @@ export function useLogin() {
 }
 
 export function useCurrentUser() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
   return useQuery({
     queryKey: qk.auth.me,
     queryFn: () => authService.me(),
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: !!token,
   })
 }
 

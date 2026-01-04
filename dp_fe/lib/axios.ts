@@ -45,6 +45,12 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
       try {
         const refreshToken = localStorage.getItem("refreshToken");
+        if (!refreshToken) {
+          localStorage.clear();
+          window.location.href = "/login";
+          return Promise.reject(err);
+        }
+
         const r = await axios.post(`${API_BASE}/app-users/refresh`, {
           token: refreshToken,
         });
@@ -55,6 +61,10 @@ axiosInstance.interceptors.response.use(
         flushQueue(newAccess);
         original.headers.Authorization = `Bearer ${newAccess}`;
         return axiosInstance(original);
+      } catch (refreshErr) {
+        localStorage.clear();
+        window.location.href = "/login";
+        return Promise.reject(refreshErr);
       } finally {
         isRefreshing = false;
       }

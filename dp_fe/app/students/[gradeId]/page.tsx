@@ -121,7 +121,7 @@ export default function GradePage({ params }: GradePageProps) {
 
       <DynamicPageHeader
         title={`${grade.nameSi || grade.nameEn} - Students`}
-        subtitle="Manage students in this grade."
+        subtitle={`${students.length} students found in this grade.`}
         icon={Users}
         actions={
           <div className="flex gap-2">
