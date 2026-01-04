@@ -135,38 +135,46 @@ export function InnerLayout({ children }: InnerLayoutProps) {
           <div className="flex-1 flex min-h-0 overflow-hidden">
             {/* Desktop Sidebars - COMPACTED */}
             {!isMobile && showMainMenu && (
-              <div className="w-[220px] bg-muted/20 border-r border-border flex-shrink-0 overflow-y-auto">
-                {mainMenuActions}
+              <div className="w-[240px] bg-slate-50/50 border-r border-slate-200/60 flex-shrink-0 overflow-hidden flex flex-col">
+                <ScrollArea className="flex-1">
+                  <div className="py-2 px-1">
+                    {mainMenuActions}
+                  </div>
+                </ScrollArea>
               </div>
-            ) /* Increased from 180px */}
+            )}
 
             <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
               {/* Desktop Horizontal Toolbar - COMPACTED */}
               {!isMobile && showHorizontalToolbar && (
-                <div className="w-full flex items-center px-6 py-2 bg-background border-b border-border min-h-[56px]">
+                <div className="w-full flex items-center px-8 py-3 bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-20 min-h-[64px] shadow-sm/5">
                   {horizontalToolbarActions}
                 </div>
-              ) /* Increased from 44px and px-4 to px-6 */}
+              )}
 
               <div className="flex-1 flex min-h-0 overflow-hidden">
                 {/* Desktop Vertical Toolbar - COMPACTED */}
                 {!isMobile && showVerticalToolbar && (
-                  <div className="w-[40px] pt-3 bg-muted/20 border-r border-border flex-shrink-0 flex flex-col items-center gap-3">
+                  <div className="w-[56px] pt-4 bg-slate-50/30 border-r border-slate-200/60 flex-shrink-0 flex flex-col items-center gap-4 z-10">
                     {verticalToolbarActions}
                   </div>
                 )}
 
                 {/* Desktop Inner Sidebar - COMPACTED */}
                 {!isMobile && showSidebar && (
-                  <div className="w-[240px] bg-background border-r border-border flex-shrink-0 overflow-hidden flex flex-col">
-                    {sidebarActions}
+                  <div className="w-[280px] bg-white border-r border-slate-200/60 flex-shrink-0 overflow-hidden flex flex-col shadow-[1px_0_10px_-5px_rgba(0,0,0,0.05)]">
+                    <ScrollArea className="flex-1">
+                      <div className="p-1">
+                        {sidebarActions}
+                      </div>
+                    </ScrollArea>
                   </div>
-                ) /* Increased from 200px */}
+                )}
 
                 {/* CONTENT AREA */}
-                <div className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden">
+                <div className="flex-1 flex flex-col min-w-0 bg-slate-50/30 overflow-hidden relative">
                   <ScrollArea className="h-full w-full" {...mainAreaProps}>
-                    <div className="p-0">
+                    <div className="p-0 min-h-full">
                       {children}
                     </div>
                   </ScrollArea>

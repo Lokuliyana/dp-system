@@ -27,10 +27,10 @@ export function AppShell({ children }: AppShellProps) {
       {!isMobile && <MainNavigation />}
 
       {/* Main area */}
-      <SidebarInset className="flex flex-col min-h-screen">
+      <SidebarInset className="flex flex-col h-screen overflow-hidden">
         {/* Desktop Header */}
         {!isMobile && (
-          <header className="flex h-14 items-center gap-4 border-b bg-white px-6 sticky top-0 z-30 shadow-sm/5">
+          <header className="flex h-14 items-center gap-4 border-b bg-white px-6 sticky top-0 z-30 shadow-sm/5 flex-shrink-0">
             <SidebarTrigger className="h-9 w-9" />
             <div className="flex-1" />
             {/* Add user profile / search here for desktop */}
@@ -43,8 +43,8 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* Scrollable content area */}
         <main className={cn(
-          "flex-1 overflow-auto bg-slate-50/50",
-          isMobile ? "pb-20" : ""
+          "flex-1 bg-slate-50/50 min-h-0 flex flex-col",
+          isMobile ? "overflow-auto pb-20" : "overflow-hidden"
         )}>
           {children}
         </main>

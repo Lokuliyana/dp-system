@@ -12,7 +12,7 @@ function PlaygroundContent() {
   const userId = searchParams.get("userId");
 
   return (
-    <div className="h-screen w-full bg-slate-50">
+    <div className="w-full bg-slate-50 h-full">
       <InnerLayout>
         {userId ? (
           <UserDetailsView 
