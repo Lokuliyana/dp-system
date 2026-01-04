@@ -33,7 +33,7 @@ export function StudentsMenu() {
             href: "#", // Collapsible parent
             icon: <GraduationCap className="h-4 w-4" />,
             subMenus: grades.map((grade) => ({
-              text: grade.nameEn,
+              text: grade.nameSi,
               href: `/students/${grade.id}`,
               icon: <GraduationCap className="h-4 w-4" />,
             })),

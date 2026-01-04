@@ -571,8 +571,8 @@ export type AppUser = BaseDoc & {
   email?: string;
   phone?: string;
   role?: string;
-  roleIds: Id[];
-  teacherId?: Id;
+  roleIds: Id[] | Role[];
+  teacherId?: Id | Teacher;
   isActive: boolean;
   permissions?: string[];
 };

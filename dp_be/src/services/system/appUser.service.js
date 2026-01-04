@@ -92,7 +92,33 @@ exports.createAppUser = async ({ schoolId, payload, userId }) => {
 exports.listAppUsers = async ({ schoolId }) => {
   return await AppUser.find({ schoolId })
     .select('-password')
+    .populate('roleIds', 'name')
+    .populate({
+      path: 'teacherId',
+      select: 'firstNameEn lastNameEn roleIds',
+      populate: {
+        path: 'roleIds',
+        model: 'StaffRole',
+        select: 'nameEn nameSi'
+      }
+    })
     .sort({ name: 1 })
+}
+
+exports.getAppUser = async ({ schoolId, id }) => {
+  const user = await AppUser.findOne({ _id: id, schoolId })
+    .select('-password')
+    .populate('roleIds', 'name')
+    .populate({
+      path: 'teacherId',
+      select: 'firstNameEn lastNameEn roleIds',
+      populate: {
+        path: 'roleIds',
+        select: 'name'
+      }
+    })
+  if (!user) throw new ApiError(404, 'User not found')
+  return user
 }
 
 exports.updateAppUser = async ({ schoolId, id, payload, userId }) => {

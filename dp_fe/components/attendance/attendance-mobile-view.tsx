@@ -14,7 +14,7 @@ interface AttendanceStat {
 
 interface AttendanceMobileViewProps {
   stats: AttendanceStat[]
-  grades: { id: string; nameEn: string }[]
+  grades: { id: string; nameEn: string; nameSi: string }[]
 }
 
 export function AttendanceMobileView({ stats, grades }: AttendanceMobileViewProps) {
@@ -42,7 +42,7 @@ export function AttendanceMobileView({ stats, grades }: AttendanceMobileViewProp
         <Card key={grade.id} className="overflow-hidden">
           <CardHeader className="bg-slate-50 pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-lg">{grade.nameEn}</CardTitle>
+              <CardTitle className="text-lg">{grade.nameSi}</CardTitle>
               <Badge variant={grade.percentage >= 75 ? "default" : "destructive"}>
                 {grade.percentage}% Present
               </Badge>

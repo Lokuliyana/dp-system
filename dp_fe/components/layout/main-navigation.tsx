@@ -15,6 +15,7 @@ import {
   BookOpen,
   FileText,
   ShieldCheck,
+  Settings,
 } from "lucide-react";
 
 import {
@@ -49,8 +50,9 @@ const NAV_ITEMS: NavItem[] = [
   { id: "staff", label: "Staff", href: "/staff", icon: Users, group: "people" },
   { id: "prefects", label: "Prefects", href: "/prefects", icon: Crown, group: "people" },
   { id: "parents", label: "Parents", href: "/parents", icon: Users2, group: "people" },
+  { id: "users", label: "Users", href: "/users", icon: ShieldCheck, group: "people" },
   { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3, group: "insights" },
-  { id: "configuration", label: "Configuration", href: "/configuration", icon: ShieldCheck, group: "insights" },
+  { id: "configuration", label: "Configuration", href: "/configuration", icon: Settings, group: "insights" },
 ];
 
 const GROUP_LABELS: Record<NavItem["group"], string> = {

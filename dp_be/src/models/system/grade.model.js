@@ -19,11 +19,12 @@ const gradeSchema = new mongoose.Schema(
     classTeacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' },
     pastTeachers: { type: [pastTeacherSchema], default: [] },
 
-    schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', index: true }
+    schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', index: true },
+    academicYear: { type: String, default: '' }
   },
   baseSchemaOptions
 )
 
-gradeSchema.index({ schoolId: 1, level: 1, nameEn: 1 }, { unique: true })
+gradeSchema.index({ schoolId: 1, level: 1, nameEn: 1, academicYear: 1 }, { unique: true })
 
 module.exports = mongoose.model('Grade', gradeSchema)

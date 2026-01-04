@@ -27,6 +27,14 @@ exports.listGradesWithStats = async ({ schoolId, year, restrictedGradeIds }) => 
   const sid = new mongoose.Types.ObjectId(schoolId)
 
   const match = { schoolId: sid }
+  
+  // Default to current year if not provided
+  const targetYear = year ? String(year) : String(new Date().getFullYear())
+  
+  // Check if any grades exist for this specific year
+  const hasYearGrades = await Grade.exists({ schoolId: sid, academicYear: targetYear })
+  match.academicYear = hasYearGrades ? targetYear : ''
+
   if (restrictedGradeIds) {
     match._id = { $in: restrictedGradeIds.map(id => new mongoose.Types.ObjectId(id)) }
   }

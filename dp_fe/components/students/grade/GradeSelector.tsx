@@ -30,8 +30,8 @@ export function GradeSelector({ grades, onSelectGrade, onEdit, onDelete, student
                   <BookOpen className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-base font-bold">{grade.nameEn}</div>
-                  <div className="text-xs font-normal text-muted-foreground">{grade.nameSi}</div>
+                  <div className="text-base font-bold">{grade.nameSi}</div>
+                  <div className="text-xs font-normal text-muted-foreground">{grade.nameEn}</div>
                 </div>
               </CardTitle>
             </CardHeader>

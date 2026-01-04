@@ -89,7 +89,7 @@ export function PrefectStudentForm({ onSubmit, isLoading, onCancel, defaultValue
                     <SelectContent>
                       {grades.map((grade) => (
                         <SelectItem key={grade.id} value={grade.id}>
-                          {grade.nameEn}
+                          {grade.nameSi}
                         </SelectItem>
                       ))}
                     </SelectContent>

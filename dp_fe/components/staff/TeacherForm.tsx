@@ -323,7 +323,7 @@ export function TeacherForm({ defaultValues, onSubmit, isLoading, onCancel }: Te
                     <SelectItem value="unassigned">Unassigned</SelectItem>
                     {grades.map((grade) => (
                       <SelectItem key={grade.id} value={grade.id}>
-                        {grade.nameEn} ({grade.nameSi})
+                        {grade.nameSi} ({grade.nameEn})
                       </SelectItem>
                     ))}
                   </SelectContent>

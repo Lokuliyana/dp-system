@@ -55,6 +55,67 @@ const calculateGrade = async (schoolId, dob, academicYear) => {
   return grade
 }
 
+/**
+ * Adjusts the query to find students based on their cohort.
+ * If gradeId=Grade1 and academicYear=2025, and it's now 2026,
+ * it will find students who are currently in Grade 2 (2026).
+ */
+const applyCohortFilter = async (q, schoolId, gradeId, academicYear, restrictedGradeIds) => {
+  const mongoose = require('mongoose')
+  
+  if (gradeId && academicYear && mongoose.Types.ObjectId.isValid(gradeId)) {
+    const grades = await Grade.find({ schoolId }).lean()
+    const targetGrade = grades.find((g) => String(g._id) === String(gradeId))
+    
+    if (targetGrade) {
+      const cohortConstant = targetGrade.level - Number(academicYear)
+      const years = await Student.distinct('academicYear', { schoolId })
+      const matchingPairs = []
+      
+      for (const y of years) {
+        if (y === null || y === undefined) continue
+        const neededLevel = cohortConstant + y
+        // Find the grade for this level in this specific year
+        const g = grades.find((grade) => grade.level === neededLevel && grade.academicYear === String(y)) 
+          || grades.find((grade) => grade.level === neededLevel && grade.academicYear === '')
+        
+        if (g) {
+          if (restrictedGradeIds) {
+            if (restrictedGradeIds.includes(g._id.toString())) {
+              matchingPairs.push({ gradeId: g._id, academicYear: y })
+            }
+          } else {
+            matchingPairs.push({ gradeId: g._id, academicYear: y })
+          }
+        }
+      }
+      
+      if (matchingPairs.length > 0) {
+        q.$or = matchingPairs
+        return true
+      } else {
+        q._id = new mongoose.Types.ObjectId() // Force no results
+        return true
+      }
+    }
+  }
+  
+  // Fallback to original logic
+  if (restrictedGradeIds) {
+    const allowedIds = restrictedGradeIds.map((id) => new mongoose.Types.ObjectId(id))
+    if (gradeId) {
+      q.gradeId = restrictedGradeIds.includes(gradeId.toString()) ? gradeId : { $in: [] }
+    } else {
+      q.gradeId = { $in: allowedIds }
+    }
+  } else if (gradeId) {
+    q.gradeId = gradeId
+  }
+  
+  if (academicYear) q.academicYear = Number(academicYear)
+  return false
+}
+
 exports.createStudent = async ({ schoolId, payload, userId }) => {
   try {
     // Auto-allocate grade if not provided
@@ -104,6 +165,18 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
     if (val instanceof Date) return val
     if (typeof val === 'number') {
       return new Date(Math.round((val - 25569) * 86400 * 1000))
+    }
+    if (typeof val === 'string') {
+      // Handle DD.MM.YYYY format
+      const parts = val.split('.')
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10)
+        const month = parseInt(parts[1], 10) - 1 // JS months are 0-indexed
+        const year = parseInt(parts[2], 10)
+        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+          return new Date(year, month, day)
+        }
+      }
     }
     return new Date(val)
   }
@@ -245,21 +318,9 @@ exports.listStudents = async ({
 }) => {
   const q = { schoolId }
 
-  if (restrictedGradeIds) {
-    const mongoose = require('mongoose')
-    const allowedIds = restrictedGradeIds.map(id => new mongoose.Types.ObjectId(id))
-    if (gradeId) {
-      q.gradeId = restrictedGradeIds.includes(gradeId.toString()) ? gradeId : { $in: [] }
-    } else {
-      q.gradeId = { $in: allowedIds }
-    }
-  } else if (gradeId) {
-    q.gradeId = gradeId
-  }
-
+  await applyCohortFilter(q, schoolId, gradeId, academicYear, restrictedGradeIds)
 
   if (sectionId) q.sectionId = sectionId
-  if (academicYear) q.academicYear = Number(academicYear)
   if (sex) q.sex = sex
 
   if (birthYear) {
@@ -312,20 +373,7 @@ exports.listStudents = async ({
 exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear, restrictedGradeIds }) => {
   const q = { schoolId }
 
-  if (restrictedGradeIds) {
-    const mongoose = require('mongoose')
-    const allowedIds = restrictedGradeIds.map(id => new mongoose.Types.ObjectId(id))
-    if (gradeId) {
-      q.gradeId = restrictedGradeIds.includes(gradeId.toString()) ? gradeId : { $in: [] }
-    } else {
-      q.gradeId = { $in: allowedIds }
-    }
-  } else if (gradeId) {
-    q.gradeId = gradeId
-  }
-
-
-  if (academicYear) q.academicYear = Number(academicYear)
+  await applyCohortFilter(q, schoolId, gradeId, academicYear, restrictedGradeIds)
 
   const items = await Student.find(q)
     .sort({ admissionNumber: 1 })

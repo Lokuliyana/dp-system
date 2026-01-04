@@ -5,17 +5,6 @@ const ApiError = require('../../utils/apiError')
 const bcrypt = require('bcryptjs')
 
 async function syncAppUser(teacher, schoolId, userId) {
-  // 1. Find or create "Staff" role
-  let staffRole = await Role.findOne({ schoolId, name: 'Staff' })
-  if (!staffRole) {
-    staffRole = await Role.create({
-      name: 'Staff',
-      description: 'Default role for staff members',
-      singleGraded: true,
-      schoolId,
-      createdById: userId,
-    })
-  }
 
   // 2. Find existing AppUser for this teacher
   let appUser = await AppUser.findOne({ teacherId: teacher._id, schoolId })

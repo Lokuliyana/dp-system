@@ -53,6 +53,12 @@ export const authService = {
       .get(endpoints.auth.users)
       .then(r => r.data.data as AppUser[])
   },
+  
+  getUser(id: string) {
+    return axiosInstance
+      .get(`${endpoints.auth.users}/${id}`)
+      .then(r => r.data.data as AppUser)
+  },
 
   createUser(payload: CreateAppUserPayload) {
     return axiosInstance

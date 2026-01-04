@@ -30,6 +30,12 @@ router.get(
   ctrl.listAppUsers
 )
 
+router.get(
+  '/:id',
+  authGuard(),
+  ctrl.getAppUser
+)
+
 router.patch(
   '/:id',
   authGuard(),

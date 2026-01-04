@@ -128,7 +128,7 @@ export function AttendanceDashboard() {
 
                 return (
                   <div key={grade.id} className="flex items-center">
-                    <div className="w-[100px] font-medium">{grade.nameEn}</div>
+                    <div className="w-[100px] font-medium">{grade.nameSi}</div>
                     <div className="flex-1 grid grid-cols-4 gap-4 items-center">
                       <div className="text-sm text-muted-foreground">
                         Present: <span className="font-medium text-foreground">{present}</span>

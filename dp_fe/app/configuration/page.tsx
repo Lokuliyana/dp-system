@@ -48,21 +48,7 @@ export default function ConfigurationPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Link href="/configuration/users">
-          <Card className="hover:bg-slate-50 transition-colors cursor-pointer h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                User Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-slate-500">
-                Manage system users, roles, and granular permissions.
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+        {/* Other configuration modules can go here */}
       </div>
     </div>
   );

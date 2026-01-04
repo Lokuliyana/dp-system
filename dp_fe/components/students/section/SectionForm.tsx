@@ -108,7 +108,7 @@ export function SectionForm({ grades, defaultValues, onSubmit, isLoading, onCanc
                             />
                           </FormControl>
                           <FormLabel className="font-normal cursor-pointer">
-                            {grade.nameEn}
+                            {grade.nameSi}
                           </FormLabel>
                         </FormItem>
                       )

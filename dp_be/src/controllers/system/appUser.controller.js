@@ -33,6 +33,14 @@ exports.listAppUsers = asyncHandler(async (req, res) => {
   res.json(ApiResponse.ok(items))
 })
 
+exports.getAppUser = asyncHandler(async (req, res) => {
+  const doc = await service.getAppUser({
+    schoolId: req.schoolId,
+    id: req.params.id,
+  })
+  res.json(ApiResponse.ok(doc))
+})
+
 exports.updateAppUser = asyncHandler(async (req, res) => {
   const doc = await service.updateAppUser({
     schoolId: req.schoolId,

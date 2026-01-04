@@ -162,6 +162,7 @@ interface MenuItem {
   icon?: ReactNode;
   href: string;
   subMenus?: MenuItem[];
+  active?: boolean;
 }
 
 interface MainMenuItemProps extends React.ComponentProps<"div"> {
@@ -176,9 +177,14 @@ export const MainMenuItem = React.forwardRef<HTMLDivElement, MainMenuItemProps>(
           <div key={index}>
             {item.subMenus && item.subMenus.length > 0 ? (
               <Collapsible className="group/collapsible">
-                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200">
+                <CollapsibleTrigger className={cn(
+                  "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-semibold transition-all duration-200",
+                  item.active 
+                    ? "bg-primary/10 text-primary" 
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                )}>
                   <div className="flex items-center gap-3">
-                    {item.icon && <span className="opacity-80">{item.icon}</span>}
+                    {item.icon && <span className={cn("opacity-80", item.active && "opacity-100")}>{item.icon}</span>}
                     {item.text}
                   </div>
                   <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
@@ -190,9 +196,14 @@ export const MainMenuItem = React.forwardRef<HTMLDivElement, MainMenuItemProps>(
             ) : (
               <Link
                 href={item.href}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-all duration-200",
+                  item.active 
+                    ? "bg-primary/10 text-primary" 
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                )}
               >
-                {item.icon && <span className="opacity-80">{item.icon}</span>}
+                {item.icon && <span className={cn("opacity-80", item.active && "opacity-100")}>{item.icon}</span>}
                 {item.text}
               </Link>
             )}

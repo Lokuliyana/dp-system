@@ -24,6 +24,14 @@ export function useAppUsers() {
   })
 }
 
+export function useAppUser(id: string) {
+  return useQuery({
+    queryKey: [...qk.auth.users, id],
+    queryFn: () => authService.getUser(id),
+    enabled: !!id,
+  })
+}
+
 export function useCreateAppUser() {
   const qc = useQueryClient()
   return useMutation({
@@ -61,6 +69,37 @@ export function useRoles() {
   return useQuery({
     queryKey: ["roles"],
     queryFn: () => roleService.list(),
+  })
+}
+
+export function useCreateRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: any) => roleService.create(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["roles"] })
+    },
+  })
+}
+
+export function useUpdateRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: any }) =>
+      roleService.update(id, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["roles"] })
+    },
+  })
+}
+
+export function useDeleteRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => roleService.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["roles"] })
+    },
   })
 }
 

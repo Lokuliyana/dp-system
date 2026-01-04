@@ -46,6 +46,14 @@ const appUserSchema = new mongoose.Schema(
   baseSchemaOptions
 )
 
+appUserSchema.virtual('roleId').get(function () {
+  if (this.roleIds && this.roleIds.length > 0) {
+    const first = this.roleIds[0]
+    return typeof first === 'object' ? (first._id || first.id) : first
+  }
+  return null
+})
+
 appUserSchema.index(
   { schoolId: 1, email: 1 },
   { unique: true, sparse: true }

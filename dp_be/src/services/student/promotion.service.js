@@ -28,10 +28,49 @@ exports.promoteStudentsByDOB = async ({ schoolId, fromYear, toYear, userId, dryR
     throw new ApiError(400, 'toYear must be greater than fromYear')
   }
 
-  // Load grade map for school
-  const grades = await Grade.find({ schoolId }).lean()
-  const gradeById = new Map(grades.map((g) => [String(g._id), g]))
-  const gradeByLevel = new Map(grades.map((g) => [g.level, g]))
+  // 1. Ensure grades exist for toYear by duplicating from fromYear (or template)
+  const existingToGrades = await Grade.find({ schoolId, academicYear: String(toYear) }).lean()
+  
+  if (existingToGrades.length === 0) {
+    console.log(`[Promotion] No grades found for ${toYear}, duplicating from previous...`)
+    // Try to find grades from fromYear, fallback to template ('')
+    let sourceGrades = await Grade.find({ schoolId, academicYear: String(fromYear) }).lean()
+    if (sourceGrades.length === 0) {
+      sourceGrades = await Grade.find({ schoolId, academicYear: '' }).lean()
+    }
+
+    if (sourceGrades.length > 0 && !dryRun) {
+      const newGrades = []
+      for (const g of sourceGrades) {
+        const { _id, createdAt, updatedAt, __v, ...rest } = g
+        const newGrade = await Grade.create({
+          ...rest,
+          academicYear: String(toYear),
+          createdById: userId,
+          pastTeachers: g.classTeacherId ? [{ teacherId: g.classTeacherId, fromYear: fromYear }] : []
+        })
+        newGrades.push(newGrade)
+
+        // Update sections that contained the source grade
+        await Section.updateMany(
+          { schoolId, assignedGradeIds: g._id },
+          { $addToSet: { assignedGradeIds: newGrade._id } }
+        )
+      }
+      console.log(`[Promotion] Duplicated ${newGrades.length} grades for ${toYear} and updated sections`)
+    }
+  }
+
+  // 2. Load grade maps for the promotion logic
+  const allGrades = await Grade.find({ schoolId }).lean()
+  const gradeById = new Map(allGrades.map((g) => [String(g._id), g]))
+  
+  // We need a map of (level -> Grade) specifically for the toYear
+  const toYearGradesByLevel = new Map(
+    allGrades
+      .filter(g => g.academicYear === String(toYear))
+      .map(g => [g.level, g])
+  )
 
   const students = await Student.find({
     schoolId,
@@ -51,7 +90,8 @@ exports.promoteStudentsByDOB = async ({ schoolId, fromYear, toYear, userId, dryR
       continue
     }
 
-    const nextGrade = gradeByLevel.get(currentGrade.level + 1)
+    // Find the grade for the NEXT level in the TO year
+    const nextGrade = toYearGradesByLevel.get(currentGrade.level + 1)
 
     if (!nextGrade) {
       skippedNoNextGrade += 1
