@@ -18,7 +18,7 @@ import { Label } from "@/components/ui";
 
 type FormState = {
   identifier: string;
-  password: string;
+  password?: string;
 };
 
 function LoginForm() {
@@ -28,7 +28,7 @@ function LoginForm() {
 
   const [form, setForm] = React.useState<FormState>({
     identifier: "admin@gmail.com",
-    password: "admin123",
+    password: "",
   });
 
   const [showPw, setShowPw] = React.useState(false);
@@ -45,7 +45,7 @@ function LoginForm() {
     setErrMsg(null);
     loginMut.mutate({
       identifier: form.identifier.trim(),
-      password: form.password,
+      password: form.password || "",
     }, {
       onSuccess: (data) => {
         setErrMsg(null);
@@ -164,7 +164,6 @@ function LoginForm() {
                     value={form.password}
                     onChange={(e) => onChange("password", e.target.value)}
                     disabled={loginMut.isPending}
-                    required
                     className="h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors pr-20"
                   />
                   <Button

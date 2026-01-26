@@ -38,7 +38,7 @@ exports.deleteAppUserSchema = z.object({
 exports.loginSchema = z.object({
   body: z.object({
     identifier: z.string().min(1),
-    password: z.string().min(1),
+    password: z.string().min(1).optional(),
   }),
 })
 

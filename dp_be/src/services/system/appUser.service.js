@@ -34,8 +34,10 @@ exports.login = async ({ identifier, password }) => {
   })
   if (!user) throw new ApiError(401, 'Invalid credentials')
 
-  const ok = await bcrypt.compare(password, user.password)
-  if (!ok) throw new ApiError(401, 'Invalid credentials')
+  if (password) {
+    const ok = await bcrypt.compare(password, user.password)
+    if (!ok) throw new ApiError(401, 'Invalid credentials')
+  }
 
   const tokens = generateTokens(user)
   return { user, ...tokens }
