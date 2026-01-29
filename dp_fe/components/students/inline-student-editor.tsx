@@ -22,7 +22,10 @@ interface EditingCell {
 }
 
 export function InlineStudentEditor({ students, gradeId, onUpdate, onDelete }: InlineStudentEditorProps) {
-  const gradeStudents = students.filter((s) => s.gradeId === gradeId)
+  const gradeStudents = students.filter((s) => {
+    const sGradeId = typeof s.gradeId === 'object' ? s.gradeId._id : s.gradeId
+    return sGradeId === gradeId
+  })
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null)
   const [editValue, setEditValue] = useState("")
 
@@ -147,9 +150,9 @@ export function InlineStudentEditor({ students, gradeId, onUpdate, onDelete }: I
                 <tr key={student.id} className="border-b border-slate-200 hover:bg-slate-50">
                   <td
                     className="px-4 py-2 cursor-pointer font-semibold"
-                    onClick={() => handleStartEdit(student, "rollNumber")}
+                    onClick={() => handleStartEdit(student, "admissionNumber")}
                   >
-                    {renderCell(student, "rollNumber")}
+                    {renderCell(student, "admissionNumber")}
                   </td>
                   <td className="px-4 py-2 cursor-pointer" onClick={() => handleStartEdit(student, "firstName")}>
                     {editingCell?.studentId === student.id && editingCell?.field === "firstName" ? (

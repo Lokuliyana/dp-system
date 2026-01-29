@@ -12,7 +12,10 @@ interface StudentDashboardProps {
 
 export function StudentDashboard({ students, selectedGrade }: StudentDashboardProps) {
   // Filter students by grade if selected
-  const dashboardStudents = selectedGrade ? students.filter((s) => s.gradeId === selectedGrade) : students
+  const dashboardStudents = selectedGrade ? students.filter((s) => {
+    const sGradeId = typeof s.gradeId === 'object' ? s.gradeId._id : s.gradeId
+    return sGradeId === selectedGrade
+  }) : students
 
   // Calculate statistics
   const stats = {
@@ -46,7 +49,10 @@ export function StudentDashboard({ students, selectedGrade }: StudentDashboardPr
   // Grade-wise student count
   const gradeWiseData = GRADES.map((grade) => ({
     name: grade.name,
-    students: students.filter((s) => s.gradeId === grade.id).length,
+    students: students.filter((s) => {
+      const sGradeId = typeof s.gradeId === 'object' ? s.gradeId._id : s.gradeId
+      return sGradeId === grade.id
+    }).length,
   }))
 
   return (

@@ -53,13 +53,14 @@ export function MobileStudentSearch({
     return students
       .filter((student) => {
         // Grade filter
-        if (selectedGradeId && student.gradeId !== selectedGradeId) return false
+        const sGradeId = typeof student.gradeId === 'object' ? student.gradeId._id : student.gradeId
+        if (selectedGradeId && sGradeId !== selectedGradeId) return false
 
         // Search term filter
         if (searchTerm.trim()) {
           const fullName = `${student.firstName} ${student.lastName}`.toLowerCase()
           const email = student.email.toLowerCase()
-          const rollStr = student.rollNumber.toString()
+          const rollStr = student.admissionNumber.toString()
 
           return fullName.includes(term) || email.includes(term) || rollStr.includes(term)
         }
@@ -76,7 +77,7 @@ export function MobileStudentSearch({
         if (!aName.startsWith(term) && bName.startsWith(term)) return 1
 
         // Then by roll number
-        return a.rollNumber - b.rollNumber
+        return a.admissionNumber.localeCompare(b.admissionNumber)
       })
       .slice(0, 12)
   }, [searchTerm, selectedGradeId, students])
@@ -121,7 +122,8 @@ export function MobileStudentSearch({
     }
   }
 
-  const getGradeName = (gradeId: string) => {
+  const getGradeName = (gradeId: string | { _id: string; nameEn: string }) => {
+    if (typeof gradeId === 'object') return gradeId.nameEn
     return GRADES.find((g) => g.id === gradeId)?.name || gradeId
   }
 
@@ -227,7 +229,7 @@ export function MobileStudentSearch({
                             {student.firstName} {student.lastName}
                           </p>
                           <Badge variant="secondary" className="text-xs shrink-0">
-                            Roll {student.rollNumber}
+                            Roll {student.admissionNumber}
                           </Badge>
                         </div>
 

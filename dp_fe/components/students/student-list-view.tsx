@@ -309,7 +309,9 @@ export function StudentListView({
                     </td>
                     {showGradeColumn && (
                       <td className="px-6 py-4 text-sm text-slate-600">
-                        {grades.find(g => g.id === student.gradeId)?.name || student.gradeId}
+                        {typeof student.gradeId === 'object' 
+                          ? student.gradeId.nameEn 
+                          : grades.find(g => g.id === student.gradeId)?.name || student.gradeId}
                       </td>
                     )}
                     <td className="px-6 py-4 text-sm text-slate-600">

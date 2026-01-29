@@ -108,7 +108,7 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
   return (
     <LayoutController
       title={`${editingStudent.firstName} ${editingStudent.lastName}`}
-      subtitle={`Roll No: ${editingStudent.rollNumber} | Grade: ${editingStudent.gradeId}`}
+      subtitle={`Roll No: ${editingStudent.admissionNumber} | Grade: ${typeof editingStudent.gradeId === 'object' ? editingStudent.gradeId.nameEn : editingStudent.gradeId}`}
       icon={<User className="h-6 w-6 text-blue-600" />}
       tabs={tabs}
       defaultTabId="basic-info"

@@ -20,7 +20,7 @@ export interface StudentNote {
 
 export interface Student {
   id: string
-  gradeId: string
+  gradeId: string | { _id: string; nameEn: string; level?: number }
   admissionNumber: string
   firstName: string
   lastName: string

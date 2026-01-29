@@ -107,7 +107,7 @@ export type Student = BaseDoc & {
   birthCertificateNumber?: string;
 
   // --- Academic ---
-  gradeId: Id;
+  gradeId: Id | { _id: Id; nameEn: string; level?: number };
   sectionId?: Id;
   admittedGrade?: string;
   medium?: "sinhala" | "english" | "tamil";
