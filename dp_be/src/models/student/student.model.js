@@ -45,6 +45,7 @@ const studentSchema = new mongoose.Schema(
     // --- Personal Details ---
     admissionNumber: { type: String, required: true, trim: true },
     admissionDate: { type: Date, required: true },
+    admissionYear: { type: Number, required: true, index: true },
     dob: { type: Date, required: true },
     sex: { type: String, enum: ['male', 'female'], required: true },
     birthCertificateNumber: { type: String, trim: true },
@@ -91,6 +92,8 @@ const studentSchema = new mongoose.Schema(
       ref: 'School',
       index: true,
     },
+
+    present: { type: Boolean, default: true, index: true },
   },
   baseSchemaOptions
 )

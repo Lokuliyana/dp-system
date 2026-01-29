@@ -186,8 +186,11 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
 
     try {
       const [
+        yearRaw, // New: Year
         admissionNumber,
         nameWithInitialsSi,
+        gradeSearchName, // New: శ్ (Grade English Name Search)
+        registerStatus, // New: Register (Present: 1/0)
         fullNameSi,
         firstNameSi,
         lastNameSi,
@@ -208,6 +211,9 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         fatherNameEn,
         fatherNumber,
         fatherOccupation,
+        guardianName, // New in list but was in old? Matched to last 3 columns
+        guardianNumber,
+        guardianOccupation,
       ] = row
 
       if (!admissionNumber) continue
@@ -222,6 +228,17 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
       }
 
       // 2. If not calculated, try to find grade by name provided in CSV
+      // First try the new "English Grade Name" column (gradeSearchName)
+      if (!gradeId && gradeSearchName) {
+        const g = grades.find(
+          (g) =>
+            g.nameEn === gradeSearchName ||
+            g.nameEn === String(gradeSearchName).trim()
+        )
+        if (g) gradeId = g._id
+      }
+
+      // 3. Fallback to "Admitted Grade" column if still not found
       if (!gradeId && admittedGradeName) {
         const g = grades.find(
           (g) =>
@@ -233,6 +250,7 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
       }
 
       if (!gradeId) {
+        // Skip for now or throw? Let's throw to report error
         throw new Error('Grade could not be determined for student')
       }
 
@@ -253,6 +271,16 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         return v
       }
 
+      // Map Register 1 -> true, 0 -> false. Default to true if missing? 
+      // User said "Register - present 1 = true 0 = false"
+      let isPresent = true
+      if (registerStatus !== undefined && registerStatus !== null && registerStatus !== '') {
+         const r = String(registerStatus).trim()
+         if (r === '0' || r.toLowerCase() === 'false') isPresent = false
+      }
+
+      const admissionYear = yearRaw ? parseInt(String(yearRaw).trim(), 10) : undefined
+
       const payload = {
         admissionNumber: String(admissionNumber),
         nameWithInitialsSi,
@@ -264,6 +292,9 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         sex: mapSex(sex),
         birthCertificateNumber: String(birthCertificateNumber || ''),
         admissionDate: parseDate(admissionDateRaw),
+        // If year is provided map it, otherwise maybe it's derived from admissionDate?
+        // Model has `admissionYear`.
+        admissionYear: admissionYear || (parseDate(admissionDateRaw) ? parseDate(admissionDateRaw).getFullYear() : undefined), 
         admittedGrade: String(admittedGradeName || ''),
         gradeId,
         addressSi,
@@ -277,9 +308,13 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         fatherNameEn,
         fatherNumber: String(fatherNumber || ''),
         fatherOccupation,
-        academicYear: currentYear, // Set academic year for the record
+        // Guardian details were in last 3 cols of input?
+        // Note: The destructuring above captured them.
+        academicYear: currentYear, 
+        present: isPresent,
       }
 
+      // Helper to handle duplicates or updates
       await Student.findOneAndUpdate(
         { schoolId, admissionNumber: String(admissionNumber) },
         {
@@ -295,7 +330,7 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
       results.errors.push({
         row: index + 2,
         error: err.message,
-        admissionNumber: row ? row[0] : 'Unknown',
+        admissionNumber: row ? row[1] : 'Unknown', // admissionNumber is at index 1 now
       })
     }
   }
