@@ -24,6 +24,10 @@ export type CreateStudentPayload = {
     number?: string;
   }>;
   academicYear: number;
+  photoUrl?: string;
+  status?: "active" | "inactive";
+  activeNote?: string;
+  inactiveNote?: string;
 };
 
 export type UpdateStudentPayload = Partial<CreateStudentPayload>;

@@ -36,8 +36,28 @@ export interface Student {
   notes: StudentNote[]
   phoneNumber: string
   nameWithInitialsSi: string
+  fullNameSi?: string
   fullNameEn?: string
   whatsappNumber?: string
+  dob?: string
+  sex?: "male" | "female"
+  birthCertificateNumber?: string
+  admittedGrade?: string
+  medium?: "sinhala" | "english" | "tamil"
+  academicYear: number
+  addressSi?: string
+  addressEn?: string
+  phoneNum?: string
+  emergencyNumber?: string
+  motherNameEn?: string
+  motherNumber?: string
+  motherOccupation?: string
+  fatherNameEn?: string
+  fatherNumber?: string
+  fatherOccupation?: string
+  photoUrl?: string
+  activeNote?: string
+  inactiveNote?: string
 }
 
 export interface Grade {
@@ -119,6 +139,7 @@ export function generateSampleStudents(): Student[] {
         talents: [],
         notes: [],
         phoneNumber: `+1-555-${String(i + 1000).padStart(4, "0")}`,
+        academicYear: new Date().getFullYear(),
       })
     }
   })

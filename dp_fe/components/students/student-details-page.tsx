@@ -6,6 +6,7 @@ import { StudentTalents } from "@/components/students/student-tabs/talents"
 import { StudentNotes } from "@/components/students/student-tabs/notes"
 import { StudentAttendanceTab } from "@/components/students/student-tabs/attendance"
 import type { Student } from "@/lib/school-data"
+import { StudentAvatar } from "@/components/students/student-avatar"
 import { User, Star, FileText, Crown, Activity } from "lucide-react"
 
 interface StudentDetailsPageProps {
@@ -21,6 +22,12 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
   const handleSaveBasicInfo = (updatedStudent: Student) => {
     setEditingStudent(updatedStudent)
     onUpdate(updatedStudent)
+  }
+
+  const handlePhotoUpdate = (photoUrl: string) => {
+    const updated = { ...editingStudent, photoUrl }
+    setEditingStudent(updated)
+    onUpdate(updated)
   }
 
   const handleAddTalent = (talent: any) => {
@@ -109,13 +116,21 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
     <LayoutController
       title={`${editingStudent.firstName} ${editingStudent.lastName}`}
       subtitle={`Roll No: ${editingStudent.admissionNumber} | Grade: ${editingStudent.gradeId && typeof editingStudent.gradeId === 'object' ? editingStudent.gradeId.nameEn : editingStudent.gradeId || "N/A"}`}
-      icon={<User className="h-6 w-6 text-blue-600" />}
+      icon={
+        <StudentAvatar 
+          studentId={editingStudent.id}
+          photoUrl={editingStudent.photoUrl}
+          firstName={editingStudent.firstName}
+          lastName={editingStudent.lastName}
+          onUpdate={handlePhotoUpdate}
+        />
+      }
       tabs={tabs}
       defaultTabId="basic-info"
       onClose={onClose}
       onBack={onBack}
       backButton={true}
-      headerBackground="bg-gradient-to-r from-blue-50 to-indigo-50"
+      headerBackground="bg-white border-b border-slate-200"
     />
   )
 }

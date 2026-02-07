@@ -6,42 +6,84 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
-import { Save } from "lucide-react";
+import { Save, UserCheck, UserX } from "lucide-react";
+import { StudentAvatar } from "@/components/students/student-avatar";
+import { Badge } from "@/components/ui/badge";
+import { StudentStatusDialog } from "@/components/students/student-status-dialog";
 
 interface BasicInfoSectionProps {
   student: Student;
-  onSave: (student: any) => void;
+  onSave?: (student: any) => void;
+  onChange?: (updated: Partial<Student>) => void;
 }
 
-export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
-  const [formData, setFormData] = useState<any>(student);
-  const [saving, setSaving] = useState(false);
+export function BasicInfoSection({ student, onSave, onChange }: BasicInfoSectionProps) {
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
 
   const handleChange = (field: string, value: any) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      onSave(formData);
-    } finally {
-      setSaving(false);
+    if (onChange) {
+      onChange({ [field]: value });
     }
   };
+
+  const handleStatusUpdate = (note: string) => {
+    const targetStatus = student.status === "inactive" ? "active" : "inactive";
+    if (onChange) {
+      onChange({ 
+        status: targetStatus,
+        [targetStatus === "active" ? "activeNote" : "inactiveNote"]: note
+      });
+    }
+    setIsStatusDialogOpen(false);
+    // Trigger save immediately for status change if desired, 
+    // or let the user click the global save button.
+    // Given the previous implementation, let's call onSave if it exists.
+    if (onSave) {
+      // We need to pass the updated object. 
+      // Since onChange just happened, the parent state might not have updated yet if it's async.
+      // But in this page, onChange updates the formData in the parent.
+    }
+  };
+
 
   return (
     <div className="grid max-w-5xl gap-6">
       {/* Personal Information */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Personal Information</CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant={student.status === "inactive" ? "destructive" : "default"}
+              className={`px-3 py-1 capitalize ${student.status !== "inactive" ? "bg-green-600 hover:bg-green-700" : ""}`}
+            >
+              {student.status || "active"}
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsStatusDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              {student.status === "inactive" ? (
+                <>
+                  <UserCheck className="h-4 w-4 text-green-500" />
+                  Make Active
+                </>
+              ) : (
+                <>
+                  <UserX className="h-4 w-4 text-red-500" />
+                  Make Inactive
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             <Field label="Full Name (En)">
               <Input
-                value={formData.fullNameEn || ""}
+                value={student.fullNameEn || ""}
                 onChange={(e) => handleChange("fullNameEn", e.target.value)}
                 className="bg-white"
               />
@@ -49,7 +91,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
 
             <Field label="Full Name (Si)">
               <Input
-                value={formData.fullNameSi || ""}
+                value={student.fullNameSi || ""}
                 onChange={(e) => handleChange("fullNameSi", e.target.value)}
                 className="bg-white"
               />
@@ -57,7 +99,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
 
             <Field label="Name with Initials (Si)">
               <Input
-                value={formData.nameWithInitialsSi || ""}
+                value={student.nameWithInitialsSi || ""}
                 onChange={(e) => handleChange("nameWithInitialsSi", e.target.value)}
                 className="bg-white"
               />
@@ -65,7 +107,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
 
             <Field label="First Name (Si)">
               <Input
-                value={formData.firstNameSi || ""}
+                value={student.firstNameSi || ""}
                 onChange={(e) => handleChange("firstNameSi", e.target.value)}
                 className="bg-white"
               />
@@ -73,7 +115,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
 
             <Field label="Last Name (Si)">
               <Input
-                value={formData.lastNameSi || ""}
+                value={student.lastNameSi || ""}
                 onChange={(e) => handleChange("lastNameSi", e.target.value)}
                 className="bg-white"
               />
@@ -82,7 +124,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
             <Field label="Date of Birth">
               <Input
                 type="date"
-                value={formData.dob ? new Date(formData.dob).toISOString().split('T')[0] : ""}
+                value={student.dob ? new Date(student.dob).toISOString().split('T')[0] : ""}
                 onChange={(e) => handleChange("dob", e.target.value)}
                 className="bg-white"
               />
@@ -90,7 +132,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
 
             <Field label="Gender">
               <Select
-                value={formData.sex}
+                value={student.sex}
                 onValueChange={(value) => handleChange("sex", value)}
               >
                 <SelectTrigger className="bg-white">
@@ -105,7 +147,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
 
             <Field label="Admission Number">
               <Input
-                value={formData.admissionNumber || ""}
+                value={student.admissionNumber || ""}
                 onChange={(e) => handleChange("admissionNumber", e.target.value)}
                 className="bg-white"
               />
@@ -114,7 +156,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
             <Field label="Admission Date">
               <Input
                 type="date"
-                value={formData.admissionDate ? new Date(formData.admissionDate).toISOString().split('T')[0] : ""}
+                value={student.admissionDate ? new Date(student.admissionDate).toISOString().split('T')[0] : ""}
                 onChange={(e) => handleChange("admissionDate", e.target.value)}
                 className="bg-white"
               />
@@ -122,7 +164,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
 
              <Field label="Birth Certificate Number">
               <Input
-                value={formData.birthCertificateNumber || ""}
+                value={student.birthCertificateNumber || ""}
                 onChange={(e) => handleChange("birthCertificateNumber", e.target.value)}
                 className="bg-white"
               />
@@ -130,7 +172,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
 
             <Field label="Medium">
               <Select
-                value={formData.medium}
+                value={student.medium}
                 onValueChange={(value) => handleChange("medium", value)}
               >
                 <SelectTrigger className="bg-white">
@@ -147,7 +189,7 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
             <Field label="Email">
               <Input
                 type="email"
-                value={formData.email || ""}
+                value={student.email || ""}
                 onChange={(e) => handleChange("email", e.target.value)}
                 className="bg-white"
               />
@@ -155,14 +197,14 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
 
             <Field label="Address (Si)">
               <Input
-                value={formData.addressSi || ""}
+                value={student.addressSi || ""}
                 onChange={(e) => handleChange("addressSi", e.target.value)}
                 className="bg-white"
               />
             </Field>
-             <Field label="Address (En)">
+            <Field label="Address (En)">
               <Input
-                value={formData.addressEn || ""}
+                value={student.addressEn || ""}
                 onChange={(e) => handleChange("addressEn", e.target.value)}
                 className="bg-white"
               />
@@ -183,21 +225,21 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
             <div className="grid gap-6 md:grid-cols-2">
               <Field label="Name (En)">
                 <Input
-                  value={formData.fatherNameEn || ""}
+                  value={student.fatherNameEn || ""}
                   onChange={(e) => handleChange("fatherNameEn", e.target.value)}
                   className="bg-white"
                 />
               </Field>
               <Field label="Phone Number">
                 <Input
-                  value={formData.fatherNumber || ""}
+                  value={student.fatherNumber || ""}
                   onChange={(e) => handleChange("fatherNumber", e.target.value)}
                   className="bg-white"
                 />
               </Field>
               <Field label="Occupation">
                 <Input
-                  value={formData.fatherOccupation || ""}
+                  value={student.fatherOccupation || ""}
                   onChange={(e) => handleChange("fatherOccupation", e.target.value)}
                   className="bg-white"
                 />
@@ -211,21 +253,21 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
             <div className="grid gap-6 md:grid-cols-2">
               <Field label="Name (En)">
                 <Input
-                  value={formData.motherNameEn || ""}
+                  value={student.motherNameEn || ""}
                   onChange={(e) => handleChange("motherNameEn", e.target.value)}
                   className="bg-white"
                 />
               </Field>
               <Field label="Phone Number">
                 <Input
-                  value={formData.motherNumber || ""}
+                  value={student.motherNumber || ""}
                   onChange={(e) => handleChange("motherNumber", e.target.value)}
                   className="bg-white"
                 />
               </Field>
               <Field label="Occupation">
                 <Input
-                  value={formData.motherOccupation || ""}
+                  value={student.motherOccupation || ""}
                   onChange={(e) => handleChange("motherOccupation", e.target.value)}
                   className="bg-white"
                 />
@@ -239,14 +281,14 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
             <div className="grid gap-6 md:grid-cols-2">
               <Field label="Emergency Number">
                 <Input
-                  value={formData.emergencyNumber || ""}
+                  value={student.emergencyNumber || ""}
                   onChange={(e) => handleChange("emergencyNumber", e.target.value)}
                   className="bg-white"
                 />
               </Field>
               <Field label="Whatsapp Number">
                 <Input
-                  value={formData.whatsappNumber || ""}
+                  value={student.whatsappNumber || ""}
                   onChange={(e) => handleChange("whatsappNumber", e.target.value)}
                   className="bg-white"
                 />
@@ -256,16 +298,37 @@ export function BasicInfoSection({ student, onSave }: BasicInfoSectionProps) {
         </CardContent>
       </Card>
 
-      <div>
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full gap-2 bg-green-600 hover:bg-green-700 md:w-auto"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? "Saving..." : "Save Changes"}
-        </Button>
-      </div>
+      {/* Status History / Notes */}
+      {(student.activeNote || student.inactiveNote) && (
+        <Card className="border-slate-200">
+          <CardHeader>
+            <CardTitle className="text-lg">Status Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {student.activeNote && (
+              <div className="p-3 bg-green-50 border border-green-100 rounded-md">
+                <p className="text-xs font-semibold text-green-700 uppercase mb-1">Latest Activation Note</p>
+                <p className="text-sm text-slate-700 italic">"{student.activeNote}"</p>
+              </div>
+            )}
+            {student.inactiveNote && (
+              <div className="p-3 bg-red-50 border border-red-100 rounded-md">
+                <p className="text-xs font-semibold text-red-700 uppercase mb-1">Latest Deactivation Note</p>
+                <p className="text-sm text-slate-700 italic">"{student.inactiveNote}"</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No internal save button - using header save */}
+      
+      <StudentStatusDialog
+        isOpen={isStatusDialogOpen}
+        onClose={() => setIsStatusDialogOpen(false)}
+        onConfirm={handleStatusUpdate}
+        targetStatus={student.status === "inactive" ? "active" : "inactive"}
+      />
     </div>
   );
 }

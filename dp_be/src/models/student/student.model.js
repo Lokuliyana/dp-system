@@ -94,6 +94,10 @@ const studentSchema = new mongoose.Schema(
     },
 
     present: { type: Boolean, default: true, index: true },
+    status: { type: String, enum: ['active', 'inactive'], default: 'active', index: true },
+    activeNote: { type: String, trim: true },
+    inactiveNote: { type: String, trim: true },
+    photoUrl: { type: String, trim: true },
   },
   baseSchemaOptions
 )

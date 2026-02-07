@@ -332,6 +332,7 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         // Note: The destructuring above captured them.
         academicYear: currentYear, 
         present: isPresent,
+        status: isPresent ? 'active' : 'inactive',
       }
 
       // Helper to handle duplicates or updates

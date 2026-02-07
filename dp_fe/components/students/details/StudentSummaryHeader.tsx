@@ -7,6 +7,8 @@ import type { Student } from "@/types/models";
 import { Badge } from "@/components/ui";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { StudentAvatar } from "@/components/students/student-avatar";
+import { toast } from "sonner";
 
 interface StudentSummaryHeaderStats {
   attendanceRate?: number;      // 0–100
@@ -20,6 +22,7 @@ interface StudentSummaryHeaderProps {
   gradeName?: string;
   stats?: StudentSummaryHeaderStats;
   onBack?: () => void;
+  onUpdate?: (updatedStudent: Partial<Student>) => void;
 }
 
 export const StudentSummaryHeader = memo(function StudentSummaryHeader({
@@ -27,6 +30,7 @@ export const StudentSummaryHeader = memo(function StudentSummaryHeader({
   gradeName,
   stats,
   onBack,
+  onUpdate,
 }: StudentSummaryHeaderProps) {
   const initials = useMemo(
     () =>
@@ -51,10 +55,17 @@ export const StudentSummaryHeader = memo(function StudentSummaryHeader({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         {/* Left: Avatar + basic info */}
         <div className="flex flex-1 items-start gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-xl font-semibold text-blue-700 shadow-sm">
-            <User className="mr-1 h-4 w-4 text-blue-400" />
-            <span>{initials}</span>
-          </div>
+          <StudentAvatar 
+            studentId={student.id || (student as any)._id}
+            photoUrl={student.photoUrl}
+            firstName={student.firstNameEn || student.fullNameEn?.split(' ')[0] || ""}
+            lastName={student.lastNameEn || student.fullNameEn?.split(' ').slice(1).join(' ') || ""}
+            onUpdate={(photoUrl) => {
+              if (onUpdate) {
+                onUpdate({ photoUrl });
+              }
+            }}
+          />
 
           <div className="flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-2">

@@ -132,6 +132,10 @@ export type Student = BaseDoc & {
   // --- Legacy / Extra ---
   emergencyContacts: EmergencyContact[];
   notes: StudentNote[];
+  photoUrl?: string;
+  status?: "active" | "inactive";
+  activeNote?: string;
+  inactiveNote?: string;
 };
 
 /* -------------------- STUDENT TALENT (F6) -------------------- */
