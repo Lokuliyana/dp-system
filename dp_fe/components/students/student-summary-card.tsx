@@ -10,7 +10,7 @@ interface StudentSummaryCardProps {
 }
 
 export function StudentSummaryCard({ student }: StudentSummaryCardProps) {
-  const gradeName = typeof student.gradeId === 'object' ? student.gradeId.nameEn : GRADES.find((g) => g.id === student.gradeId)?.name
+  const gradeName = (student.gradeId && typeof student.gradeId === 'object') ? student.gradeId.nameEn : GRADES.find((g) => g.id === student.gradeId)?.name || student.gradeId || "N/A"
 
   const getPerformanceBadgeColor = (performance: string) => {
     switch (performance) {

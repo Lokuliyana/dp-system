@@ -13,7 +13,7 @@ interface StudentDashboardProps {
 export function StudentDashboard({ students, selectedGrade }: StudentDashboardProps) {
   // Filter students by grade if selected
   const dashboardStudents = selectedGrade ? students.filter((s) => {
-    const sGradeId = typeof s.gradeId === 'object' ? s.gradeId._id : s.gradeId
+    const sGradeId = (s.gradeId && typeof s.gradeId === 'object') ? (s.gradeId as any)._id : s.gradeId
     return sGradeId === selectedGrade
   }) : students
 
@@ -50,7 +50,7 @@ export function StudentDashboard({ students, selectedGrade }: StudentDashboardPr
   const gradeWiseData = GRADES.map((grade) => ({
     name: grade.name,
     students: students.filter((s) => {
-      const sGradeId = typeof s.gradeId === 'object' ? s.gradeId._id : s.gradeId
+      const sGradeId = (s.gradeId && typeof s.gradeId === 'object') ? (s.gradeId as any)._id : s.gradeId
       return sGradeId === grade.id
     }).length,
   }))

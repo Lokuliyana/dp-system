@@ -23,7 +23,7 @@ interface EditingCell {
 
 export function InlineStudentEditor({ students, gradeId, onUpdate, onDelete }: InlineStudentEditorProps) {
   const gradeStudents = students.filter((s) => {
-    const sGradeId = typeof s.gradeId === 'object' ? s.gradeId._id : s.gradeId
+    const sGradeId = (s.gradeId && typeof s.gradeId === 'object') ? (s.gradeId as any)._id : s.gradeId
     return sGradeId === gradeId
   })
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null)

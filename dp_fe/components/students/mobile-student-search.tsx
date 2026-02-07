@@ -53,7 +53,7 @@ export function MobileStudentSearch({
     return students
       .filter((student) => {
         // Grade filter
-        const sGradeId = typeof student.gradeId === 'object' ? student.gradeId._id : student.gradeId
+        const sGradeId = (student.gradeId && typeof student.gradeId === 'object') ? (student.gradeId as any)._id : student.gradeId
         if (selectedGradeId && sGradeId !== selectedGradeId) return false
 
         // Search term filter
@@ -123,7 +123,7 @@ export function MobileStudentSearch({
   }
 
   const getGradeName = (gradeId: string | { _id: string; nameEn: string }) => {
-    if (typeof gradeId === 'object') return gradeId.nameEn
+    if (gradeId && typeof gradeId === 'object') return (gradeId as any).nameEn
     return GRADES.find((g) => g.id === gradeId)?.name || gradeId
   }
 

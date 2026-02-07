@@ -67,7 +67,7 @@ export default function GradePage({ params }: GradePageProps) {
   // Map real students to mock student interface
   const mappedStudents: MockStudent[] = students.map(s => ({
     id: s.id,
-    gradeId: typeof s.gradeId === 'object' ? (s.gradeId as any)._id || (s.gradeId as any).id : s.gradeId,
+    gradeId: s.gradeId && typeof s.gradeId === 'object' ? (s.gradeId as any)._id || (s.gradeId as any).id : s.gradeId,
     admissionNumber: s.admissionNumber || "",
     firstName: s.firstNameSi || s.firstNameEn || "",
     lastName: s.lastNameSi || s.lastNameEn || "",

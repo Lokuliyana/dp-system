@@ -65,7 +65,7 @@ export const StudentSummaryHeader = memo(function StudentSummaryHeader({
             </div>
 
             <p className="text-sm text-slate-600">
-              Grade <span className="font-semibold">{gradeName || (typeof student.gradeId === 'object' ? student.gradeId.nameEn : student.gradeId)}</span>{" "}
+              Grade <span className="font-semibold">{gradeName || (student.gradeId && typeof student.gradeId === 'object' ? student.gradeId.nameEn : student.gradeId || "N/A")}</span>{" "}
               <span className="mx-1">•</span>
               Admission No <span className="font-semibold">{student.admissionNumber}</span>
             </p>

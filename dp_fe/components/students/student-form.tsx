@@ -148,7 +148,7 @@ export function StudentForm({
       sex: (initialData?.sex as "male" | "female") || undefined,
       birthCertificateNumber: initialData?.birthCertificateNumber || "",
 
-      gradeId: (typeof initialData?.gradeId === 'object' ? initialData.gradeId._id : initialData?.gradeId) || "",
+      gradeId: (initialData?.gradeId && typeof initialData?.gradeId === 'object' ? (initialData.gradeId as any)._id : initialData?.gradeId) || "",
       sectionId: initialData?.sectionId || "",
       admittedGrade: initialData?.admittedGrade || "",
       medium: (initialData?.medium as "sinhala" | "english" | "tamil") || "sinhala",
@@ -189,7 +189,7 @@ export function StudentForm({
         sex: (initialData.sex as "male" | "female") || undefined,
         birthCertificateNumber: initialData.birthCertificateNumber || "",
         
-        gradeId: (typeof initialData.gradeId === 'object' ? initialData.gradeId._id : initialData.gradeId) || "",
+        gradeId: (initialData.gradeId && typeof initialData.gradeId === 'object' ? (initialData.gradeId as any)._id : initialData.gradeId) || "",
         sectionId: initialData.sectionId || "",
         admittedGrade: initialData.admittedGrade || "",
         medium: (initialData.medium as "sinhala" | "english" | "tamil") || "sinhala",

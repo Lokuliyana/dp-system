@@ -163,22 +163,42 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
   const parseDate = (val) => {
     if (!val) return undefined
     if (val instanceof Date) return val
+    
+    // Handle excel serial numbers
     if (typeof val === 'number') {
       return new Date(Math.round((val - 25569) * 86400 * 1000))
     }
+    
     if (typeof val === 'string') {
-      // Handle DD.MM.YYYY format
-      const parts = val.split('.')
+      const s = val.trim()
+      if (!s) return undefined
+
+      // Attempt to handle various separators: . / - 
+      const parts = s.split(/[.\/\-]/)
       if (parts.length === 3) {
-        const day = parseInt(parts[0], 10)
-        const month = parseInt(parts[1], 10) - 1 // JS months are 0-indexed
-        const year = parseInt(parts[2], 10)
-        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        let day, month, year
+
+        // Detect format: YYYY.? or DD.?
+        if (parts[0].length === 4) {
+          // Assume YYYY.MM.DD
+          year = parseInt(parts[0], 10)
+          month = parseInt(parts[1], 10) - 1
+          day = parseInt(parts[2], 10)
+        } else if (parts[2].length === 4) {
+          // Assume DD.MM.YYYY
+          day = parseInt(parts[0], 10)
+          month = parseInt(parts[1], 10) - 1
+          year = parseInt(parts[2], 10)
+        }
+
+        if (year !== undefined && !isNaN(day) && !isNaN(month) && !isNaN(year)) {
           return new Date(year, month, day)
         }
       }
     }
-    return new Date(val)
+    
+    const d = new Date(val)
+    return isNaN(d.getTime()) ? undefined : d
   }
 
   for (const [index, row] of rows.entries()) {
