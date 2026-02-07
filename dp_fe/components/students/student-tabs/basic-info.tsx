@@ -110,7 +110,7 @@ export function StudentBasicInfo({ student, onSave }: BasicInfoProps) {
                   <Info className="absolute top-2 right-2 h-3.5 w-3.5 text-slate-300" />
                   <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Latest Update Note</p>
                   <p className="text-xs text-slate-600 italic line-clamp-2 leading-relaxed">
-                    "{formData.activeNote || formData.inactiveNote}"
+                    &quot;{formData.activeNote || formData.inactiveNote}&quot;
                   </p>
                 </div>
               )}

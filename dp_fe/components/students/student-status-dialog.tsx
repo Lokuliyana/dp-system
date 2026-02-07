@@ -67,7 +67,7 @@ export function StudentStatusDialog({
               {isActive ? "Activate Student Account" : "Deactivate Student Account"}
             </DialogTitle>
             <DialogDescription className="text-slate-500 text-xs mt-0.5">
-              Updates will be logged in the student's history.
+              Updates will be logged in the student&apos;s history.
             </DialogDescription>
           </div>
         </div>

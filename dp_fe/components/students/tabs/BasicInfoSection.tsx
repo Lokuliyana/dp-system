@@ -308,13 +308,13 @@ export function BasicInfoSection({ student, onSave, onChange }: BasicInfoSection
             {student.activeNote && (
               <div className="p-3 bg-green-50 border border-green-100 rounded-md">
                 <p className="text-xs font-semibold text-green-700 uppercase mb-1">Latest Activation Note</p>
-                <p className="text-sm text-slate-700 italic">"{student.activeNote}"</p>
+                <p className="text-sm text-slate-700 italic">&quot;{student.activeNote}&quot;</p>
               </div>
             )}
             {student.inactiveNote && (
               <div className="p-3 bg-red-50 border border-red-100 rounded-md">
                 <p className="text-xs font-semibold text-red-700 uppercase mb-1">Latest Deactivation Note</p>
-                <p className="text-sm text-slate-700 italic">"{student.inactiveNote}"</p>
+                <p className="text-sm text-slate-700 italic">&quot;{student.inactiveNote}&quot;</p>
               </div>
             )}
           </CardContent>
