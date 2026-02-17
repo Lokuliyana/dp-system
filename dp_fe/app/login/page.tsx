@@ -91,7 +91,7 @@ function LoginForm() {
             Welcome Back
           </CardTitle>
           <CardDescription className="text-slate-500 text-base">
-            Sign in to your administrative dashboard
+            Sign in to Sri Ananda administrative dashboard
           </CardDescription>
         </CardHeader>
 

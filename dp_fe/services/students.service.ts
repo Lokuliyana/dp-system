@@ -39,9 +39,9 @@ export const studentsService = {
       .then((r) => r.data.data as Student);
   },
 
-  listByGrade(gradeId: string, academicYear?: number) {
+  listByGrade(gradeId: string, academicYear?: number, status?: string, sex?: string) {
     return axiosInstance
-      .get(`${endpoints.students}/by-grade`, { params: { gradeId, academicYear } })
+      .get(`${endpoints.students}/by-grade`, { params: { gradeId, academicYear, status, sex } })
       .then((r) => r.data.data as Student[]);
   },
 
@@ -58,6 +58,8 @@ export const studentsService = {
     gradeId?: string;
     sectionId?: string;
     academicYear?: number;
+    status?: string;
+    sex?: string;
   }) {
     return axiosInstance
       .get(endpoints.students, { params })

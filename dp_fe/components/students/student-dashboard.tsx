@@ -42,8 +42,6 @@ export function StudentDashboard({ students, selectedGrade }: StudentDashboardPr
   const statusData = [
     { name: "Active", value: dashboardStudents.filter((s) => s.status === "active").length, fill: "#10b981" },
     { name: "Inactive", value: dashboardStudents.filter((s) => s.status === "inactive").length, fill: "#6b7280" },
-    { name: "Transferred", value: dashboardStudents.filter((s) => s.status === "transferred").length, fill: "#3b82f6" },
-    { name: "Graduated", value: dashboardStudents.filter((s) => s.status === "graduated").length, fill: "#8b5cf6" },
   ]
 
   // Grade-wise student count

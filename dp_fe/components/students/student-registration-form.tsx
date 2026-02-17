@@ -339,8 +339,6 @@ export function StudentRegistrationForm({
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="transferred">Transferred</SelectItem>
-                    <SelectItem value="graduated">Graduated</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

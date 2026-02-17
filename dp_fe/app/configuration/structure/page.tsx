@@ -9,7 +9,7 @@ export default function StructureConfigurationPage() {
   return (
     <div className="space-y-6">
       <Header
-        title="School Structure"
+        title="Organization Structure"
         description="Manage houses, squads, and physical organization."
         icon={Building2}
         variant="section"

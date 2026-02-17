@@ -11,6 +11,8 @@ export function useStudents(params: {
   gradeId?: string;
   sectionId?: string;
   academicYear?: number;
+  status?: string;
+  sex?: string;
 } = {}) {
   return useQuery({
     queryKey: [qk.students.all, params],
@@ -19,10 +21,10 @@ export function useStudents(params: {
   })
 }
 
-export function useStudentsByGrade(gradeId: string, year?: number) {
+export function useStudentsByGrade(gradeId: string, year?: number, status?: string, sex?: string) {
   return useQuery({
-    queryKey: qk.students.byGrade(gradeId, year),
-    queryFn: () => studentsService.listByGrade(gradeId, year),
+    queryKey: qk.students.byGrade(gradeId, year, status, sex),
+    queryFn: () => studentsService.listByGrade(gradeId, year, status, sex),
     enabled: !!gradeId,
     staleTime: 60_000,
   })
@@ -41,7 +43,8 @@ export function useCreateStudent() {
   return useMutation({
     mutationFn: (payload: CreateStudentPayload) => studentsService.create(payload),
     onSuccess: (s: Student) => {
-      qc.invalidateQueries({ queryKey: qk.students.byGrade(s.gradeId, s.academicYear) })
+      const gId = typeof s.gradeId === 'object' ? s.gradeId._id : s.gradeId;
+      qc.invalidateQueries({ queryKey: qk.students.byGrade(gId, s.academicYear) })
     },
   })
 }
@@ -52,7 +55,8 @@ export function useUpdateStudent() {
     mutationFn: ({ id, payload }: { id: string; payload: UpdateStudentPayload }) =>
       studentsService.update(id, payload),
     onSuccess: (s: Student) => {
-      qc.invalidateQueries({ queryKey: qk.students.byGrade(s.gradeId, s.academicYear) })
+      const gId = typeof s.gradeId === 'object' ? s.gradeId._id : s.gradeId;
+      qc.invalidateQueries({ queryKey: qk.students.byGrade(gId, s.academicYear) })
       qc.invalidateQueries({ queryKey: qk.students.byId(s.id) })
       qc.invalidateQueries({ queryKey: qk.students.view360(s.id) })
     },

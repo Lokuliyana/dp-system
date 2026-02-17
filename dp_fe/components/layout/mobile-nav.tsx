@@ -155,7 +155,7 @@ export function MobileHeader() {
           <BookOpen className="h-5 w-5" />
         </div>
         <div className="flex flex-col">
-          <span className="text-base font-bold leading-none tracking-tight">EduMIS</span>
+          <span className="text-base font-bold leading-none tracking-tight">Sri Ananda</span>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Admin Console</span>
         </div>
       </div>

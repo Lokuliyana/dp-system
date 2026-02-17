@@ -132,7 +132,7 @@ export function ImprovedDashboard() {
       >
         <Header
           icon={BarChart3}
-          title="School Overview"
+          title="Sri Ananda Overview"
           description="High-level view of student numbers, activities, performance, and operational alerts."
           variant="page"
           actions={

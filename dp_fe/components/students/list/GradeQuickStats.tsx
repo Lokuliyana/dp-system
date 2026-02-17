@@ -89,7 +89,7 @@ export function GradeQuickStats({
         <CardContent className="flex items-center justify-between gap-3 pt-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Inactive / Transferred
+              Inactive
             </p>
             <p className="mt-1 text-2xl font-semibold text-rose-600">
               {inactive}

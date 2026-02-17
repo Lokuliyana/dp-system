@@ -7,8 +7,8 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ReactQueryProvider } from "@/lib/react-query";
 
 export const metadata: Metadata = {
-  title: "EduMIS Admin",
-  description: "School Management Admin Console",
+  title: "Sri Ananda Admin",
+  description: "Sri Ananda Admin Console",
 };
 
 interface RootLayoutProps {

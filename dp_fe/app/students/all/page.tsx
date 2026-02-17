@@ -28,8 +28,11 @@ import { StudentForm } from "@/components/students/student-form";
 export default function UniversalStudentListPage() {
   const router = useRouter();
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit, setLimit] = useState(50);
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const [sex, setSex] = useState("all");
+  const [grade, setGrade] = useState("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
@@ -40,6 +43,9 @@ export default function UniversalStudentListPage() {
     page,
     limit,
     search,
+    status: status === "all" ? undefined : status,
+    sex: sex === "all" ? undefined : sex,
+    gradeId: grade === "all" ? undefined : grade,
   });
 
   const students = data?.items || [];
@@ -145,13 +151,14 @@ export default function UniversalStudentListPage() {
             parentName: s.fatherNameEn || s.motherNameEn || "",
             parentPhone: s.fatherNumber || s.motherNumber || s.emergencyNumber || "",
             address: s.addressEn || s.addressSi || "",
-            status: "active",
+            status: (s.status as any) || "active",
             academicPerformance: "average",
+            academicYear: s.academicYear || 2024,
             talents: [],
             notes: [],
             phoneNumber: s.phoneNum || s.emergencyNumber || s.whatsappNumber || s.fatherNumber || s.motherNumber || "",
-            fullNameEn: s.fullNameEn || "",
             whatsappNumber: s.whatsappNumber || "",
+            sex: s.sex || "",
           }))}
           showGradeColumn={true}
           onSelectStudent={(s: any) => handleViewStudent(s)}
@@ -165,6 +172,21 @@ export default function UniversalStudentListPage() {
           searchTerm={search}
           onSearchChange={(val) => {
             setSearch(val);
+            setPage(1);
+          }}
+          statusFilter={status}
+          onStatusChange={(val) => {
+            setStatus(val);
+            setPage(1);
+          }}
+          sexFilter={sex}
+          onSexChange={(val) => {
+            setSex(val);
+            setPage(1);
+          }}
+          gradeFilter={grade}
+          onGradeChange={(val) => {
+            setGrade(val);
             setPage(1);
           }}
         />

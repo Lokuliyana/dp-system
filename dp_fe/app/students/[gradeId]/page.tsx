@@ -36,7 +36,9 @@ export default function GradePage({ params }: GradePageProps) {
   const { gradeId } = params;
   const { data: grades = [] } = useGrades();
   const { data: sections = [] } = useSections();
-  const { data: students = [], isLoading } = useStudentsByGrade(gradeId);
+  const [statusFilter, setStatusFilter] = useState("active");
+  const [sexFilter, setSexFilter] = useState("all");
+  const { data: students = [], isLoading } = useStudentsByGrade(gradeId, undefined, statusFilter, sexFilter === "all" ? undefined : sexFilter);
   const updateStudentMutation = useUpdateStudent();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -78,13 +80,15 @@ export default function GradePage({ params }: GradePageProps) {
     parentName: s.fatherNameEn || s.motherNameEn || "",
     parentPhone: s.fatherNumber || s.motherNumber || s.emergencyNumber || "",
     address: s.addressEn || s.addressSi || "",
-    status: "active", // Default
+    status: (s.status as any) || "active",
     academicPerformance: "average", // Default
+    academicYear: s.academicYear || 2024,
     talents: [],
     notes: [],
     phoneNumber: s.phoneNum || s.emergencyNumber || s.whatsappNumber || s.fatherNumber || s.motherNumber || "",
     fullNameEn: s.fullNameEn || "",
     whatsappNumber: s.whatsappNumber || "",
+    sex: s.sex || "",
   }));
 
   const handleEditStudent = (student: MockStudent) => {
@@ -164,6 +168,12 @@ export default function GradePage({ params }: GradePageProps) {
           onEditStudent={handleEditStudent}
           showGradeColumn={false}
           grades={grades.map(g => ({ id: g.id, name: g.nameSi || g.nameEn }))}
+          showFilters={true}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          sexFilter={sexFilter}
+          onSexChange={setSexFilter}
+          itemsPerPage={50}
         />
       </div>
     </LayoutController>

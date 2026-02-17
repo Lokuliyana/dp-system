@@ -66,8 +66,8 @@ export const qk = {
   students: {
     all: ["students", "all"] as const,
 
-    byGrade: (gradeId: string, year?: number) =>
-      ["students", "grade", gradeId, year] as const,
+    byGrade: (gradeId: string, year?: number, status?: string, sex?: string) =>
+      ["students", "grade", gradeId, year, status, sex] as const,
 
     byId: (id: string) => ["students", id] as const,
 

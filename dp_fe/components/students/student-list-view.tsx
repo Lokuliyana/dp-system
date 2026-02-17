@@ -35,10 +35,10 @@ interface StudentListViewProps {
   onSearchChange?: (value: string) => void
   statusFilter?: string
   onStatusChange?: (value: string) => void
-  performanceFilter?: string
-  onPerformanceChange?: (value: string) => void
-  sortBy?: "name" | "roll" | "performance"
-  onSortChange?: (value: "name" | "roll" | "performance") => void
+  sexFilter?: string
+  onSexChange?: (value: string) => void
+  gradeFilter?: string
+  onGradeChange?: (value: string) => void
 }
 
 export function StudentListView({ 
@@ -51,28 +51,28 @@ export function StudentListView({
   totalItems,
   currentPage: externalPage,
   onPageChange,
-  itemsPerPage = 10,
+  itemsPerPage = 50,
   grades = GRADES,
   showFilters = false,
   searchTerm: externalSearchTerm,
   onSearchChange,
   statusFilter: externalStatusFilter,
   onStatusChange,
-  performanceFilter: externalPerformanceFilter,
-  onPerformanceChange,
-  sortBy: externalSortBy,
-  onSortChange
+  sexFilter: externalSexFilter,
+  onSexChange,
+  gradeFilter: externalGradeFilter,
+  onGradeChange,
 }: StudentListViewProps) {
   const [internalSearchTerm, setInternalSearchTerm] = useState("")
   const [internalStatusFilter, setStatusFilter] = useState<string>("all")
-  const [internalPerformanceFilter, setPerformanceFilter] = useState<string>("all")
-  const [internalSortBy, setSortBy] = useState<"name" | "roll" | "performance">("roll")
+  const [internalSexFilter, setSexFilter] = useState<string>("all")
+  const [internalGradeFilter, setGradeFilter] = useState<string>("all")
   const [internalPage, setInternalPage] = useState(1)
 
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
   const statusFilter = externalStatusFilter !== undefined ? externalStatusFilter : internalStatusFilter;
-  const performanceFilter = externalPerformanceFilter !== undefined ? externalPerformanceFilter : internalPerformanceFilter;
-  const sortBy = externalSortBy !== undefined ? externalSortBy : internalSortBy;
+  const sexFilter = externalSexFilter !== undefined ? externalSexFilter : internalSexFilter;
+  const gradeFilter = externalGradeFilter !== undefined ? externalGradeFilter : internalGradeFilter;
 
   const isServerSide = typeof totalItems === 'number' && typeof externalPage === 'number';
   const currentPage = isServerSide ? externalPage : internalPage;
@@ -105,32 +105,21 @@ export function StudentListView({
       filtered = filtered.filter((s) => s.status === statusFilter)
     }
 
-    // Apply performance filter
-    if (performanceFilter !== "all") {
-      filtered = filtered.filter((s) => s.academicPerformance === performanceFilter)
+    // Apply sex filter
+    if (sexFilter !== "all") {
+      filtered = filtered.filter((s) => s.sex === sexFilter)
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "name":
-          return (a.nameWithInitialsSi || "").localeCompare(b.nameWithInitialsSi || "")
-        case "performance":
-          const perfOrder = {
-            excellent: 0,
-            good: 1,
-            average: 2,
-            "needs-improvement": 3,
-          }
-          return perfOrder[a.academicPerformance] - perfOrder[b.academicPerformance]
-        case "roll":
-        default:
-          return a.admissionNumber.localeCompare(b.admissionNumber)
-      }
-    })
+    // Apply grade filter (only if not already filtered by gradeId prop)
+    if (!gradeId && gradeFilter !== "all") {
+       filtered = filtered.filter((s) => {
+         const sGradeId = typeof s.gradeId === 'object' ? (s.gradeId as any)._id || (s.gradeId as any).id : s.gradeId;
+         return sGradeId === gradeFilter;
+       })
+    }
 
     return filtered
-  }, [students, gradeId, searchTerm, statusFilter, performanceFilter, sortBy, isServerSide])
+  }, [students, gradeId, searchTerm, statusFilter, sexFilter, gradeFilter, isServerSide])
 
   // Paginate (Client-side only)
   const totalPages = isServerSide 
@@ -223,55 +212,57 @@ export function StudentListView({
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="transferred">Transferred</SelectItem>
-                  <SelectItem value="graduated">Graduated</SelectItem>
                 </SelectContent>
               </Select>
 
-              {/* Performance Filter */}
+              {/* Sex Filter */}
               <Select
-                value={performanceFilter}
+                value={sexFilter}
                 onValueChange={(value) => {
-                  if (onPerformanceChange) {
-                    onPerformanceChange(value)
+                  if (onSexChange) {
+                    onSexChange(value)
                   } else {
-                    setPerformanceFilter(value)
+                    setSexFilter(value)
                     setInternalPage(1)
                   }
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Performance" />
+                  <SelectValue placeholder="Gender" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="excellent">Excellent</SelectItem>
-                  <SelectItem value="good">Good</SelectItem>
-                  <SelectItem value="average">Average</SelectItem>
-                  <SelectItem value="needs-improvement">Needs Improvement</SelectItem>
+                  <SelectItem value="all">All Genders</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
                 </SelectContent>
               </Select>
 
-              {/* Sort */}
-              <Select 
-                value={sortBy} 
-                onValueChange={(value: any) => {
-                  if (onSortChange) {
-                    onSortChange(value)
-                  } else {
-                    setSortBy(value)
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="roll">Roll Number</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="performance">Performance</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Grade Filter - only show if not already in grade context */}
+              {!gradeId && (
+                <Select
+                  value={gradeFilter}
+                  onValueChange={(value) => {
+                    if (onGradeChange) {
+                      onGradeChange(value)
+                    } else {
+                      setGradeFilter(value)
+                      setInternalPage(1)
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Grade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Grades</SelectItem>
+                    {grades.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -298,8 +289,12 @@ export function StudentListView({
                 {displayStudents.map((student) => (
                   <tr
                     key={student.id}
-                    className={`border-b border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer ${
-                      selectedStudentId === student.id ? "bg-blue-50" : ""
+                    className={`border-b border-slate-200 transition-colors cursor-pointer ${
+                      selectedStudentId === student.id 
+                        ? "bg-blue-50 hover:bg-blue-100" 
+                        : student.status === "inactive" 
+                          ? "bg-red-50 hover:bg-red-100" 
+                          : "hover:bg-slate-50"
                     }`}
                     onClick={() => onSelectStudent?.(student)}
                   >

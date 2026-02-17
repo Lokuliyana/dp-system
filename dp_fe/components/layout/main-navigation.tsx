@@ -89,7 +89,7 @@ export function MainNavigation() {
             <BookOpen className="h-4.5 w-4.5" />
           </div>
           <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-sm font-bold tracking-tight">EduMIS</span>
+            <span className="truncate text-sm font-bold tracking-tight">Sri Ananda</span>
             <span className="truncate text-[10px] text-muted-foreground leading-none">
               Admin Console
             </span>
@@ -140,7 +140,7 @@ export function MainNavigation() {
 
       <SidebarFooter className="border-t border-sidebar-border p-1.5">
         <div className="flex items-center justify-between px-1.5 text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">
-          <span className="font-medium">EduMIS v2.0</span>
+          <span className="font-medium">Sri Ananda v2.0</span>
           <div className="h-1 w-1 rounded-full bg-emerald-500" />
         </div>
       </SidebarFooter>

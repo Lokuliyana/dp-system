@@ -35,6 +35,7 @@ exports.listStudents = asyncHandler(async (req, res) => {
     sex: req.query.sex,
     birthYear: req.query.birthYear,
     admittedYear: req.query.admittedYear,
+    status: req.query.status,
     restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(data))
@@ -45,6 +46,7 @@ exports.listStudentsByGrade = asyncHandler(async (req, res) => {
     schoolId: req.schoolId,
     gradeId: req.query.gradeId,
     academicYear: req.query.academicYear,
+    sex: req.query.sex,
     restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
