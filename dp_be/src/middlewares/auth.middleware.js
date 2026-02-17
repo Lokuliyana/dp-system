@@ -43,15 +43,45 @@ module.exports = async (req, _res, next) => {
     user.id = user._id.toString()
     req.user = user
 
-    // Handle Grade Restriction
-    // A user is restricted ONLY IF all their system roles are singleGraded.
-    // Fallback to roleId if roleIds is empty (for backward compatibility)
+    // Handle system roles for restrictions and permissions
     let systemRoles = user.roleIds || []
     if (systemRoles.length === 0 && user.roleId) {
       const Role = require('../models/system/role.model')
       const r = await Role.findById(user.roleId).lean()
       if (r) systemRoles = [r]
     }
+
+    // Aggregrate permissions
+    const P = require('../constants/permissions')
+    const basePermissions = new Set()
+    
+    // Default: Every user can read everything and mark attendance
+    Object.values(P).forEach(group => {
+      if (typeof group === 'object') {
+        Object.values(group).forEach(perm => {
+          if (perm.endsWith(':read') || perm === P.ATTENDANCE?.MARK) {
+            basePermissions.add(perm)
+          }
+        })
+      }
+    })
+
+    const finalPermissions = new Set([...basePermissions])
+    
+    // Add User's explicit permissions
+    if (user.permissions) {
+      user.permissions.forEach(p => finalPermissions.add(p))
+    }
+
+    // Add permissions from Roles
+    systemRoles.forEach(role => {
+      if (role.permissions) {
+        role.permissions.forEach(p => finalPermissions.add(p))
+      }
+    })
+
+    req.user.permissions = Array.from(finalPermissions)
+    // console.log(`[AUTH] User ${user.name} aggregate permissions: ${req.user.permissions.length}`)
 
     const isSystemRestricted = systemRoles.length > 0 && systemRoles.every(r => r.singleGraded)
     // console.log(`[AUTH] isSystemRestricted: ${isSystemRestricted}, teacherId: ${user.teacherId}`)

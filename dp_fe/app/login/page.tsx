@@ -75,28 +75,22 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a] relative overflow-hidden">
-      {/* Abstract Background elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03] pointer-events-none" 
-           style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+    <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden">
 
-      <Card className="w-full max-w-lg border-white/5 bg-slate-900/50 backdrop-blur-xl shadow-2xl relative z-10 overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-blue-500 to-primary animate-gradient-x" />
+      <Card className="w-full max-w-lg border-slate-200 bg-white shadow-xl relative z-10 overflow-hidden">
         
         <CardHeader className="space-y-4 text-center pt-12 pb-8">
-          <div className="mx-auto w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mb-2 rotate-3 hover:rotate-0 transition-transform duration-300 shadow-inner">
+          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-2 shadow-sm">
             <BookOpen className="w-8 h-8 text-primary" />
           </div>
           <div className="space-y-2">
-            <CardTitle className="text-4xl font-extrabold tracking-tight text-white flex items-center justify-center gap-3">
+            <CardTitle className="text-4xl font-extrabold tracking-tight text-slate-900 flex items-center justify-center gap-3">
               Sri Ananda
-              <span className="text-xs font-medium bg-primary/20 text-primary-foreground px-2 py-1 rounded uppercase tracking-widest border border-primary/20">
+              <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded uppercase tracking-widest border border-primary/10">
                 Console
               </span>
             </CardTitle>
-            <CardDescription className="text-slate-400 text-lg">
+            <CardDescription className="text-slate-500 text-lg">
               Authorized personnel only. Please sign in.
             </CardDescription>
           </div>
@@ -106,9 +100,9 @@ function LoginForm() {
           <CardContent className="space-y-6 px-8">
             <div className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="identifier" className="text-slate-300 font-medium ml-1">Account Identifier</Label>
+                <Label htmlFor="identifier" className="text-slate-700 font-medium ml-1">Account Identifier</Label>
                 <div className="relative group">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="identifier"
                     type="text"
@@ -118,20 +112,20 @@ function LoginForm() {
                     onChange={(e) => onChange("identifier", e.target.value)}
                     disabled={loginMut.isPending}
                     required
-                    className="h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:bg-slate-800 focus:border-primary/50 transition-all pl-11 rounded-xl"
+                    className="h-12 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-primary/50 transition-all pl-11 rounded-xl"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between ml-1">
-                  <Label htmlFor="password" title="password" className="text-slate-300 font-medium">Password</Label>
-                  <Button variant="link" className="p-0 h-auto text-xs text-slate-500 hover:text-primary transition-colors" type="button">
+                  <Label htmlFor="password" title="password" className="text-slate-700 font-medium">Password</Label>
+                  <Button variant="link" className="p-0 h-auto text-xs text-slate-400 hover:text-primary transition-colors" type="button">
                     Forgot Access?
                   </Button>
                 </div>
                 <div className="relative group">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="password"
                     type={showPw ? "text" : "password"}
@@ -140,11 +134,11 @@ function LoginForm() {
                     value={form.password}
                     onChange={(e) => onChange("password", e.target.value)}
                     disabled={loginMut.isPending}
-                    className="h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:bg-slate-800 focus:border-primary/50 transition-all pl-11 pr-12 rounded-xl"
+                    className="h-12 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-primary/50 transition-all pl-11 pr-12 rounded-xl"
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                     onClick={() => setShowPw((v) => !v)}
                     disabled={loginMut.isPending}
                   >
@@ -155,7 +149,7 @@ function LoginForm() {
             </div>
 
             {errMsg && (
-              <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-4 text-sm text-red-400 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 border-l-4 border-l-red-500">
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-600 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 border-l-4 border-l-red-500">
                 <ShieldCheck className="w-5 h-5 flex-shrink-0" />
                 <p className="font-medium">{errMsg}</p>
               </div>
@@ -165,7 +159,7 @@ function LoginForm() {
           <CardFooter className="flex flex-col gap-6 px-8 pt-4 pb-12">
             <Button
               type="submit"
-              className="w-full h-12 text-base font-bold transition-all rounded-xl relative overflow-hidden group shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]"
+              className="w-full h-12 text-base font-bold transition-all rounded-xl relative overflow-hidden group"
               disabled={loginMut.isPending}
             >
               <span className={cn(
@@ -186,7 +180,7 @@ function LoginForm() {
               </span>
             </Button>
             
-            <p className="text-center text-slate-500 text-sm">
+            <p className="text-center text-slate-400 text-sm">
               Sri Ananda Educational Complex &copy; {new Date().getFullYear()}
             </p>
           </CardFooter>
@@ -199,8 +193,8 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <React.Suspense fallback={
-       <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a]">
-         <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+       <div className="min-h-screen w-full flex items-center justify-center bg-slate-50">
+         <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
        </div>
     }>
       <LoginForm />

@@ -8,7 +8,7 @@ import type { Student } from "@/lib/school-data"
 
 interface AttendanceRecord {
   date: string
-  status: "present" | "absent"
+  status: "present" | "absent" | "leave"
   remarks?: string
 }
 
@@ -255,9 +255,9 @@ export function StudentAttendanceTab({ student }: { student: Student }) {
           <CardTitle>Monthly Summary</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b">
+          <div className="overflow-x-auto overflow-y-auto max-h-[400px] scrollbar-thin scrollbar-thumb-slate-200">
+            <table className="w-full text-sm border-collapse">
+              <thead className="bg-slate-50 border-b sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold">Month</th>
                   <th className="px-4 py-3 text-center font-semibold">Present</th>

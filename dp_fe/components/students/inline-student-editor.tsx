@@ -129,9 +129,9 @@ export function InlineStudentEditor({ students, gradeId, onUpdate, onDelete }: I
         <CardTitle>Quick Edit Students</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+        <div className="overflow-x-auto overflow-y-auto max-h-[500px] scrollbar-thin scrollbar-thumb-slate-200">
+          <table className="w-full text-sm border-collapse">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-2 text-left font-semibold text-slate-900">Roll</th>
                 <th className="px-4 py-2 text-left font-semibold text-slate-900">Name</th>

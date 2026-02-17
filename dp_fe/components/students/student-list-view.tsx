@@ -271,9 +271,9 @@ export function StudentListView({
       {/* Student List */}
       <Card>
         <CardContent className="p-0">
-          <div className="w-full overflow-x-auto">
-            <table className="w-full min-w-[1000px]">
-              <thead className="bg-slate-50 border-b border-slate-200">
+          <div className="w-full overflow-x-auto overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-slate-200">
+            <table className="w-full min-w-[1000px] border-collapse">
+              <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Admission No</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Admit Year</th>
