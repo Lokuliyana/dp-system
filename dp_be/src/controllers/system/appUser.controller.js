@@ -58,3 +58,11 @@ exports.deleteAppUser = asyncHandler(async (req, res) => {
   })
   res.json(ApiResponse.ok({ deleted: true }))
 })
+
+exports.resetPassword = asyncHandler(async (req, res) => {
+  await service.resetPassword({
+    id: req.user.id,
+    newPassword: req.body.password,
+  })
+  res.json(ApiResponse.ok({ message: 'Password reset successfully' }))
+})

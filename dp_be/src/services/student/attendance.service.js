@@ -10,6 +10,33 @@ function dup(err) {
 
 exports.markAttendance = async ({ schoolId, payload, userId }) => {
   try {
+    const attendanceDate = new Date(payload.date)
+    const dayOfWeek = attendanceDate.getUTCDay()
+
+    // Restriction 1: Must be Sunday (0)
+    if (dayOfWeek !== 0) {
+      throw new ApiError(400, 'Attendance can only be marked for Sundays')
+    }
+
+    // Restriction 2: Time window (07:30 - 13:00) on the actual day
+    // This applies if the user is trying to mark attendance for "today"
+    const now = new Date()
+    const isToday = attendanceDate.getUTCFullYear() === now.getUTCFullYear() &&
+                    attendanceDate.getUTCMonth() === now.getUTCMonth() &&
+                    attendanceDate.getUTCDate() === now.getUTCDate()
+
+    if (isToday) {
+      const hours = now.getHours()
+      const minutes = now.getMinutes()
+      const currentTimeInMinutes = hours * 60 + minutes
+      const startLimit = 7 * 60 + 30 // 07:30
+      const endLimit = 13 * 60 // 13:00
+
+      if (currentTimeInMinutes < startLimit || currentTimeInMinutes > endLimit) {
+        throw new ApiError(400, 'Attendance can only be marked between 07:30 AM and 01:00 PM on Sundays')
+      }
+    }
+
     const doc = await Attendance.create({
       ...payload,
       recordedById: userId,
@@ -18,17 +45,46 @@ exports.markAttendance = async ({ schoolId, payload, userId }) => {
     })
     return doc.toJSON()
   } catch (err) {
+    if (err instanceof ApiError) throw err
     dup(err)
   }
 }
 
 exports.updateAttendance = async ({ schoolId, id, payload, userId }) => {
+  const existing = await Attendance.findOne({ _id: id, schoolId })
+  if (!existing) throw new ApiError(404, 'Attendance record not found')
+
+  const now = new Date()
+  const attendanceDate = new Date(existing.date)
+  
+  // Apply same time restrictions for updates if it's "today"
+  const isToday = attendanceDate.getUTCFullYear() === now.getUTCFullYear() &&
+                  attendanceDate.getUTCMonth() === now.getUTCMonth() &&
+                  attendanceDate.getUTCDate() === now.getUTCDate()
+
+  if (isToday) {
+    const hours = now.getHours()
+    const minutes = now.getMinutes()
+    const currentTimeInMinutes = hours * 60 + minutes
+    const startLimit = 7 * 60 + 30 // 07:30
+    const endLimit = 13 * 60 // 13:00
+
+    if (currentTimeInMinutes < startLimit || currentTimeInMinutes > endLimit) {
+      throw new ApiError(400, 'Attendance cannot be changed after 01:00 PM on Sundays')
+    }
+  } else {
+    // If it's not today's attendance, we should probably still restrict updates
+    // based on the requirement "Attandence related everything should needs to be restrict only for sundays"
+    // and "cant change the attendence after 1 pm on that sunday"
+    // This implies you can't edit past attendance.
+    throw new ApiError(400, 'Attendance can only be modified on the respective Sunday before 1:00 PM')
+  }
+
   const updated = await Attendance.findOneAndUpdate(
     { _id: id, schoolId },
     { status: payload.status, updatedById: userId },
     { new: true }
   )
-  if (!updated) throw new ApiError(404, 'Attendance record not found')
   return updated.toJSON()
 }
 

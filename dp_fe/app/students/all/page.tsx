@@ -159,6 +159,7 @@ export default function UniversalStudentListPage() {
             phoneNumber: s.phoneNum || s.emergencyNumber || s.whatsappNumber || s.fatherNumber || s.motherNumber || "",
             whatsappNumber: s.whatsappNumber || "",
             sex: s.sex || "",
+            admissionYear: s.admissionYear || (s.admissionDate ? new Date(s.admissionDate).getFullYear() : undefined),
           }))}
           showGradeColumn={true}
           onSelectStudent={(s: any) => handleViewStudent(s)}

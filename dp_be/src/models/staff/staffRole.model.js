@@ -33,6 +33,10 @@ const staffRoleSchema = new mongoose.Schema(
       ref: 'School',
       index: true,
     },
+    systemRoleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Role',
+    },
   },
   baseSchemaOptions
 )

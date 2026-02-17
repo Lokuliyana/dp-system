@@ -46,12 +46,12 @@ const calculateGrade = async (schoolId, dob, academicYear) => {
 
   const currentLevel = academicYear - grade1Year + 1
 
+  let targetLevel = currentLevel
   if (currentLevel < 1 || currentLevel > 14) {
-    // Out of range, maybe return null or handle gracefully?
-    // For now, let's try to find it.
+    targetLevel = 20
   }
 
-  const grade = await Grade.findOne({ schoolId, level: currentLevel })
+  const grade = await Grade.findOne({ schoolId, level: targetLevel })
   return grade
 }
 

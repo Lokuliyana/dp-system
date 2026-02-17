@@ -199,13 +199,14 @@ export function useSaveTeamSelection(level: "zonal" | "district" | "allisland", 
   });
 }
 
-export function useTeamSelectionSuggestions(year: number) {
+export function useTeamSelectionSuggestions(year: number, level: "zonal" | "district" | "allisland" = "zonal") {
   return useQuery({
-    queryKey: ["teamSelection", "zonalSuggestions", year],
-    queryFn: () => teamSelectionsService.getZonalSuggestions(year),
-    enabled: !!year,
+    queryKey: ["teamSelection", "suggestions", year, level],
+    queryFn: () => teamSelectionsService.getSuggestions(year, level),
+    enabled: !!year && !!level,
   });
 }
+
 
 export function useAutoGenerateTeamSelection(year: number) {
   const qc = useQueryClient();

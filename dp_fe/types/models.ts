@@ -112,6 +112,7 @@ export type Student = BaseDoc & {
   admittedGrade?: string;
   medium?: "sinhala" | "english" | "tamil";
   academicYear: number;
+  admissionYear?: number;
 
   // --- Contact ---
   email?: string;
@@ -178,8 +179,9 @@ export type Attendance = BaseDoc & {
   studentId: Id;
   gradeId: Id;
   date: string; // Sunday date (ISO)
-  isPresent: boolean;
-  year: number;
+  status: "present" | "absent" | "late";
+  isPresent?: boolean; // Legacy/Derived
+  year?: number;
   riskStage?: AttendanceRiskStage; // derived by backend
 };
 
@@ -578,6 +580,7 @@ export type AppUser = BaseDoc & {
   roleIds: Id[] | Role[];
   teacherId?: Id | Teacher;
   isActive: boolean;
+  isFirstTimeLogin?: boolean;
   permissions?: string[];
 };
 

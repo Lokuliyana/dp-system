@@ -32,8 +32,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const BOTTOM_NAV_ITEMS = [
   { id: "dashboard", label: "Home", href: "/dashboard", icon: Home },
   { id: "students", label: "Students", href: "/students", icon: Users },
-  { id: "attendance", label: "Attendance", href: "/attendance", icon: Calendar },
-  { id: "staff", label: "Staff", href: "/staff", icon: Users },
+  { id: "attendance", label: "Attendance", href: "/attendance", icon: Calendar, hidden: false },
+  { id: "staff", label: "Staff", href: "/staff", icon: Users, hidden: false },
 ];
 
 const ALL_NAV_ITEMS = [
@@ -62,7 +62,7 @@ export function MobileBottomNav() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t bg-white/95 px-2 pb-safe backdrop-blur-lg md:hidden">
-      {BOTTOM_NAV_ITEMS.map((item) => {
+      {BOTTOM_NAV_ITEMS.filter(item => !(item as any).hidden).map((item) => {
         const Icon = item.icon;
         const active = isActive(item.href);
         return (
@@ -108,7 +108,7 @@ export function MobileBottomNav() {
           <ScrollArea className="h-full px-6 pb-20">
             <div className="grid grid-cols-3 gap-3">
               <AnimatePresence>
-                {ALL_NAV_ITEMS.map((item, index) => {
+                {ALL_NAV_ITEMS.filter(item => !(item as any).hidden).map((item, index) => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
                   return (
@@ -150,7 +150,7 @@ export function MobileBottomNav() {
 export function MobileHeader() {
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-white/90 px-4 backdrop-blur-md md:hidden">
-      <div className="flex items-center gap-3">
+      <Link href="/dashboard" className="flex items-center gap-3 active:scale-95 transition-transform">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/20 text-white">
           <BookOpen className="h-5 w-5" />
         </div>
@@ -158,7 +158,7 @@ export function MobileHeader() {
           <span className="text-base font-bold leading-none tracking-tight">Sri Ananda</span>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Admin Console</span>
         </div>
-      </div>
+      </Link>
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" className="rounded-full">
           <Search className="h-5 w-5 text-slate-600" />

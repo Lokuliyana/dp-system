@@ -77,4 +77,10 @@ export const authService = {
       .delete(`${endpoints.auth.users}/${id}`)
       .then(r => r.data.data as { deleted: true })
   },
+
+  resetPassword(password: string) {
+    return axiosInstance
+      .post(`${endpoints.auth.users}/reset-password`, { password })
+      .then(r => r.data.data)
+  },
 }

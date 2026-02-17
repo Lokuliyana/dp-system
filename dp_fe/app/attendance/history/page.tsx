@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { History, Search, Download } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDate, getYear, getMonth, setMonth, setYear } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDate, getYear, getMonth, setMonth, setYear, isSunday, subMonths, eachWeekOfInterval, startOfDay } from "date-fns";
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { AttendanceMenu } from "@/components/attendance/attendance-menu";
 import { 
@@ -23,6 +23,11 @@ import { useAttendanceByRange } from "@/hooks/useAttendance";
 import { useStudentsByGrade } from "@/hooks/useStudents";
 import { cn } from "@/lib/utils";
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June", 
+  "July", "August", "September", "October", "November", "December"
+];
+
 export default function AttendanceHistoryPage() {
   const { data: grades = [] } = useGrades();
   const [selectedGradeId, setSelectedGradeId] = useState<string>("");
@@ -31,18 +36,42 @@ export default function AttendanceHistoryPage() {
   const today = new Date();
   const [selectedYear, setSelectedYear] = useState<number>(getYear(today));
   const [selectedMonth, setSelectedMonth] = useState<number>(getMonth(today)); // 0-indexed
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Calculate date range for the selected month
-  const currentDate = new Date(selectedYear, selectedMonth, 1);
-  const startDate = format(startOfMonth(currentDate), "yyyy-MM-dd");
-  const endDate = format(endOfMonth(currentDate), "yyyy-MM-dd");
   
-  // Get all days in the month for columns
-  const daysInMonth = eachDayOfInterval({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate)
-  });
+  // View range state
+  const [viewRange, setViewRange] = useState<"1m" | "6m" | "1y">("1m");
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Calculate date range based on selected view range
+  const { startDate, endDate, displayTitle } = useMemo(() => {
+    const end = endOfMonth(new Date(selectedYear, selectedMonth, 1));
+    let start;
+    let title;
+
+    if (viewRange === "1m") {
+      start = startOfMonth(end);
+      title = `${MONTHS[selectedMonth]} ${selectedYear}`;
+    } else if (viewRange === "6m") {
+      start = startOfMonth(subMonths(end, 5));
+      title = `${format(start, "MMM yyyy")} - ${format(end, "MMM yyyy")}`;
+    } else {
+      start = startOfMonth(subMonths(end, 11));
+      title = `${format(start, "MMM yyyy")} - ${format(end, "MMM yyyy")}`;
+    }
+
+    return {
+      startDate: format(start, "yyyy-MM-dd"),
+      endDate: format(end, "yyyy-MM-dd"),
+      displayTitle: title
+    };
+  }, [selectedYear, selectedMonth, viewRange]);
+  
+  // Get all Sundays in the range for columns
+  const sundaysInRange = useMemo(() => {
+    return eachDayOfInterval({
+      start: new Date(startDate),
+      end: new Date(endDate)
+    }).filter(date => isSunday(date));
+  }, [startDate, endDate]);
 
   // Fetch data
   const { data: attendance = [], isLoading: isLoadingAttendance } = useAttendanceByRange(startDate, endDate, selectedGradeId);
@@ -60,26 +89,21 @@ export default function AttendanceHistoryPage() {
     );
   }, [students, searchQuery]);
 
-  // Process attendance data into a map for easy lookup: studentId -> day -> status
+  // Process attendance data into a map for easy lookup: studentId -> dateString -> status
   const attendanceMap = useMemo(() => {
-    const map: Record<string, Record<number, string>> = {};
+    const map: Record<string, Record<string, string>> = {};
     attendance.forEach(record => {
       if (!map[record.studentId]) {
         map[record.studentId] = {};
       }
-      const day = getDate(new Date(record.date));
-      map[record.studentId][day] = record.status;
+      const dateStr = format(new Date(record.date), "yyyy-MM-dd");
+      map[record.studentId][dateStr] = record.status;
     });
     return map;
   }, [attendance]);
 
   // Generate years for dropdown (e.g., current year - 5 to current year + 1)
-  const years = Array.from({ length: 7 }, (_, i) => getYear(today) - 5 + i);
-  
-  const months = [
-    "January", "February", "March", "April", "May", "June", 
-    "July", "August", "September", "October", "November", "December"
-  ];
+  const years = useMemo(() => Array.from({ length: 7 }, (_, i) => getYear(today) - 5 + i), [today]);
 
   return (
     <LayoutController showMainMenu showHorizontalToolbar>
@@ -110,8 +134,22 @@ export default function AttendanceHistoryPage() {
                 </Select>
               </div>
 
+              <div className="w-full md:w-40">
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">View Range</label>
+                <Select value={viewRange} onValueChange={(v: any) => setViewRange(v)}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1m">1 Month View</SelectItem>
+                    <SelectItem value="6m">6 Month View</SelectItem>
+                    <SelectItem value="1y">1 Year View</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="w-full md:w-32">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">Year</label>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">End Year</label>
                 <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
                   <SelectTrigger className="bg-white">
                     <SelectValue placeholder="Year" />
@@ -125,13 +163,13 @@ export default function AttendanceHistoryPage() {
               </div>
 
               <div className="w-full md:w-40">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">Month</label>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">End Month</label>
                 <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
                   <SelectTrigger className="bg-white">
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
                   <SelectContent>
-                    {months.map((m, i) => (
+                    {MONTHS.map((m, i) => (
                       <SelectItem key={i} value={i.toString()}>{m}</SelectItem>
                     ))}
                   </SelectContent>
@@ -161,7 +199,7 @@ export default function AttendanceHistoryPage() {
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-base">
-                  Attendance Sheet - {months[selectedMonth]} {selectedYear}
+                  Attendance Sheet - {displayTitle}
                 </CardTitle>
                 <div className="text-sm text-muted-foreground">
                   {filteredStudents.length} Students
@@ -184,11 +222,12 @@ export default function AttendanceHistoryPage() {
                         <th className="sticky left-[200px] z-30 bg-slate-50 border-b border-r px-4 py-3 text-left font-semibold min-w-[100px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           Admission
                         </th>
-                        {daysInMonth.map(day => (
-                          <th key={day.toString()} className="border-b border-r px-2 py-3 text-center min-w-[36px] font-medium text-slate-600">
+                        {sundaysInRange.map(day => (
+                          <th key={day.toString()} className="border-b border-r px-2 py-3 text-center min-w-[60px] font-medium text-slate-600">
                             <div className="flex flex-col items-center">
-                              <span>{getDate(day)}</span>
-                              <span className="text-[10px] uppercase text-slate-400">{format(day, "EEEEE")}</span>
+                              <span className="text-[10px] text-slate-400">{format(day, "MMM")}</span>
+                              <span className="text-base font-bold">{getDate(day)}</span>
+                              <span className="text-[10px] uppercase text-slate-400">{format(day, "yyyy")}</span>
                             </div>
                           </th>
                         ))}
@@ -203,9 +242,9 @@ export default function AttendanceHistoryPage() {
                           <td className="sticky left-[200px] z-10 bg-white border-b border-r px-4 py-2 text-slate-500 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                             {student.admissionNumber}
                           </td>
-                          {daysInMonth.map(day => {
-                            const dateNum = getDate(day);
-                            const status = attendanceMap[student.id]?.[dateNum];
+                          {sundaysInRange.map(day => {
+                            const dateStr = format(day, "yyyy-MM-dd");
+                            const status = attendanceMap[student.id]?.[dateStr];
                             
                             let cellContent = <span className="text-slate-200">-</span>;
                             let cellClass = "";

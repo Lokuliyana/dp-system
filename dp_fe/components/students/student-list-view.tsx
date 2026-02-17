@@ -276,6 +276,7 @@ export function StudentListView({
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Admission No</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Admit Year</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Name w/ Initials (Si)</th>
                   {showGradeColumn && (
                     <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Grade</th>
@@ -299,6 +300,7 @@ export function StudentListView({
                     onClick={() => onSelectStudent?.(student)}
                   >
                     <td className="px-6 py-4 text-sm font-medium text-slate-900 w-32">{student.admissionNumber}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 w-24">{(student as any).admissionYear || "-"}</td>
                     <td className="px-6 py-4 text-sm text-slate-900 font-medium">
                       {student.nameWithInitialsSi || student.fullNameEn}
                     </td>

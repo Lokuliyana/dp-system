@@ -1,12 +1,21 @@
 "use client";
 
-import { ZonalOverview } from "@/components/zonal/overview";
-import { PageContainer } from "@/components/reusable";
+import { TeamSelectionView } from "@/components/champions/team-selection-view";
+import { LayoutController } from "@/components/layout/dynamic";
+import { ChampionsMenu } from "@/components/champions/champions-menu";
+import { Map } from "lucide-react";
 
 export default function ZonalPage() {
   return (
-    <PageContainer variant="fluid">
-      <ZonalOverview />
-    </PageContainer>
+    <LayoutController showMainMenu showHorizontalToolbar>
+      <ChampionsMenu />
+      <TeamSelectionView 
+        level="zonal"
+        title="Zonal Team Selection"
+        description="Manage school team selection for Zonal competitions and record results."
+        icon={Map}
+      />
+    </LayoutController>
   );
 }
+

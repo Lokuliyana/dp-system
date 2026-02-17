@@ -6,13 +6,15 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from "@/components/ui";
-import { MainNavigation, MobileBottomNav, MobileHeader } from "@/components/layout";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useCurrentUser } from "@/hooks/useAuth";
-import { Loader2 } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
+import { MainNavigation, MobileBottomNav, MobileHeader } from "@/components/layout"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useCurrentUser } from "@/hooks/useAuth"
+import { Loader2, BookOpen, User } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { cn } from "@/lib/utils"
+import Link from "next/link"
+import { UserNav } from "@/components/layout/user-nav"
 
 interface AppShellProps {
   children: ReactNode;
@@ -75,11 +77,28 @@ export function AppShell({ children }: AppShellProps) {
       <SidebarInset className="flex flex-col h-screen overflow-hidden">
         {/* Desktop Header */}
         {!isMobile && (
-          <header className="flex h-14 items-center gap-4 border-b bg-white px-6 sticky top-0 z-30 shadow-sm/5 flex-shrink-0">
-            <SidebarTrigger className="h-9 w-9" />
-            <div className="flex-1" />
-            {/* Add user profile / search here for desktop */}
-            <div className="h-9 w-9 rounded-full bg-slate-100 border shadow-sm" />
+          <header className="flex h-16 items-center gap-4 border-b bg-white/80 backdrop-blur-md px-6 sticky top-0 z-30 shadow-sm flex-shrink-0">
+            <SidebarTrigger className="h-10 w-10 hover:bg-slate-100 transition-colors rounded-lg" />
+            
+            <div className="flex-1 flex justify-center">
+              <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.02]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] text-primary-foreground transform group-hover:rotate-6 transition-transform">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-lg font-black tracking-tight text-slate-900 leading-tight">SRI ANANDA</span>
+                  <div className="flex items-center gap-1.5 mt-[-2px]">
+                    <div className="h-[1px] w-4 bg-slate-300" />
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">Admin Console</span>
+                    <div className="h-[1px] w-4 bg-slate-300" />
+                  </div>
+                </div>
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <UserNav />
+            </div>
           </header>
         )}
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, Users } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,7 @@ const studentSchema = z.object({
   admittedGrade: z.string().optional(),
   medium: z.enum(["sinhala", "english", "tamil"]).optional(),
   academicYear: z.number().min(2000, "Invalid Year"),
+  admissionYear: z.number().min(1900, "Invalid Year").optional(),
 
   // --- Contact ---
   email: z.string().email().optional().or(z.literal("")),
@@ -153,6 +154,7 @@ export function StudentForm({
       admittedGrade: initialData?.admittedGrade || "",
       medium: (initialData?.medium as "sinhala" | "english" | "tamil") || "sinhala",
       academicYear: initialData?.academicYear || new Date().getFullYear(),
+      admissionYear: initialData?.admissionYear || (initialData?.admissionDate ? new Date(initialData.admissionDate).getFullYear() : undefined),
 
       addressSi: initialData?.addressSi || "",
       addressEn: initialData?.addressEn || "",
@@ -269,18 +271,24 @@ export function StudentForm({
         className="space-y-8"
       >
         <div className="space-y-8">
-          {/* Section 1: Names */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Names</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Names Section */}
+          <section className="p-6 bg-slate-50/50 rounded-xl border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center gap-2 mb-6 text-blue-700">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Users className="h-5 w-5" />
+              </div>
+              <h3 className="text-xl font-semibold">Student Identification</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <FormField
                 control={form.control}
                 name="admissionNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Admission Number *</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">Admission Number *</FormLabel>
                     <FormControl>
-                      <Input placeholder="AD-1234" {...field} />
+                      <Input placeholder="AD-1234" {...field} className="focus-visible:ring-blue-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -291,22 +299,9 @@ export function StudentForm({
                 name="nameWithInitialsSi"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name with Initials (Sinhala) *</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">Name with Initials (Sinhala) *</FormLabel>
                     <FormControl>
-                      <Input placeholder="එස්. පෙරේරා" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="fullNameSi"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Full Name (Sinhala) *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="සමන් පෙරේරා" {...field} />
+                      <Input placeholder="එස්. පෙරේරා" {...field} className="focus-visible:ring-blue-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -317,9 +312,9 @@ export function StudentForm({
                 name="firstNameSi"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name (Sinhala) *</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">First Name (Sinhala) *</FormLabel>
                     <FormControl>
-                      <Input placeholder="සමන්" {...field} />
+                      <Input placeholder="සමන්" {...field} className="focus-visible:ring-blue-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -330,9 +325,22 @@ export function StudentForm({
                 name="lastNameSi"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name (Sinhala) *</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">Last Name (Sinhala) *</FormLabel>
                     <FormControl>
-                      <Input placeholder="පෙරේරා" {...field} />
+                      <Input placeholder="පෙරේරා" {...field} className="focus-visible:ring-blue-500" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="fullNameSi"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel className="text-slate-700 font-medium">Full Name (Sinhala) *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="සමන් පෙරේරා" {...field} className="focus-visible:ring-blue-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -342,33 +350,40 @@ export function StudentForm({
                 control={form.control}
                 name="fullNameEn"
                 render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Full Name (English) *</FormLabel>
+                  <FormItem className="md:col-span-2">
+                    <FormLabel className="text-slate-700 font-medium">Full Name (English) *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Saman Perera" {...field} />
+                      <Input placeholder="Saman Perera" {...field} className="focus-visible:ring-blue-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-          </div>
+          </section>
 
-          {/* Section 2: Personal Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Personal Details</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {/* Academic & Personal Section */}
+          <section className="p-6 bg-slate-50/50 rounded-xl border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center gap-2 mb-6 text-emerald-700">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <CalendarIcon className="h-5 w-5" />
+              </div>
+              <h3 className="text-xl font-semibold">Academic & Personal Details</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormField
                 control={form.control}
                 name="dob"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date of Birth *</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">Date of Birth *</FormLabel>
                     <FormControl>
                       <Input
                         type="date"
                         value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
                         onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                        className="focus-visible:ring-emerald-500"
                       />
                     </FormControl>
                     <FormMessage />
@@ -380,14 +395,55 @@ export function StudentForm({
                 name="admissionDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Admitted Date *</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">Admission Date *</FormLabel>
                     <FormControl>
                       <Input
                         type="date"
                         value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
                         onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                        className="focus-visible:ring-emerald-500"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="admissionYear"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-slate-700 font-medium">Admission Year</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder={new Date().getFullYear().toString()} 
+                        {...field} 
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                        className="focus-visible:ring-emerald-500"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sex"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-slate-700 font-medium">Sex *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="focus:ring-emerald-500">
+                          <SelectValue placeholder="Select sex" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="male">Male (පුරුෂ)</SelectItem>
+                        <SelectItem value="female">Female (ස්ත්‍රී)</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -397,10 +453,10 @@ export function StudentForm({
                 name="gradeId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Admitted Grade (System) <span className="text-xs font-normal text-muted-foreground">(Auto-allocated if empty)</span></FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">Assigned Grade</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="focus:ring-emerald-500">
                           <SelectValue placeholder="Select grade" />
                         </SelectTrigger>
                       </FormControl>
@@ -421,89 +477,9 @@ export function StudentForm({
                 name="admittedGrade"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Admitted Grade (Record)</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">Admitted Grade (Record)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Grade 1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="sex"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sex *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select sex" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="male">Male (පුරුෂ)</SelectItem>
-                        <SelectItem value="female">Female (ස්ත්‍රී)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          {/* Section 3: Contact Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Contact Details</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="addressSi"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Address (Sinhala)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ලිපිනය" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="whatsappNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>WhatsApp Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="077..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="emergencyNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Emergency Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="077..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="email@example.com" {...field} />
+                      <Input placeholder="Grade 1" {...field} className="focus-visible:ring-emerald-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -514,10 +490,10 @@ export function StudentForm({
                 name="medium"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Medium</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">Medium</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="focus:ring-emerald-500">
                           <SelectValue placeholder="Select medium" />
                         </SelectTrigger>
                       </FormControl>
@@ -532,101 +508,184 @@ export function StudentForm({
                 )}
               />
             </div>
-          </div>
+          </section>
 
-          {/* Section 4: Parent Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Parent Details</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Contact Details Section */}
+          <section className="p-6 bg-slate-50/50 rounded-xl border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center gap-2 mb-6 text-amber-700">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Plus className="h-5 w-5" />
+              </div>
+              <h3 className="text-xl font-semibold">Contact Details</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <FormField
+                control={form.control}
+                name="addressSi"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel className="text-slate-700 font-medium">Address (Sinhala)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="ලිපිනය" {...field} className="focus-visible:ring-amber-500" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="whatsappNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-slate-700 font-medium">WhatsApp Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="077..." {...field} className="focus-visible:ring-amber-500" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="emergencyNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-slate-700 font-medium">Emergency Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="077..." {...field} className="focus-visible:ring-amber-500" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-slate-700 font-medium">Email Address</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="email@example.com" {...field} className="focus-visible:ring-amber-500" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </section>
+
+          {/* Parent Details Section */}
+          <section className="p-6 bg-slate-50/50 rounded-xl border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center gap-2 mb-6 text-purple-700">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Users className="h-5 w-5" />
+              </div>
+              <h3 className="text-xl font-semibold">Parent / Guardian Details</h3>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Mother */}
-              <div className="space-y-4 p-4 border rounded-md">
-                <h4 className="font-medium text-sm text-muted-foreground">Mother</h4>
-                <FormField
-                  control={form.control}
-                  name="motherNameEn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name (English)</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="motherNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="motherOccupation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Occupation</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="space-y-5 p-5 bg-white/50 rounded-lg border border-purple-100/50 group hover:border-purple-200 transition-colors">
+                <div className="flex items-center gap-2 pb-2 border-b border-purple-50">
+                  <span className="w-2 h-2 rounded-full bg-pink-400" />
+                  <h4 className="font-semibold text-slate-800">Mother&apos;s Information</h4>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="motherNameEn"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel className="text-slate-600 text-sm">Full Name (English)</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="focus-visible:ring-purple-400" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="motherNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-600 text-sm">Phone Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="focus-visible:ring-purple-400" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="motherOccupation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-600 text-sm">Occupation</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="focus-visible:ring-purple-400" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               {/* Father */}
-              <div className="space-y-4 p-4 border rounded-md">
-                <h4 className="font-medium text-sm text-muted-foreground">Father</h4>
-                <FormField
-                  control={form.control}
-                  name="fatherNameEn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name (English)</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="fatherNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="fatherOccupation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Occupation</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="space-y-5 p-5 bg-white/50 rounded-lg border border-purple-100/50 group hover:border-purple-200 transition-colors">
+                <div className="flex items-center gap-2 pb-2 border-b border-purple-50">
+                  <span className="w-2 h-2 rounded-full bg-blue-400" />
+                  <h4 className="font-semibold text-slate-800">Father&apos;s Information</h4>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="fatherNameEn"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel className="text-slate-600 text-sm">Full Name (English)</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="focus-visible:ring-purple-400" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="fatherNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-600 text-sm">Phone Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="focus-visible:ring-purple-400" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="fatherOccupation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-600 text-sm">Occupation</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="focus-visible:ring-purple-400" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          </section>
         </div>
 
         <div className="flex justify-end gap-2">

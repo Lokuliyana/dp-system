@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { CalendarCheck, Search } from "lucide-react";
-import { format } from "date-fns";
+import { format, isSunday, addDays, nextSunday, setHours, setMinutes, isBefore, isAfter, startOfDay } from "date-fns";
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { AttendanceMenu } from "@/components/attendance/attendance-menu";
 import { 
@@ -15,6 +15,8 @@ import {
   SelectTrigger, 
   SelectValue,
   Input,
+  Alert,
+  AlertDescription,
 } from "@/components/ui";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useGrades } from "@/hooks/useGrades";
@@ -22,11 +24,29 @@ import { useStudentsByGrade } from "@/hooks/useStudents";
 import { useMarkAttendance, useAttendanceByDate } from "@/hooks/useAttendance";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { AlertCircle, Clock } from "lucide-react";
 
 export default function MarkAttendancePage() {
   const { data: grades = [] } = useGrades();
   const [selectedGradeId, setSelectedGradeId] = useState<string>("");
-  const [date, setDate] = useState<Date>(new Date());
+  
+  // Logic to determine the default Sunday
+  const getDefaultDate = () => {
+    const now = new Date();
+    // If it's Sunday
+    if (isSunday(now)) {
+      const cutOff = setMinutes(setHours(startOfDay(now), 13), 0); // 1:00 PM
+      // If past 1:00 PM, default to NEXT Sunday
+      if (isAfter(now, cutOff)) {
+        return nextSunday(now);
+      }
+      return now;
+    }
+    // If not Sunday, default to NEXT Sunday
+    return nextSunday(now);
+  };
+
+  const [date, setDate] = useState<Date>(getDefaultDate());
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
@@ -35,6 +55,34 @@ export default function MarkAttendancePage() {
   const { data: students = [], isLoading: isLoadingStudents } = useStudentsByGrade(selectedGradeId);
   const { data: existingAttendance = [], isLoading: isLoadingAttendance } = useAttendanceByDate(formattedDate, selectedGradeId);
   const markAttendanceMutation = useMarkAttendance(formattedDate, selectedGradeId);
+
+  // Time window validation logic
+  const markingStatus = useMemo(() => {
+    if (!date) return { canMark: false, reason: "Please select a date" };
+    
+    if (!isSunday(date)) return { canMark: false, reason: "Attendance can only be marked for Sundays" };
+
+    const now = new Date();
+    const isToday = format(date, "yyyy-MM-dd") === format(now, "yyyy-MM-dd");
+
+    if (isToday) {
+      const startTime = setMinutes(setHours(startOfDay(now), 7), 30); // 7:30 AM
+      const endTime = setMinutes(setHours(startOfDay(now), 13), 0); // 1:00 PM
+
+      if (isBefore(now, startTime)) return { canMark: false, reason: "Marking opens at 7:30 AM today" };
+      if (isAfter(now, endTime)) return { canMark: false, reason: "Marking closed at 1:00 PM today" };
+      
+      return { canMark: true, reason: "" };
+    }
+
+    // If it's a past Sunday, we assume it's closed (based on "cant change after 1pm on THAT sunday")
+    if (isBefore(date, startOfDay(now))) {
+      return { canMark: false, reason: "Cannot modify past attendance" };
+    }
+
+    // If it's a future Sunday, it's not open yet
+    return { canMark: false, reason: "Marking will open on Sunday at 7:30 AM" };
+  }, [date]);
 
   // Local state to track attendance changes before saving
   const [attendanceState, setAttendanceState] = useState<Record<string, "present" | "absent" | "late">>({});
@@ -115,8 +163,12 @@ export default function MarkAttendancePage() {
                 </Select>
               </div>
               <div className="w-full md:w-64">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">Date</label>
-                <DatePicker date={date} setDate={(d) => d && setDate(d)} />
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">Date (Sundays Only)</label>
+                <DatePicker 
+                  date={date} 
+                  setDate={(d) => d && setDate(d)} 
+                  disabled={(d) => !isSunday(d)}
+                />
               </div>
               {selectedGradeId && (
                 <div className="w-full md:w-auto md:ml-auto">
@@ -183,11 +235,13 @@ export default function MarkAttendancePage() {
                         <Button
                           size="sm"
                           variant={status === "present" ? "default" : "outline"}
+                          disabled={!markingStatus.canMark || markAttendanceMutation.isPending}
                           className={cn(
                             "w-24 h-10 font-medium transition-all",
                             status === "present" 
                               ? "bg-green-600 hover:bg-green-700 text-white shadow-sm" 
-                              : "hover:bg-green-50 hover:text-green-700 hover:border-green-200 text-slate-600"
+                              : "hover:bg-green-50 hover:text-green-700 hover:border-green-200 text-slate-600",
+                            !markingStatus.canMark && "opacity-50 cursor-not-allowed"
                           )}
                           onClick={() => handleMark(student.id, "present")}
                         >
@@ -196,11 +250,13 @@ export default function MarkAttendancePage() {
                         <Button
                           size="sm"
                           variant={status === "absent" ? "default" : "outline"}
+                          disabled={!markingStatus.canMark || markAttendanceMutation.isPending}
                           className={cn(
                             "w-24 h-10 font-medium transition-all",
                             status === "absent" 
                               ? "bg-red-600 hover:bg-red-700 text-white shadow-sm" 
-                              : "hover:bg-red-50 hover:text-red-700 hover:border-red-200 text-slate-600"
+                              : "hover:bg-red-50 hover:text-red-700 hover:border-red-200 text-slate-600",
+                            !markingStatus.canMark && "opacity-50 cursor-not-allowed"
                           )}
                           onClick={() => handleMark(student.id, "absent")}
                         >

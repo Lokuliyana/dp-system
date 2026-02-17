@@ -1,19 +1,24 @@
 const Teacher = require('../../models/staff/teacher.model')
+const StaffRole = require('../../models/staff/staffRole.model')
 const Role = require('../../models/system/role.model')
 const AppUser = require('../../models/system/appUser.model')
 const ApiError = require('../../utils/apiError')
 const bcrypt = require('bcryptjs')
+const dayjs = require('dayjs')
 
 async function syncAppUser(teacher, schoolId, userId) {
+  // 1. Get systemRoleIds from teacher's staff roles
+  const staffRoles = await StaffRole.find({ _id: { $in: teacher.roleIds || [] } })
+  const roleIds = staffRoles.map((r) => r.systemRoleId).filter(Boolean)
 
   // 2. Find existing AppUser for this teacher
-  let appUser = await AppUser.findOne({ teacherId: teacher._id, schoolId })
+  const appUser = await AppUser.findOne({ teacherId: teacher._id, schoolId })
 
   const userData = {
     name: `${teacher.firstNameEn} ${teacher.lastNameEn}`.trim(),
     email: teacher.email || undefined,
     phone: teacher.phone || undefined,
-    roleIds: [staffRole._id],
+    roleIds: roleIds,
     teacherId: teacher._id,
     schoolId,
     isActive: teacher.status === 'active',
@@ -29,12 +34,18 @@ async function syncAppUser(teacher, schoolId, userId) {
     )
   } else {
     // Create new user
-    const defaultPassword = teacher.firstNameEn.toLowerCase()
+    // Default PW should be dob MMDD + firstname (order - firstnameMMDD)
+    let dobMMDD = ''
+    if (teacher.dob) {
+      dobMMDD = dayjs(teacher.dob).format('MMDD')
+    }
+    const defaultPassword = `${teacher.firstNameEn.toLowerCase()}${dobMMDD}`
     const hashedPassword = await bcrypt.hash(defaultPassword, 10)
 
     await AppUser.create({
       ...userData,
       password: hashedPassword,
+      isFirstTimeLogin: true,
       createdById: userId,
     })
   }
@@ -69,9 +80,7 @@ exports.listTeachers = async ({ schoolId, filters }) => {
     ]
   }
 
-  const items = await Teacher.find(q)
-    .sort({ fullNameEn: 1 })
-    .lean()
+  const items = await Teacher.find(q).sort({ fullNameEn: 1 }).lean()
 
   return items.map((item) => ({ ...item, id: item._id?.toString?.() }))
 }
@@ -100,7 +109,6 @@ exports.deleteTeacher = async ({ schoolId, id }) => {
 
   return true
 }
-
 
 /**
  * Append a past role entry.

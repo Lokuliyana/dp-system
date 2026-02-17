@@ -1,13 +1,16 @@
+const mongoose = require('mongoose')
 const TeamSelection = require('../../models/housemeets/teamSelection.model')
 const Competition = require('../../models/housemeets/competition.model')
 const CompetitionRegistration = require('../../models/housemeets/competitionRegistration.model')
 const CompetitionResult = require('../../models/housemeets/competitionResult.model')
 const ApiError = require('../../utils/apiError')
 
-// F22 scoring: 1st=5, 2nd=4, 3rd=3, 4th=2, 5th=1. :contentReference[oaicite:2]{index=2}
+// Scoring for higher levels (Zonal, District, All-Island): 1st=5, 2nd=4, 3rd=3, 4th=2, 5th=1.
 const MARKS_BY_PLACE = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 }
 
-function computeTotalMarks(entries = []) {
+function computeTotalMarks(entries = [], level = 'zonal') {
+  // If we ever need level-specific scoring, we can branch here.
+  // For now, all higher levels (zonal, district, allisland) use MARKS_BY_PLACE.
   return entries.reduce((sum, e) => {
     const p = e.place
     return sum + (MARKS_BY_PLACE[p] || 0)
@@ -26,31 +29,54 @@ function enforceMaxThreePerStudent(entries = []) {
 }
 
 /**
- * F21 Suggestions:
- * - take 1st place from each MAIN competition (41) for given year
- * - fallback to registered students if no results yet
+ * Team Selection Suggestions:
+ * - for zonal: take results/registrations from house meets
+ * - for district: take 1st place from zonal selection
+ * - for allisland: take 1st place from district selection
  */
-exports.getZonalSuggestions = async ({ schoolId, year }) => {
+exports.getTeamSelectionSuggestions = async ({ schoolId, year, level = 'zonal' }) => {
   const y = Number(year)
 
+  if (level === 'district' || level === 'allisland') {
+    const fromLevel = level === 'district' ? 'zonal' : 'district'
+    const prev = await TeamSelection.findOne({ schoolId, level: fromLevel, year: y }).lean()
+    
+    if (!prev || !prev.entries?.length) return []
+
+    // Suggest top winners from previous level (currently 1st place as per original requirement)
+    const winners = prev.entries.filter(e => e.place === 1)
+    
+    // Populate student details for UI
+    const results = await Promise.all(
+      winners.map(async (w) => {
+        const student = await mongoose.model('Student').findById(w.studentId).select('firstNameEn lastNameEn admissionNumber').lean()
+        return {
+          competitionId: w.competitionId,
+          studentId: student || { _id: w.studentId },
+          place: undefined // place at the NEW level is unknown
+        }
+      })
+    )
+    return results
+  }
+
+  // Zonal (original logic)
   const mains = await Competition.find({
     schoolId,
     year: y,
-    // isMainCompetition: true, // Fetch all for now as per requirement
   }).lean()
 
   const mainCompetitionIds = mains.map((c) => c._id)
 
-  // Fetch top 5 places for all competitions to allow alternates
   const results = await CompetitionResult.find({
     schoolId,
     year: y,
     competitionId: { $in: mainCompetitionIds },
-    place: { $lte: 5 }, // Get top 5
+    place: { $lte: 5 },
     studentId: { $ne: null },
   })
     .sort({ competitionId: 1, place: 1 })
-    .populate('studentId', 'firstNameEn lastNameEn admissionNumber') // Populate for frontend display
+    .populate('studentId', 'firstNameEn lastNameEn admissionNumber')
     .lean()
 
   if (results.length > 0) {
@@ -61,7 +87,6 @@ exports.getZonalSuggestions = async ({ schoolId, year }) => {
     }))
   }
 
-  // Fallback: if no results, return registrations
   const registrations = await CompetitionRegistration.find({
     schoolId,
     year: y,
@@ -77,6 +102,7 @@ exports.getZonalSuggestions = async ({ schoolId, year }) => {
   }))
 }
 
+
 /**
  * Save/Update selection for any level.
  * If entries provided -> recompute totalMarks automatically (F22).
@@ -86,7 +112,7 @@ exports.saveTeamSelection = async ({ schoolId, payload, userId }) => {
 
   enforceMaxThreePerStudent(entries)
 
-  const totalMarks = computeTotalMarks(entries)
+  const totalMarks = computeTotalMarks(entries, level)
 
   const updated = await TeamSelection.findOneAndUpdate(
     { schoolId, level, year },

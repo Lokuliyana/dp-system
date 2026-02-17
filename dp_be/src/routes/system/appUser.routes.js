@@ -15,6 +15,7 @@ router.use(auth)
 router.use(injectTenant)
 
 router.get('/me', ctrl.me)
+router.post('/reset-password', ctrl.resetPassword)
 
 /* ---- ADMIN USER CRUD ---- */
 router.post(

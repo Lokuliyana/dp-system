@@ -89,6 +89,7 @@ export default function GradePage({ params }: GradePageProps) {
     fullNameEn: s.fullNameEn || "",
     whatsappNumber: s.whatsappNumber || "",
     sex: s.sex || "",
+    admissionYear: s.admissionYear || (s.admissionDate ? new Date(s.admissionDate).getFullYear() : undefined),
   }));
 
   const handleEditStudent = (student: MockStudent) => {

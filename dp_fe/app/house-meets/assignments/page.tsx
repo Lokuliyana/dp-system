@@ -1,22 +1,43 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader, Users, ArrowRight, X, ChevronsRight, Save, RotateCcw, Calendar } from "lucide-react";
+import { Loader, Users, ArrowRight, X, ChevronsRight, Save, RotateCcw, Calendar, Wand2, Briefcase } from "lucide-react";
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { HouseMeetsMenu } from "@/components/house-meets/house-meets-menu";
-import { Button, Card, CardContent, CardHeader, CardTitle, ScrollArea, Badge, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
+import { 
+  Button, 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  ScrollArea, 
+  Badge, 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from "@/components/ui";
 import { useGrades } from "@/hooks/useGrades";
 import { useStudentsByGrade } from "@/hooks/useStudents";
 import { useAssignHouse, useHouseAssignments, useUnassignHouse, useBulkAssignHouse } from "@/hooks/useHouseAssignments";
 import { useHouses } from "@/hooks/useHouses";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { AutomaticAssignmentDialog } from "@/components/house-meets/automatic-assignment-dialog";
+import { TeacherHouseAssignments } from "@/components/house-meets/teacher-house-assignments";
 
 export default function HouseAssignmentsPage() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const { data: grades = [] } = useGrades();
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
+  const [isAutoDialogOpen, setIsAutoDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("students");
   
   // Local state for pending assignments: studentId -> houseId (or null for unassigned)
   const [localAssignments, setLocalAssignments] = useState<Record<string, string | null>>({});
@@ -122,7 +143,7 @@ export default function HouseAssignmentsPage() {
 
       <DynamicPageHeader
         title="House Assignments"
-        subtitle="Assign students to houses for the selected year."
+        subtitle="Manage student and staff house assignments."
         icon={Users}
         actions={
           <div className="flex items-center gap-3">
@@ -144,6 +165,16 @@ export default function HouseAssignmentsPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAutoDialogOpen(true)}
+              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+            >
+              <Wand2 className="mr-2 h-4 w-4" />
+              Automatic
+            </Button>
 
             {hasChanges && (
               <>
@@ -170,110 +201,137 @@ export default function HouseAssignmentsPage() {
         }
       />
 
-      <div className="p-6 space-y-6 h-[calc(100vh-140px)] flex flex-col">
-        {/* Grade Selector */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide shrink-0">
-          {grades.map((grade) => (
-            <Button
-              key={grade.id}
-              onClick={() => setSelectedGrade(grade.id)}
-              variant={selectedGrade === grade.id ? "default" : "outline"}
-              size="sm"
-              className="whitespace-nowrap"
-            >
-              Grade {grade.level}
-            </Button>
-          ))}
-        </div>
+      <div className="p-6 h-[calc(100vh-140px)] flex flex-col overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full overflow-hidden">
+          <TabsList className="mb-4">
+            <TabsTrigger value="students" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Students
+            </TabsTrigger>
+            <TabsTrigger value="staff" className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4" />
+              Staff
+            </TabsTrigger>
+          </TabsList>
 
-        {isLoading ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            <Loader className="mr-2 h-5 w-5 animate-spin" />
-            Loading assignments...
-          </div>
-        ) : houses.length === 0 ? (
-          <div className="text-sm text-muted-foreground">Create houses first to start assignments.</div>
-        ) : !selectedGrade ? (
-          <div className="flex h-full items-center justify-center text-slate-500 border border-dashed border-slate-200 rounded-lg">
-            Select a grade to manage assignments
-          </div>
-        ) : (
-          <div className="flex flex-col h-full gap-6 overflow-hidden">
-            {/* Top: House Boxes */}
-            <div className="grid grid-cols-4 gap-4 shrink-0 h-64">
-              {houses.map((house) => (
-                <HouseBox
-                  key={house.id}
-                  house={house}
-                  students={houseStudents[house.id] || []}
-                  onUnassign={(studentId) => handleUnassign(studentId)}
-                />
+          <TabsContent value="students" className="flex-1 flex flex-col gap-6 overflow-hidden mt-0">
+             {/* Grade Selector */}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide shrink-0">
+              {grades.map((grade) => (
+                <Button
+                  key={grade.id}
+                  onClick={() => setSelectedGrade(grade.id)}
+                  variant={selectedGrade === grade.id ? "default" : "outline"}
+                  size="sm"
+                  className="whitespace-nowrap"
+                >
+                  Grade {grade.level}
+                </Button>
               ))}
             </div>
 
-            {/* Bottom: Unassigned Students */}
-            <Card className="flex-1 flex flex-col border-slate-200 shadow-sm overflow-hidden">
-              <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50 py-3 min-h-[50px]">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                    Unassigned Students
-                    <Badge variant="secondary" className="bg-slate-200 text-slate-700 ml-2">
-                      {unassignedStudents.length}
-                    </Badge>
-                  </CardTitle>
+            {isLoading ? (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                <Loader className="mr-2 h-5 w-5 animate-spin" />
+                Loading assignments...
+              </div>
+            ) : houses.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Create houses first to start assignments.</div>
+            ) : !selectedGrade ? (
+              <div className="flex-1 flex items-center justify-center text-slate-500 border border-dashed border-slate-200 rounded-lg">
+                Select a grade to manage assignments
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col gap-6 overflow-hidden">
+                {/* Top: House Boxes */}
+                <div className="grid grid-cols-4 gap-4 shrink-0 h-64">
+                  {houses.map((house) => (
+                    <HouseBox
+                      key={house.id}
+                      house={house}
+                      students={houseStudents[house.id] || []}
+                      onUnassign={(studentId) => handleUnassign(studentId)}
+                    />
+                  ))}
                 </div>
-              </CardHeader>
-              <CardContent className="p-0 flex-1 overflow-hidden bg-slate-50/30">
-                <ScrollArea className="h-full">
-                    {unassignedStudents.length === 0 ? (
-                      <div className="col-span-full py-12 text-center text-sm text-muted-foreground flex flex-col items-center justify-center h-full">
-                        <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
-                          <Users className="h-6 w-6 text-green-600" />
-                        </div>
-                        <p className="font-medium text-slate-900">All students assigned!</p>
-                        <p className="text-slate-500 mt-1">Great job organizing the houses.</p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col bg-white rounded-md border border-slate-200 shadow-sm divide-y divide-slate-100">
-                        {unassignedStudents.map((student) => (
-                          <div
-                            key={student.id}
-                            className="flex items-center justify-between gap-3 p-3 hover:bg-slate-50 transition-all group"
-                          >
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <div className="min-w-0">
-                                <p className="font-medium text-sm text-slate-900 truncate">
-                                  {student.nameWithInitialsSi}
-                                </p>
-                                <p className="text-[11px] text-slate-500">
-                                  ID: {student.admissionNumber}
-                                </p>
-                              </div>
+
+                {/* Bottom: Unassigned Students */}
+                <Card className="flex-1 flex flex-col border-slate-200 shadow-sm overflow-hidden min-h-0">
+                  <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50 py-3 min-h-[50px] shrink-0">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                        Unassigned Students
+                        <Badge variant="secondary" className="bg-slate-200 text-slate-700 ml-2">
+                          {unassignedStudents.length}
+                        </Badge>
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0 flex-1 overflow-hidden bg-slate-50/30">
+                    <ScrollArea className="h-full">
+                        {unassignedStudents.length === 0 ? (
+                          <div className="col-span-full py-12 text-center text-sm text-muted-foreground flex flex-col items-center justify-center h-full">
+                            <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
+                              <Users className="h-6 w-6 text-green-600" />
                             </div>
-                            
-                            <div className="flex items-center gap-1.5 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
-                              {houses.map((house) => (
-                                <button
-                                  key={house.id}
-                                  onClick={() => handleAssign(student.id, house.id)}
-                                  className="h-7 px-3 rounded-md text-[10px] font-bold text-white shadow-sm hover:shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center tracking-wide"
-                                  style={{ backgroundColor: house.color }}
-                                  title={`Assign to ${house.nameEn}`}
-                                >
-                                  {house.nameEn.substring(0, 3).toUpperCase()}
-                                </button>
-                              ))}
-                            </div>
+                            <p className="font-medium text-slate-900">All students assigned!</p>
+                            <p className="text-slate-500 mt-1">Great job organizing the houses.</p>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                        ) : (
+                          <div className="flex flex-col bg-white rounded-md border border-slate-200 shadow-sm divide-y divide-slate-100">
+                            {unassignedStudents.map((student) => (
+                              <div
+                                key={student.id}
+                                className="flex items-center justify-between gap-3 p-3 hover:bg-slate-50 transition-all group"
+                              >
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-sm text-slate-900 truncate">
+                                      {student.nameEn || student.nameWithInitialsSi}
+                                    </p>
+                                    <p className="text-[11px] text-slate-500">
+                                      ID: {student.admissionNumber}
+                                    </p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-1.5 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
+                                  {houses.map((house) => (
+                                    <button
+                                      key={house.id}
+                                      onClick={() => handleAssign(student.id, house.id)}
+                                      className="h-7 px-3 rounded-md text-[10px] font-bold text-white shadow-sm hover:shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center tracking-wide"
+                                      style={{ backgroundColor: house.color }}
+                                      title={`Assign to ${house.nameEn}`}
+                                    >
+                                      {house.nameEn.substring(0, 3).toUpperCase()}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="staff" className="flex-1 overflow-hidden mt-0">
+             <TeacherHouseAssignments />
+          </TabsContent>
+        </Tabs>
       </div>
+
+      <AutomaticAssignmentDialog 
+        isOpen={isAutoDialogOpen}
+        onClose={() => setIsAutoDialogOpen(false)}
+        grades={grades}
+        houses={houses}
+        year={selectedYear}
+      />
     </LayoutController>
   );
 }
@@ -288,12 +346,7 @@ function HouseBox({
   onUnassign: (id: string) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const defaultCount = 5; // Increased default count as requested "expand width... put 3 letters"
-  // Actually user said "default size 3 students, expand to 5" in previous request, 
-  // but now "expand the width of students list". 
-  // Since boxes are now on top, they have less height but more width? 
-  // No, grid-cols-4 means they are narrow. 
-  // Let's keep 3 as default but make the list item compact.
+  const defaultCount = 5; 
   
   const displayStudents = isExpanded ? students : students.slice(0, defaultCount);
   const remaining = Math.max(0, students.length - defaultCount);
@@ -336,7 +389,7 @@ function HouseBox({
                       {houseCode}
                     </span>
                     <span className="text-xs font-medium text-slate-700 truncate">
-                      {student.nameWithInitialsSi}
+                      {student.nameEn || student.nameWithInitialsSi}
                     </span>
                   </div>
                   <button

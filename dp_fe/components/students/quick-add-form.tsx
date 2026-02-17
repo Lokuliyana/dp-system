@@ -45,6 +45,7 @@ const quickStudentSchema = z.object({
   gradeId: z.string().min(1, "Grade is required"),
   sectionId: z.string().min(1, "Section is required"),
   academicYear: z.number().min(2000),
+  admissionYear: z.number().min(1900).optional(),
 });
 
 type QuickStudentValues = z.infer<typeof quickStudentSchema>;
@@ -91,6 +92,7 @@ export function QuickAddStudentForm({
       gradeId: defaultGradeId || "",
       sectionId: defaultSectionId || "",
       academicYear: new Date().getFullYear(),
+      admissionYear: new Date().getFullYear(),
     },
   });
 
@@ -240,6 +242,25 @@ export function QuickAddStudentForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-semibold">Academic Year</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        className="h-12 border-2 focus:ring-primary/20 font-medium"
+                        {...field} 
+                        onChange={e => field.onChange(parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="admissionYear"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-semibold">Admit Year</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 

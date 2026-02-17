@@ -2,10 +2,11 @@ const service = require('../../services/housemeets/teamSelection.service')
 const asyncHandler = require('../../middlewares/asyncHandler')
 const ApiResponse = require('../../utils/apiResponse')
 
-exports.getZonalSuggestions = asyncHandler(async (req, res) => {
-  const items = await service.getZonalSuggestions({
+exports.getTeamSelectionSuggestions = asyncHandler(async (req, res) => {
+  const items = await service.getTeamSelectionSuggestions({
     schoolId: req.schoolId,
     year: req.query.year,
+    level: req.query.level,
   })
   res.json(ApiResponse.ok(items))
 })

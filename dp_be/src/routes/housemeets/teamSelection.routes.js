@@ -3,13 +3,15 @@ const ctrl = require('../../controllers/housemeets/teamSelection.controller')
 const validate = require('../../middlewares/validate.middleware')
 const V = require('../../validations/housemeets/teamSelection.validation')
 
-// F21 suggestions
+// Team selection suggestions (any level)
 router.get(
-  '/zonal-suggestions',
+  '/suggestions',
   // permit([P.TEAM_SELECTION.READ]),
-  validate(V.getZonalSuggestionsSchema),
-  ctrl.getZonalSuggestions
+  validate(V.getSuggestionsSchema),
+
+  ctrl.getTeamSelectionSuggestions
 )
+
 
 // Save selection for any level (F21/F22)
 router.post(

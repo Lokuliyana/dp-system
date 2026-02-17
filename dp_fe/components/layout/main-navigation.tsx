@@ -83,18 +83,18 @@ export function MainNavigation() {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
-      <SidebarHeader className="border-b border-sidebar-border py-1.5">
-        <Link href="/" className="flex items-center gap-2.5 px-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-            <BookOpen className="h-4.5 w-4.5" />
+      <SidebarHeader className="border-b border-sidebar-border py-4">
+        <div className="px-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
+              <BookOpen className="h-6 w-6" />
+            </div>
+            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+              <span className="text-sm font-bold text-foreground">Navigation</span>
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Control Panel</span>
+            </div>
           </div>
-          <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-sm font-bold tracking-tight">Sri Ananda</span>
-            <span className="truncate text-[10px] text-muted-foreground leading-none">
-              Admin Console
-            </span>
-          </div>
-        </Link>
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="gap-0">

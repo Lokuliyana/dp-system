@@ -40,6 +40,7 @@ const appUserSchema = new mongoose.Schema(
     },
 
     isActive: { type: Boolean, default: true },
+    isFirstTimeLogin: { type: Boolean, default: true },
     permissions: { type: [String], default: [] },
     restrictedGradeIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Grade' }],
   },

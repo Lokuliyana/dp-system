@@ -4,8 +4,8 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLogin } from "@/hooks/useAuth";
-import { Button } from "@/components/ui";
-import { Input } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardHeader,
@@ -13,8 +13,10 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "@/components/ui";
-import { Label } from "@/components/ui";
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { BookOpen, Lock, User, Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type FormState = {
   identifier: string;
@@ -27,7 +29,7 @@ function LoginForm() {
   const redirectTo = searchParams.get("redirect") || "/dashboard";
 
   const [form, setForm] = React.useState<FormState>({
-    identifier: "admin@gmail.com",
+    identifier: "",
     password: "",
   });
 
@@ -50,14 +52,17 @@ function LoginForm() {
       onSuccess: (data) => {
         setErrMsg(null);
 
-        // Store tokens for axios interceptor / session-store usage
         if (data?.accessToken)
           localStorage.setItem("accessToken", data.accessToken);
         if (data?.refreshToken)
           localStorage.setItem("refreshToken", data.refreshToken);
         if (data?.user) localStorage.setItem("me", JSON.stringify(data.user));
-
-        router.replace(redirectTo);
+        
+        if (data?.user?.isFirstTimeLogin) {
+          router.replace("/reset-password");
+        } else {
+          router.replace(redirectTo);
+        }
       },
       onError: (e: any) => {
         const msg =
@@ -70,139 +75,120 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-0px)] w-full flex items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-md rounded-xl shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
-        <CardHeader className="space-y-2 text-center pb-8">
-          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-6 h-6 text-primary"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a] relative overflow-hidden">
+      {/* Abstract Background elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03] pointer-events-none" 
+           style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+
+      <Card className="w-full max-w-lg border-white/5 bg-slate-900/50 backdrop-blur-xl shadow-2xl relative z-10 overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-blue-500 to-primary animate-gradient-x" />
+        
+        <CardHeader className="space-y-4 text-center pt-12 pb-8">
+          <div className="mx-auto w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mb-2 rotate-3 hover:rotate-0 transition-transform duration-300 shadow-inner">
+            <BookOpen className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">
-            Welcome Back
-          </CardTitle>
-          <CardDescription className="text-slate-500 text-base">
-            Sign in to Sri Ananda administrative dashboard
-          </CardDescription>
+          <div className="space-y-2">
+            <CardTitle className="text-4xl font-extrabold tracking-tight text-white flex items-center justify-center gap-3">
+              Sri Ananda
+              <span className="text-xs font-medium bg-primary/20 text-primary-foreground px-2 py-1 rounded uppercase tracking-widest border border-primary/20">
+                Console
+              </span>
+            </CardTitle>
+            <CardDescription className="text-slate-400 text-lg">
+              Authorized personnel only. Please sign in.
+            </CardDescription>
+          </div>
         </CardHeader>
 
         <form onSubmit={onSubmit}>
-          <CardContent className="space-y-6">
-            {/* Demo Credentials Alert */}
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Demo Credentials
-                </span>
-                <span className="text-[10px] px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">
-                  Active
-                </span>
-              </div>
-              <div className="grid grid-cols-1 gap-2 text-sm">
-                <div className="flex items-center justify-between group p-2 hover:bg-white rounded transition-colors cursor-pointer" onClick={() => {
-                  navigator.clipboard.writeText("admin@gmail.com");
-                  setForm(p => ({ ...p, identifier: "admin@gmail.com" }));
-                }}>
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <span className="font-medium text-slate-900">Login:</span>
-                    <span className="font-mono">admin@gmail.com</span>
-                  </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                </div>
-                <div className="flex items-center justify-between group p-2 hover:bg-white rounded transition-colors cursor-pointer" onClick={() => {
-                   navigator.clipboard.writeText("admin123");
-                   setForm(p => ({ ...p, password: "admin123" }));
-                }}>
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <span className="font-medium text-slate-900">Pass:</span>
-                    <span className="font-mono">admin123</span>
-                  </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          <CardContent className="space-y-6 px-8">
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="identifier" className="text-slate-300 font-medium ml-1">Account Identifier</Label>
+                <div className="relative group">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                  <Input
+                    id="identifier"
+                    type="text"
+                    autoComplete="username"
+                    placeholder="Email or phone number"
+                    value={form.identifier}
+                    onChange={(e) => onChange("identifier", e.target.value)}
+                    disabled={loginMut.isPending}
+                    required
+                    className="h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:bg-slate-800 focus:border-primary/50 transition-all pl-11 rounded-xl"
+                  />
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="identifier">Email or Phone Number</Label>
-                <Input
-                  id="identifier"
-                  type="text"
-                  autoComplete="username"
-                  placeholder="Email or phone number"
-                  value={form.identifier}
-                  onChange={(e) => onChange("identifier", e.target.value)}
-                  disabled={loginMut.isPending}
-                  required
-                  className="h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                />
-              </div>
-
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Button variant="link" className="p-0 h-auto text-xs text-primary" type="button">
-                    Forgot password?
+                <div className="flex items-center justify-between ml-1">
+                  <Label htmlFor="password" title="password" className="text-slate-300 font-medium">Password</Label>
+                  <Button variant="link" className="p-0 h-auto text-xs text-slate-500 hover:text-primary transition-colors" type="button">
+                    Forgot Access?
                   </Button>
                 </div>
-                <div className="relative">
+                <div className="relative group">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="password"
                     type={showPw ? "text" : "password"}
                     autoComplete="current-password"
-                    placeholder="Enter your password"
+                    placeholder="••••••••"
                     value={form.password}
                     onChange={(e) => onChange("password", e.target.value)}
                     disabled={loginMut.isPending}
-                    className="h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors pr-20"
+                    className="h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:bg-slate-800 focus:border-primary/50 transition-all pl-11 pr-12 rounded-xl"
                   />
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1 h-9 text-xs text-slate-500 hover:text-slate-900"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
                     onClick={() => setShowPw((v) => !v)}
                     disabled={loginMut.isPending}
                   >
-                    {showPw ? "Hide" : "Show"}
-                  </Button>
+                    {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
               </div>
             </div>
 
             {errMsg && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-                {errMsg}
+              <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-4 text-sm text-red-400 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 border-l-4 border-l-red-500">
+                <ShieldCheck className="w-5 h-5 flex-shrink-0" />
+                <p className="font-medium">{errMsg}</p>
               </div>
             )}
           </CardContent>
 
-          <CardFooter className="flex flex-col gap-4 pb-8">
+          <CardFooter className="flex flex-col gap-6 px-8 pt-4 pb-12">
             <Button
               type="submit"
-              className="w-full h-11 text-base font-medium shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+              className="w-full h-12 text-base font-bold transition-all rounded-xl relative overflow-hidden group shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]"
               disabled={loginMut.isPending}
             >
-              {loginMut.isPending ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Signing in...</span>
-                </div>
-              ) : (
-                "Sign In to Dashboard"
-              )}
+              <span className={cn(
+                "flex items-center justify-center gap-2 transition-transform duration-300",
+                loginMut.isPending ? "translate-x-0" : "group-hover:translate-x-1"
+              )}>
+                {loginMut.isPending ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Authenticating...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Enter Console</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </span>
             </Button>
+            
+            <p className="text-center text-slate-500 text-sm">
+              Sri Ananda Educational Complex &copy; {new Date().getFullYear()}
+            </p>
           </CardFooter>
         </form>
       </Card>
@@ -212,7 +198,11 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <React.Suspense fallback={<div>Loading...</div>}>
+    <React.Suspense fallback={
+       <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a]">
+         <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+       </div>
+    }>
       <LoginForm />
     </React.Suspense>
   );

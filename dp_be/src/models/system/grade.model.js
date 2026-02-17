@@ -14,7 +14,7 @@ const gradeSchema = new mongoose.Schema(
   {
     nameSi: { type: String, required: true, trim: true },
     nameEn: { type: String, required: true, trim: true },
-    level: { type: Number, required: true, min: 1, max: 14 },
+    level: { type: Number, required: true, min: 1, max: 20 },
 
     classTeacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' },
     pastTeachers: { type: [pastTeacherSchema], default: [] },

@@ -149,3 +149,17 @@ exports.deleteAppUser = async ({ schoolId, id }) => {
   if (!deleted) throw new ApiError(404, 'User not found')
   return true
 }
+
+exports.resetPassword = async ({ id, newPassword }) => {
+  const hashed = await bcrypt.hash(newPassword, 10)
+  const updated = await AppUser.findByIdAndUpdate(
+    id,
+    { 
+      password: hashed,
+      isFirstTimeLogin: false 
+    },
+    { new: true }
+  )
+  if (!updated) throw new ApiError(404, 'User not found')
+  return true
+}

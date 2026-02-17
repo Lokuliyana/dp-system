@@ -14,7 +14,7 @@ exports.createGradeSchema = z.object({
   body: z.object({
     nameSi: z.string().min(1, 'nameSi is required'),
     nameEn: z.string().min(1, 'nameEn is required'),
-    level: z.number().int().min(1).max(14),
+    level: z.number().int().min(1).max(20),
     classTeacherId: objectId.nullable().optional(),
   }),
 })

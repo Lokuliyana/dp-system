@@ -26,11 +26,13 @@ exports.getSelectionSchema = z.object({
   }),
 })
 
-exports.getZonalSuggestionsSchema = z.object({
+exports.getSuggestionsSchema = z.object({
   query: z.object({
     year: z.string(),
+    level: levelEnum.optional(),
   }),
 })
+
 
 exports.autoGenerateSchema = z.object({
   body: z.object({

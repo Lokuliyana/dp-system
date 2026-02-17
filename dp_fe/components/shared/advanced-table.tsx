@@ -128,6 +128,7 @@ export interface AdvancedTableProps<T extends Record<string, any>> {
   showAggregations?: boolean
   compactMode?: boolean
   theme?: "default" | "industrial" | "minimal"
+  sortable?: boolean
 }
 
 interface SortConfig<T> {
@@ -181,6 +182,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
     showAggregations = false,
     compactMode = false,
     theme = "industrial",
+    sortable: globalSortable = false,
   } = props
 
   const { toast } = useToast()
@@ -192,6 +194,15 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [sortConfig, setSortConfig] = useState<SortConfig<T> | null>(null)
+
+  // Memoize columns with global sortable prop applied
+  const enrichedColumns = useMemo(() => {
+    return columns.map(col => ({
+      ...col,
+      sortable: col.sortable ?? globalSortable
+    }))
+  }, [columns, globalSortable])
+
   const [filters, setFilters] = useState<FilterConfig>({})
   const [visibleColumns, setVisibleColumns] = useState<Set<keyof T>>(new Set(columns.map((col) => col.key)))
   const [frozenColumns, setFrozenColumns] = useState<Set<keyof T>>(
@@ -210,33 +221,55 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
   const cellRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const autoSaveRef = useRef<NodeJS.Timeout>()
 
-  useEffect(() => {
-    setLocalData(data)
-    if (enableValidation) {
-      validateAllData(data)
-    }
-  }, [data, enableValidation])
-
-  useEffect(() => {
-    if (autoSave && hasUnsavedChanges && onSave) {
-      autoSaveRef.current = setTimeout(() => {
-        saveAllChanges()
-      }, autoSaveInterval)
-    }
-
-    return () => {
-      if (autoSaveRef.current) {
-        clearTimeout(autoSaveRef.current)
+  const saveAllChanges = useCallback(async () => {
+    if (!onSave || validationErrors.length > 0) {
+      if (validationErrors.length > 0) {
+        toast({
+          title: "Validation Errors",
+          description: `Please fix ${validationErrors.length} validation error(s) before saving.`,
+          variant: "destructive",
+        })
       }
+      return
     }
-  }, [autoSave, hasUnsavedChanges, autoSaveInterval])
+
+    setIsLoading(true)
+    try {
+      const result = await onSave(localData)
+      if (result.success) {
+        setHasUnsavedChanges(false)
+        setLastSaved(new Date())
+        toast({
+          title: "Changes Saved",
+          description: "All changes have been saved successfully.",
+        })
+      } else {
+        if (result.errors) {
+          setValidationErrors(result.errors)
+        }
+        toast({
+          title: "Save Failed",
+          description: "Some validation errors occurred. Please review and try again.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save changes. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [localData, onSave, validationErrors, toast])
 
   const validateAllData = useCallback(
     (dataToValidate: T[]) => {
       const errors: ValidationError[] = []
 
       dataToValidate.forEach((row) => {
-        columns.forEach((column) => {
+        enrichedColumns.forEach((column) => {
           if (column.validation) {
             const error = column.validation(row[column.key])
             if (error) {
@@ -260,8 +293,29 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
 
       setValidationErrors(errors)
     },
-    [columns, idField],
+    [enrichedColumns, idField],
   )
+
+  useEffect(() => {
+    setLocalData(data)
+    if (enableValidation) {
+      validateAllData(data)
+    }
+  }, [data, enableValidation, validateAllData])
+
+  useEffect(() => {
+    if (autoSave && hasUnsavedChanges && onSave) {
+      autoSaveRef.current = setTimeout(() => {
+        saveAllChanges()
+      }, autoSaveInterval)
+    }
+
+    return () => {
+      if (autoSaveRef.current) {
+        clearTimeout(autoSaveRef.current)
+      }
+    }
+  }, [autoSave, hasUnsavedChanges, autoSaveInterval, onSave, saveAllChanges])
 
   const processedData = useMemo(() => {
     let filtered = [...localData]
@@ -327,11 +381,9 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
   const totalPages = Math.ceil(processedData.length / pageSize)
 
   const aggregations = useMemo(() => {
-    if (!showAggregations) return {}
-
     const aggs: Record<string, any> = {}
 
-    columns.forEach((column) => {
+    enrichedColumns.forEach((column) => {
       if (column.aggregation && column.type === "number") {
         const values = processedData.map((row) => Number(row[column.key]) || 0)
 
@@ -356,7 +408,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
     })
 
     return aggs
-  }, [processedData, columns, showAggregations])
+  }, [processedData, enrichedColumns, showAggregations])
 
   const getRowDecorations = useCallback(
     (row: T) => {
@@ -524,7 +576,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
     (format: "csv" | "excel" | "pdf" = "csv") => {
       if (!enableExport) return
 
-      const exportColumns = columns.filter((col) => visibleColumns.has(col.key))
+      const exportColumns = enrichedColumns.filter((col) => visibleColumns.has(col.key))
       const timestamp = new Date().toISOString().split("T")[0]
 
       switch (format) {
@@ -570,7 +622,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
         }
       }
     },
-    [enableExport, columns, visibleColumns, processedData, title],
+    [enableExport, enrichedColumns, visibleColumns, processedData, title, toast],
   )
 
   const toggleColumnVisibility = useCallback((key: keyof T) => {
@@ -588,7 +640,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
   const startEditing = useCallback(
     (rowId: string, field: keyof T) => {
       if (!editable) return
-      const column = columns.find((col) => col.key === field)
+      const column = enrichedColumns.find((col) => col.key === field)
       if (!column?.editable) return
 
       const row = localData.find((r) => String(r[idField]) === rowId)
@@ -597,12 +649,12 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
         setEditValue(String(row[field]))
       }
     },
-    [localData, columns, idField, editable],
+    [localData, enrichedColumns, idField, editable],
   )
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent, rowIndex: number, colIndex: number, rowId: string, field: keyof T) => {
-      const visibleEditableColumns = columns.filter((col) => col.editable && visibleColumns.has(col.key))
+      const visibleEditableColumns = enrichedColumns.filter((col) => col.editable && visibleColumns.has(col.key))
 
       if (e.key === "Tab") {
         e.preventDefault()
@@ -650,51 +702,9 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
         cancelCellEdit()
       }
     },
-    [editingCell, cancelCellEdit, startEditing, paginatedData, columns, visibleColumns, idField, editable],
+    [editingCell, cancelCellEdit, startEditing, paginatedData, enrichedColumns, visibleColumns, idField, editable, saveCellEdit],
   )
 
-  const saveAllChanges = useCallback(async () => {
-    if (!onSave || validationErrors.length > 0) {
-      if (validationErrors.length > 0) {
-        toast({
-          title: "Validation Errors",
-          description: `Please fix ${validationErrors.length} validation error(s) before saving.`,
-          variant: "destructive",
-        })
-      }
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const result = await onSave(localData)
-      if (result.success) {
-        setHasUnsavedChanges(false)
-        setLastSaved(new Date())
-        toast({
-          title: "Changes Saved",
-          description: "All changes have been saved successfully.",
-        })
-      } else {
-        if (result.errors) {
-          setValidationErrors(result.errors)
-        }
-        toast({
-          title: "Save Failed",
-          description: "Some validation errors occurred. Please review and try again.",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      toast({
-        title: "Save Failed",
-        description: "Failed to save changes. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [localData, onSave, validationErrors, toast])
 
   const renderCell = useCallback(
     (row: T, column: TableColumn<T>, rowIndex: number, colIndex: number) => {
@@ -715,7 +725,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
             {column.type === "select" ? (
               <CustomDropdown
                 value={editValue}
-                options={column.options || []}
+                options={(column.options as any) || []}
                 onChange={setEditValue}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") saveCellEdit()
@@ -823,7 +833,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
     ],
   )
 
-  const visibleColumnsArray = columns.filter((col) => visibleColumns.has(col.key))
+  const visibleColumnsArray = enrichedColumns.filter((col) => visibleColumns.has(col.key))
   const frozenColumnsArray = visibleColumnsArray.filter((col) => frozenColumns.has(col.key))
   const regularColumnsArray = visibleColumnsArray.filter((col) => !frozenColumns.has(col.key))
 
@@ -909,7 +919,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>Column Visibility</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {columns.map((column) => (
+                   {enrichedColumns.map((column) => (
                     <DropdownMenuCheckboxItem
                       key={String(column.key)}
                       checked={visibleColumns.has(column.key)}
@@ -999,12 +1009,12 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
       </CardHeader>
 
       <CardContent className="p-0">
-        <div
+         <div
           ref={tableRef}
-          className="overflow-auto"
-          style={{ maxHeight: virtualScrolling ? "600px" : undefined }}
+          className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-250px)] scrollbar-thin scrollbar-thumb-muted-foreground/20"
+          style={{ minHeight: "200px" }}
         >
-          <table className="w-full border-collapse bg-background">
+           <table className="w-full border-collapse bg-background min-w-[800px]">
             <thead className={`${stickyHeader ? "sticky top-0 z-20" : ""} bg-muted/50 backdrop-blur-sm`}>
               <tr className="border-b-2 border-border">
                 {enableRowNumbers && (
@@ -1103,7 +1113,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
                     className={`border-b border-border hover:bg-muted/30 transition-colors ${
                       decorations.className
                     } ${hasRowErrors ? "bg-red-50/50" : ""} ${selectedRows.has(rowId) ? "bg-blue-50/50" : ""}`}
-                    style={decorations.style}
+                    style={decorations.style as React.CSSProperties}
                     title={decorations.tooltip}
                   >
                     {enableRowNumbers && (

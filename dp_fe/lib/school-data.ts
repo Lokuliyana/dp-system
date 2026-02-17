@@ -44,8 +44,9 @@ export interface Student {
   birthCertificateNumber?: string
   admittedGrade?: string
   medium?: "sinhala" | "english" | "tamil"
-  academicYear: number
-  addressSi?: string
+  academicYear: number;
+  admissionYear?: number;
+  addressSi?: string;
   addressEn?: string
   phoneNum?: string
   emergencyNumber?: string

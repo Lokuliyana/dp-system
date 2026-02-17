@@ -20,6 +20,14 @@ export const getStudentColumns = (
     frozen: true,
   },
   {
+    key: "admissionYear",
+    label: "Admit Year",
+    type: "text",
+    sortable: true,
+    filterable: true,
+    width: "120px",
+  },
+  {
     key: "nameWithInitialsSi",
     label: "Name w/ Initials (Si)",
     type: "text",

@@ -38,11 +38,16 @@ export const teamSelectionsService = {
       .then((r) => r.data.data as TeamSelection)
   },
 
-  getZonalSuggestions(year: number) {
+  getSuggestions(year: number, level: "zonal" | "district" | "allisland" = "zonal") {
     return axiosInstance
-      .get(`${endpoints.teamSelections}/zonal-suggestions`, { params: { year } })
-      .then((r) => r.data.data as Array<{ competitionId: string; studentId: string; place?: number }>)
+      .get(`${endpoints.teamSelections}/suggestions`, { params: { year, level } })
+      .then((r) => r.data.data as Array<{ 
+        competitionId: string; 
+        studentId: any; 
+        place?: number 
+      }>)
   },
+
 
   autoGenerate(payload: AutoGeneratePayload) {
     return axiosInstance
