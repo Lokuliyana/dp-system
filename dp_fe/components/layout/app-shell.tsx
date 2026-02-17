@@ -14,6 +14,7 @@ import { Loader2, BookOpen, User } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import Image from "next/image"
 import { UserNav } from "@/components/layout/user-nav"
 
 interface AppShellProps {
@@ -77,13 +78,13 @@ export function AppShell({ children }: AppShellProps) {
       <SidebarInset className="flex flex-col h-screen overflow-hidden">
         {/* Desktop Header */}
         {!isMobile && (
-          <header className="flex h-16 items-center gap-4 border-b bg-white/80 backdrop-blur-md px-6 sticky top-0 z-30 shadow-sm flex-shrink-0">
-            <SidebarTrigger className="h-10 w-10 hover:bg-slate-100 transition-colors rounded-lg" />
+          <header className="flex h-14 items-center gap-4 border-b bg-white/80 backdrop-blur-md px-4 sticky top-0 z-30 shadow-sm flex-shrink-0">
+            <SidebarTrigger className="h-9 w-9 hover:bg-slate-100 transition-colors rounded-lg" />
             
             <div className="flex-1 flex justify-center">
               <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.02]">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] text-primary-foreground transform group-hover:rotate-6 transition-transform">
-                  <BookOpen className="h-5 w-5" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] text-primary-foreground transform group-hover:rotate-6 transition-transform overflow-hidden">
+                  <Image src="/logo.png" alt="Sri Ananda Logo" width={36} height={36} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex flex-col items-center">
                   <span className="text-lg font-black tracking-tight text-slate-900 leading-tight">SRI ANANDA</span>

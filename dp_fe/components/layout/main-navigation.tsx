@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Home,
@@ -85,15 +86,15 @@ export function MainNavigation() {
     <Sidebar collapsible="icon" variant="sidebar" side="left">
       <SidebarHeader className="border-b border-sidebar-border py-4">
         <div className="px-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-              <BookOpen className="h-6 w-6" />
+          {/* <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-primary/20 overflow-hidden">
+              <Image src="/logo.png" alt="Sri Ananda Logo" width={40} height={40} className="h-full w-full object-cover" />
             </div>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
               <span className="text-sm font-bold text-foreground">Navigation</span>
               <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Control Panel</span>
             </div>
-          </div>
+          </div> */}
         </div>
       </SidebarHeader>
 

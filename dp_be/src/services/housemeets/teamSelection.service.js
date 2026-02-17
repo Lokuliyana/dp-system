@@ -49,7 +49,7 @@ exports.getTeamSelectionSuggestions = async ({ schoolId, year, level = 'zonal' }
     // Populate student details for UI
     const results = await Promise.all(
       winners.map(async (w) => {
-        const student = await mongoose.model('Student').findById(w.studentId).select('firstNameEn lastNameEn admissionNumber').lean()
+        const student = await mongoose.model('Student').findById(w.studentId).select('firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi').lean()
         return {
           competitionId: w.competitionId,
           studentId: student || { _id: w.studentId },
@@ -76,14 +76,14 @@ exports.getTeamSelectionSuggestions = async ({ schoolId, year, level = 'zonal' }
     studentId: { $ne: null },
   })
     .sort({ competitionId: 1, place: 1 })
-    .populate('studentId', 'firstNameEn lastNameEn admissionNumber')
+    .populate('studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi')
     .lean()
 
   if (results.length > 0) {
     return results.map(r => ({
       competitionId: r.competitionId,
       studentId: r.studentId,
-      place: r.place
+      place: undefined // Reset place for Zonal, it's a new level
     }))
   }
 
@@ -92,14 +92,14 @@ exports.getTeamSelectionSuggestions = async ({ schoolId, year, level = 'zonal' }
     year: y,
     competitionId: { $in: mainCompetitionIds },
   })
-    .populate('studentId', 'firstNameEn lastNameEn admissionNumber')
+    .populate('studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi')
     .lean()
 
-  return registrations.map(r => ({
-    competitionId: r.competitionId,
-    studentId: r.studentId,
-    place: undefined
-  }))
+    return registrations.map(r => ({
+      competitionId: r.competitionId,
+      studentId: r.studentId,
+      place: undefined
+    }))
 }
 
 
@@ -130,6 +130,7 @@ exports.saveTeamSelection = async ({ schoolId, payload, userId }) => {
     { new: true, upsert: true, setDefaultsOnInsert: true }
   )
 
+  await updated.populate('entries.studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi')
   return updated.toJSON()
 }
 
@@ -142,7 +143,7 @@ exports.getSelection = async ({ schoolId, level, year }) => {
     level,
     year: Number(year),
   })
-    .populate('entries.studentId', 'firstNameEn lastNameEn admissionNumber')
+    .populate('entries.studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi')
     .lean()
 
   return doc || null

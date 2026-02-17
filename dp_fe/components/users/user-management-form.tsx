@@ -72,7 +72,7 @@ export function UserManagementForm({ initialData, isEditing = false }: UserManag
     if (initialData) {
       const firstRole = initialData.roleIds?.[0];
       const safeRoleId = typeof firstRole === 'object' 
-        ? (firstRole as any).id || (firstRole as any)._id 
+        ? String((firstRole as any).id || (firstRole as any)._id || "")
         : String(firstRole || "");
 
       form.reset({
@@ -239,7 +239,7 @@ export function UserManagementForm({ initialData, isEditing = false }: UserManag
                           </TableCell>
                         </TableRow>
                       ) : roles?.map((role) => {
-                        const isSelected = form.watch("roleId") === role.id
+                        const isSelected = String(form.watch("roleId")) === String(role.id)
                         return (
                           <TableRow 
                             key={role.id} 
@@ -247,7 +247,7 @@ export function UserManagementForm({ initialData, isEditing = false }: UserManag
                               "hover:bg-slate-50/30 border-slate-100 cursor-pointer transition-colors",
                               isSelected && "bg-primary/[0.02]"
                             )}
-                            onClick={() => form.setValue("roleId", role.id)}
+                            onClick={() => form.setValue("roleId", String(role.id))}
                           >
                             <TableCell className="py-3">
                               <span className="text-xs font-semibold text-slate-700">{role.name}</span>

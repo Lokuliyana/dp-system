@@ -133,24 +133,24 @@ export function InlineStudentEditor({ students, gradeId, onUpdate, onDelete }: I
           <table className="w-full text-sm border-collapse">
             <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-2 text-left font-semibold text-slate-900">Roll</th>
-                <th className="px-4 py-2 text-left font-semibold text-slate-900">Name</th>
-                <th className="px-4 py-2 text-left font-semibold text-slate-900">Email</th>
-                <th className="px-4 py-2 text-left font-semibold text-slate-900">Status</th>
-                <th className="px-4 py-2 text-left font-semibold text-slate-900">Performance</th>
-                <th className="px-4 py-2 text-right font-semibold text-slate-900">Actions</th>
+                <th className="px-4 py-2 text-left font-semibold text-slate-900 whitespace-nowrap">Roll</th>
+                <th className="px-4 py-2 text-left font-semibold text-slate-900 whitespace-nowrap">Name</th>
+                <th className="px-4 py-2 text-left font-semibold text-slate-900 whitespace-nowrap">Email</th>
+                <th className="px-4 py-2 text-left font-semibold text-slate-900 whitespace-nowrap">Status</th>
+                <th className="px-4 py-2 text-left font-semibold text-slate-900 whitespace-nowrap">Performance</th>
+                <th className="px-4 py-2 text-right font-semibold text-slate-900 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody>
               {gradeStudents.map((student) => (
                 <tr key={student.id} className="border-b border-slate-200 hover:bg-slate-50">
                   <td
-                    className="px-4 py-2 cursor-pointer font-semibold"
+                    className="px-4 py-2 cursor-pointer font-semibold whitespace-nowrap"
                     onClick={() => handleStartEdit(student, "admissionNumber")}
                   >
                     {renderCell(student, "admissionNumber")}
                   </td>
-                  <td className="px-4 py-2 cursor-pointer" onClick={() => handleStartEdit(student, "firstName")}>
+                  <td className="px-4 py-2 cursor-pointer whitespace-nowrap" onClick={() => handleStartEdit(student, "firstName")}>
                     {editingCell?.studentId === student.id && editingCell?.field === "firstName" ? (
                       <div className="flex gap-1">
                         <Input

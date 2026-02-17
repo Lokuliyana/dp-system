@@ -83,6 +83,7 @@ module.exports = async (req, _res, next) => {
     req.user.permissions = Array.from(finalPermissions)
     // console.log(`[AUTH] User ${user.name} aggregate permissions: ${req.user.permissions.length}`)
 
+  /* REMOVED: Grade restrictions based on singleGraded roles
     const isSystemRestricted = systemRoles.length > 0 && systemRoles.every(r => r.singleGraded)
     // console.log(`[AUTH] isSystemRestricted: ${isSystemRestricted}, teacherId: ${user.teacherId}`)
 
@@ -140,6 +141,10 @@ module.exports = async (req, _res, next) => {
       AppUser.updateOne({ _id: user._id }, { $unset: { restrictedGradeIds: 1 } }).exec()
       req.user.restrictedGradeIds = undefined
     }
+    */
+    
+    // Explicitly clear restrictedGradeIds so downstream services don't use it
+    req.user.restrictedGradeIds = undefined
 
 
 

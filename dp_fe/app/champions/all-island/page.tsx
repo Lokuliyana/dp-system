@@ -1,15 +1,15 @@
 "use client";
 
-import { TeamSelectionView } from "@/components/champions/team-selection-view";
+import { ChampionsPathView } from "@/components/champions/champions-path-view";
 import { LayoutController } from "@/components/layout/dynamic";
 import { ChampionsMenu } from "@/components/champions/champions-menu";
 import { Globe } from "lucide-react";
 
 export default function AllIslandPage() {
   return (
-    <LayoutController showMainMenu showHorizontalToolbar>
+    <LayoutController showMainMenu showHorizontalToolbar showSidebar>
       <ChampionsMenu />
-      <TeamSelectionView 
+      <ChampionsPathView 
         level="allisland"
         title="All Island Level"
         description="Manage national level competitions and final rankings."

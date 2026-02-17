@@ -1038,7 +1038,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
                 {visibleColumnsArray.map((column, index) => (
                   <th
                     key={String(column.key)}
-                    className={`text-left p-3 font-semibold bg-muted/70 ${
+                    className={`text-left p-3 font-semibold bg-muted/70 whitespace-nowrap ${
                       column.type === "number" || column.type === "currency" || column.type === "percentage"
                         ? "text-right"
                         : ""
@@ -1138,7 +1138,7 @@ export function AdvancedTable<T extends Record<string, any>>(props: AdvancedTabl
                     {visibleColumnsArray.map((column, colIndex) => (
                       <td
                         key={String(column.key)}
-                        className={`p-3 ${
+                        className={`p-3 whitespace-nowrap ${
                           column.type === "number" || column.type === "currency" || column.type === "percentage"
                             ? "text-right"
                             : ""

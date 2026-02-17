@@ -38,8 +38,9 @@ exports.recordResults = async ({ schoolId, payload, userId }) => {
   }))
 
   await CompetitionResult.bulkWrite(ops)
-
+  
   const saved = await CompetitionResult.find({ schoolId, competitionId, year })
+    .populate('studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi')
     .sort({ place: 1 })
     .lean()
 
@@ -59,6 +60,7 @@ exports.listResults = async ({ schoolId, filters }) => {
   if (filters.houseId) q.houseId = filters.houseId
 
   const items = await CompetitionResult.find(q)
+    .populate('studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi')
     .sort({ year: -1, place: 1 })
     .lean()
 

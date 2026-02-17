@@ -9,6 +9,11 @@ import { ReactQueryProvider } from "@/lib/react-query";
 export const metadata: Metadata = {
   title: "Sri Ananda Admin",
   description: "Sri Ananda Admin Console",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
 };
 
 interface RootLayoutProps {

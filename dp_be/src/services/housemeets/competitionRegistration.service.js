@@ -112,14 +112,7 @@ exports.registerStudent = async ({ schoolId, payload, userId }) => {
     throw new ApiError(400, 'House mode requires houseId')
   }
 
-  await checkQuota({
-    schoolId,
-    competitionId,
-    gradeId,
-    houseId,
-    year,
-    mode,
-  })
+
 
   try {
     const doc = await CompetitionRegistration.create({
@@ -128,6 +121,7 @@ exports.registerStudent = async ({ schoolId, payload, userId }) => {
       schoolId,
       registeredById: userId,
     })
+    await doc.populate('studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi')
     return doc.toJSON()
   } catch (err) {
     if (err?.code === 11000) {
@@ -156,7 +150,7 @@ exports.listRegistrations = async ({ schoolId, filters, restrictedGradeIds }) =>
   }
 
   const items = await CompetitionRegistration.find(q)
-    .populate('studentId', 'firstNameEn lastNameEn admissionNumber')
+    .populate('studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi')
     .sort({ year: -1 })
     .lean()
 

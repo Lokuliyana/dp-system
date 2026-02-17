@@ -275,15 +275,15 @@ export function StudentListView({
             <table className="w-full min-w-[1000px] border-collapse">
               <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Admission No</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Admit Year</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Name w/ Initials (Si)</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 whitespace-nowrap">Admission No</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 whitespace-nowrap">Admit Year</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 whitespace-nowrap">Name w/ Initials (Si)</th>
                   {showGradeColumn && (
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Grade</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 whitespace-nowrap">Grade</th>
                   )}
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Phone</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">DOB</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-900">Action</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 whitespace-nowrap">Phone</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 whitespace-nowrap">DOB</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-900 whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -299,25 +299,25 @@ export function StudentListView({
                     }`}
                     onClick={() => onSelectStudent?.(student)}
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900 w-32">{student.admissionNumber}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900 w-32 whitespace-nowrap">{student.admissionNumber}</td>
                     <td className="px-6 py-4 text-sm text-slate-600 w-24">{(student as any).admissionYear || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-900 font-medium">
+                    <td className="px-6 py-4 text-sm text-slate-900 font-medium whitespace-nowrap">
                       {student.nameWithInitialsSi || student.fullNameEn}
                     </td>
                     {showGradeColumn && (
-                      <td className="px-6 py-4 text-sm text-slate-600">
+                      <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
                         {student.gradeId && typeof student.gradeId === 'object' 
                           ? student.gradeId.nameEn 
                           : grades.find(g => g.id === (typeof student.gradeId === 'object' ? student.gradeId?._id : student.gradeId))?.name || (typeof student.gradeId === 'string' ? student.gradeId : "-")}
                       </td>
                     )}
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
                       <div className="flex items-center gap-1">
                         <Phone className="h-3 w-3" />
                         {student.phoneNumber || "-"}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {student.dateOfBirth ? format(new Date(student.dateOfBirth), "MMM d, yyyy") : "-"}

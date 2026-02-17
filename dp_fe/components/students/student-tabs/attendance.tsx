@@ -259,12 +259,12 @@ export function StudentAttendanceTab({ student }: { student: Student }) {
             <table className="w-full text-sm border-collapse">
               <thead className="bg-slate-50 border-b sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold">Month</th>
-                  <th className="px-4 py-3 text-center font-semibold">Present</th>
-                  <th className="px-4 py-3 text-center font-semibold">Absent</th>
-                  <th className="px-4 py-3 text-center font-semibold">Leave</th>
-                  <th className="px-4 py-3 text-center font-semibold">Total</th>
-                  <th className="px-4 py-3 text-center font-semibold">Rate %</th>
+                  <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Month</th>
+                  <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Present</th>
+                  <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Absent</th>
+                  <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Leave</th>
+                  <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Total</th>
+                  <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Rate %</th>
                 </tr>
               </thead>
               <tbody>

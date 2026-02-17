@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -151,8 +152,8 @@ export function MobileHeader() {
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-white/90 px-4 backdrop-blur-md md:hidden">
       <Link href="/dashboard" className="flex items-center gap-3 active:scale-95 transition-transform">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/20 text-white">
-          <BookOpen className="h-5 w-5" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-lg shadow-primary/20 text-white overflow-hidden">
+          <Image src="/logo.png" alt="Sri Ananda Logo" width={40} height={40} className="h-full w-full object-cover" />
         </div>
         <div className="flex flex-col">
           <span className="text-base font-bold leading-none tracking-tight">Sri Ananda</span>

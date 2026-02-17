@@ -1,15 +1,15 @@
 "use client";
 
-import { TeamSelectionView } from "@/components/champions/team-selection-view";
+import { ChampionsPathView } from "@/components/champions/champions-path-view";
 import { LayoutController } from "@/components/layout/dynamic";
 import { ChampionsMenu } from "@/components/champions/champions-menu";
 import { Map } from "lucide-react";
 
 export default function ZonalPage() {
   return (
-    <LayoutController showMainMenu showHorizontalToolbar>
+    <LayoutController showMainMenu showHorizontalToolbar showSidebar>
       <ChampionsMenu />
-      <TeamSelectionView 
+      <ChampionsPathView 
         level="zonal"
         title="Zonal Team Selection"
         description="Manage school team selection for Zonal competitions and record results."

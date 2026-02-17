@@ -124,7 +124,7 @@ exports.createStudent = async ({ schoolId, payload, userId }) => {
       if (grade) {
         payload.gradeId = grade._id
       } else {
-        throw new ApiError(400, 'Could not determine grade based on DOB')
+        // Continue without gradeId if not found
       }
     }
 
