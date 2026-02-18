@@ -1,4 +1,5 @@
 const Prefect = require('../../models/staff/prefect.model')
+const Student = require('../../models/student/student.model')
 const ApiError = require('../../utils/apiError')
 
 function yearDup(err) {
@@ -32,10 +33,13 @@ exports.addPrefectStudent = async ({ schoolId, id, payload, userId }) => {
   )
   if (exists) throw new ApiError(409, 'Student already appointed in this year')
 
+  const student = await Student.findOne({ _id: payload.studentId, schoolId })
+  if (!student) throw new ApiError(404, 'Student not found')
+
   prefect.students.push({
     studentId: payload.studentId,
-    studentNameSi: payload.studentNameSi,
-    studentNameEn: payload.studentNameEn,
+    studentNameSi: student.nameWithInitialsSi || student.fullNameSi || payload.studentNameSi,
+    studentNameEn: student.fullNameEn || student.nameWithInitialsEn || payload.studentNameEn,
     rank: payload.rank,
     positionIds: payload.positionIds || [],
   })
@@ -57,10 +61,19 @@ exports.updatePrefectStudent = async ({ schoolId, id, studentId, payload, userId
 
   const current = prefect.students[idx]
 
+  // Ensure we don't accidentally corrupt names on update
+  // If we want to support name updates, we should probably fetch from Student again
+  // Or just ignore name updates from payload and keep existing?
+  // Use DB student to be safe.
+  const student = await Student.findOne({ _id: studentId, schoolId })
+  if (!student) throw new ApiError(404, 'Student not found')
+
   prefect.students[idx] = {
     ...current.toObject(),
     ...payload,
     studentId: current.studentId,
+    studentNameSi: student.nameWithInitialsSi || student.fullNameSi || current.studentNameSi,
+    studentNameEn: student.fullNameEn || student.nameWithInitialsEn || current.studentNameEn,
   }
 
   prefect.updatedById = userId

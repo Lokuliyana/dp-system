@@ -15,6 +15,7 @@ const Club = require('../../models/activities/club.model')
 const Prefect = require('../../models/staff/prefect.model')
 const EventRegistration = require('../../models/activities/eventRegistration.model')
 const StudentTalent = require('../../models/student/studentTalent.model')
+const ParentStudentLink = require('../../models/student/parentStudentLink.model')
 
 function handleDup(err) {
   if (err?.code === 11000) {
@@ -62,23 +63,23 @@ const calculateGrade = async (schoolId, dob, academicYear) => {
  */
 const applyCohortFilter = async (q, schoolId, gradeId, academicYear, restrictedGradeIds) => {
   const mongoose = require('mongoose')
-  
+
   if (gradeId && academicYear && mongoose.Types.ObjectId.isValid(gradeId)) {
     const grades = await Grade.find({ schoolId }).lean()
     const targetGrade = grades.find((g) => String(g._id) === String(gradeId))
-    
+
     if (targetGrade) {
       const cohortConstant = targetGrade.level - Number(academicYear)
       const years = await Student.distinct('academicYear', { schoolId })
       const matchingPairs = []
-      
+
       for (const y of years) {
         if (y === null || y === undefined) continue
         const neededLevel = cohortConstant + y
         // Find the grade for this level in this specific year
-        const g = grades.find((grade) => grade.level === neededLevel && grade.academicYear === String(y)) 
+        const g = grades.find((grade) => grade.level === neededLevel && grade.academicYear === String(y))
           || grades.find((grade) => grade.level === neededLevel && grade.academicYear === '')
-        
+
         if (g) {
           if (restrictedGradeIds) {
             if (restrictedGradeIds.includes(g._id.toString())) {
@@ -89,7 +90,7 @@ const applyCohortFilter = async (q, schoolId, gradeId, academicYear, restrictedG
           }
         }
       }
-      
+
       if (matchingPairs.length > 0) {
         q.$or = matchingPairs
         return true
@@ -99,7 +100,7 @@ const applyCohortFilter = async (q, schoolId, gradeId, academicYear, restrictedG
       }
     }
   }
-  
+
   // Fallback to original logic
   if (restrictedGradeIds) {
     const allowedIds = restrictedGradeIds.map((id) => new mongoose.Types.ObjectId(id))
@@ -111,7 +112,7 @@ const applyCohortFilter = async (q, schoolId, gradeId, academicYear, restrictedG
   } else if (gradeId) {
     q.gradeId = gradeId
   }
-  
+
   if (academicYear) q.academicYear = Number(academicYear)
   return false
 }
@@ -163,12 +164,12 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
   const parseDate = (val) => {
     if (!val) return undefined
     if (val instanceof Date) return val
-    
+
     // Handle excel serial numbers
     if (typeof val === 'number') {
       return new Date(Math.round((val - 25569) * 86400 * 1000))
     }
-    
+
     if (typeof val === 'string') {
       const s = val.trim()
       if (!s) return undefined
@@ -196,7 +197,7 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         }
       }
     }
-    
+
     const d = new Date(val)
     return isNaN(d.getTime()) ? undefined : d
   }
@@ -295,8 +296,8 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
       // User said "Register - present 1 = true 0 = false"
       let isPresent = true
       if (registerStatus !== undefined && registerStatus !== null && registerStatus !== '') {
-         const r = String(registerStatus).trim()
-         if (r === '0' || r.toLowerCase() === 'false') isPresent = false
+        const r = String(registerStatus).trim()
+        if (r === '0' || r.toLowerCase() === 'false') isPresent = false
       }
 
       const admissionYear = yearRaw ? parseInt(String(yearRaw).trim(), 10) : undefined
@@ -314,7 +315,7 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         admissionDate: parseDate(admissionDateRaw),
         // If year is provided map it, otherwise maybe it's derived from admissionDate?
         // Model has `admissionYear`.
-        admissionYear: admissionYear || (parseDate(admissionDateRaw) ? parseDate(admissionDateRaw).getFullYear() : undefined), 
+        admissionYear: admissionYear || (parseDate(admissionDateRaw) ? parseDate(admissionDateRaw).getFullYear() : undefined),
         admittedGrade: String(admittedGradeName || ''),
         gradeId,
         addressSi,
@@ -330,7 +331,7 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         fatherOccupation,
         // Guardian details were in last 3 cols of input?
         // Note: The destructuring above captured them.
-        academicYear: currentYear, 
+        academicYear: currentYear,
         present: isPresent,
         status: isPresent ? 'active' : 'inactive',
       }
@@ -441,7 +442,7 @@ exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear, restrict
   const q = { schoolId }
 
   if (sex) q.sex = sex
-  
+
   await applyCohortFilter(q, schoolId, gradeId, academicYear, restrictedGradeIds)
 
   const items = await Student.find(q)
@@ -525,6 +526,7 @@ exports.getStudent360 = async ({ schoolId, id, year }) => {
     prefectHistory,
     events,
     talents,
+    parentLinks,
   ] = await Promise.all([
     Attendance.find({
       schoolId,
@@ -542,68 +544,142 @@ exports.getStudent360 = async ({ schoolId, id, year }) => {
       schoolId,
       studentId: id,
       ...(y ? { year: y } : {}),
-    }).lean(),
+    })
+      .populate('houseId', 'nameEn nameSi color')
+      .lean(),
 
     CompetitionRegistration.find({
       schoolId,
       studentId: id,
       ...(y ? { year: y } : {}),
-    }).lean(),
+    })
+      .populate('competitionId', 'nameEn nameSi year scope')
+      .lean(),
 
     CompetitionResult.find({
       schoolId,
       studentId: id,
       ...(y ? { year: y } : {}),
-    }).lean(),
+    })
+      .populate('competitionId', 'nameEn nameSi year scope')
+      .populate('houseId', 'nameEn nameSi color')
+      .populate('teamId', 'name')
+      .lean(),
 
     CompetitionTeam.find({
       schoolId,
       memberStudentIds: id,
       ...(y ? { year: y } : {}),
-    }).lean(),
+    })
+      .populate('competitionId', 'nameEn nameSi year scope')
+      .lean(),
 
+    // For higher level teams (zonal/district), we look for where they are in entries
     TeamSelection.find({
       schoolId,
       ...(y ? { year: y } : {}),
       'entries.studentId': id,
-    }).lean(),
+    })
+      .populate('entries.competitionId', 'nameEn nameSi') // Populate competition info for the entry
+      .lean(),
 
     Club.find({
       schoolId,
       'members.studentId': id,
-    }).lean(),
+      ...(y ? { year: y } : {}), // Club has 'year' field directly
+    })
+      .populate('teacherInChargeId', 'nameWithInitials')
+      .populate('members.positionId', 'nameEn nameSi')
+      .lean(),
 
     Prefect.find({
       schoolId,
       ...(y ? { year: y } : {}),
       'students.studentId': id,
-    }).lean(),
+    })
+      // We might want to filter only the specific student record from the array later if needed,
+      // but finding the document is the first step.
+      // We can't easily populate a subdocument array element matching a query directly in find().
+      // But we can populate 'students.positionIds' relative to the schema.
+      .populate('students.positionIds', 'nameEn nameSi')
+      .lean(),
 
     EventRegistration.find({
       schoolId,
       studentId: id,
       ...(y ? { year: y } : {}),
-    }).lean(),
+    })
+      .populate('eventId', 'nameEn nameSi date')
+      .lean(),
 
     StudentTalent.find({
       schoolId,
       studentId: id,
       ...(y ? { year: y } : {}),
     }).lean(),
+
+    ParentStudentLink.find({
+      schoolId,
+      studentId: id,
+    })
+      .populate('parentId', 'firstNameEn lastNameEn email phone nic addressSi')
+      .lean(),
   ])
 
-  return {
+  // Post-processing for Prefects to only show relevant student entry?
+  // Or just return the whole prefect board record?
+  // Usually user wants to know "I was a prefect in 2024". The record contains all prefects.
+  // Let's filter the `students` array in `prefectHistory` to only this student for clarity?
+  const processedPrefectHistory = prefectHistory.map((p) => ({
+    ...p,
+    myEntry: p.students.find((s) => String(s.studentId) === String(id)),
+  }))
+
+  const result = {
     student,
     attendance,
     examResults,
     houseHistory,
-    competitions,
-    competitionWins,
-    teams,
-    higherTeams,
+    competitions, // Registrations
+    competitionWins, // Results
+    teams, // Internal teams
+    higherTeams, // Zonal/District selections
     clubs,
-    prefectHistory,
+    prefectHistory: processedPrefectHistory,
     events,
     talents,
+    parents: parentLinks.map((link) => ({
+      ...link,
+      parent: link.parentId, // rename for clarity if desired, or keep structure
+    })),
   }
+
+  // PATCH: Fix undefined names in prefectHistory
+  // Some prefect records have "undefined undefined" as name.
+  // We overwrite/enrich this with the current student's name.
+  if (result.prefectHistory && result.prefectHistory.length > 0) {
+    result.prefectHistory.forEach(yearRecord => {
+      // If we used the map approach above (processedPrefectHistory), we might need to adjust it or the raw array.
+      // The code above defines 'processedPrefectHistory' but then returns it as 'prefectHistory'.
+      // So we should iterate over 'result.prefectHistory'.
+
+      // calculated above: const processedPrefectHistory = ... map ... myEntry
+      // So yearRecord has .myEntry
+      if (yearRecord.myEntry) {
+        yearRecord.myEntry.studentNameEn = student.fullNameEn || student.nameWithInitialsEn || yearRecord.myEntry.studentNameEn
+        yearRecord.myEntry.studentNameSi = student.nameWithInitialsSi || student.fullNameSi || yearRecord.myEntry.studentNameSi
+
+        // Also update the array in 'students' just in case frontend uses that
+        if (yearRecord.students) {
+          const s = yearRecord.students.find(x => String(x.studentId) === String(id))
+          if (s) {
+            s.studentNameEn = student.fullNameEn || student.nameWithInitialsEn || s.studentNameEn
+            s.studentNameSi = student.nameWithInitialsSi || student.fullNameSi || s.studentNameSi
+          }
+        }
+      }
+    })
+  }
+
+  return result
 }

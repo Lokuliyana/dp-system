@@ -12,6 +12,7 @@ router.use('/competition-results', require('./housemeets/competitionResult.route
 router.use('/team-selections', require('./housemeets/teamSelection.routes'))
 router.use('/grading-schemas', require('./system/gradingSchema.routes'))
 router.use('/exam-results', require('./student/examResult.routes'))
+router.use('/exams', require('./student/exam.routes'))
 router.use('/teachers', require('./staff/teacher.routes'))
 router.use('/staff-roles', require('./staff/staffRole.routes'))
 router.use('/club-positions', require('./activities/clubPosition.routes'))
