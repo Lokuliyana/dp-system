@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Users, Save, Printer, Trash2, User, Calendar, FileText, Star, Trophy } from "lucide-react";
+import { ChevronLeft, Users, Save, Printer, Trash2, User, Calendar, FileText, Star, Trophy, LayoutDashboard, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -25,6 +25,8 @@ import { AttendanceTab } from "@/components/students/tabs/AttendanceTab";
 import { NotesTab } from "@/components/students/tabs/NotesTab";
 import { TalentsSection } from "@/components/students/tabs/TalentsSection";
 import { RolesAndActivitiesTab } from "@/components/students/tabs/RolesAndActivitiesTab";
+import { OverviewTab } from "@/components/students/tabs/OverviewTab";
+import { ExamsTab } from "@/components/students/tabs/ExamsTab";
 
 import type { Student } from "@/types/models";
 
@@ -45,7 +47,7 @@ export default function StudentDetailPage({ params }: StudentPageProps) {
   const deleteStudentMutation = useDeleteStudent(gradeId);
 
   const grade = grades.find((g) => g.id === gradeId);
-  const [activeTab, setActiveTab] = useState<"basic" | "attendance" | "notes" | "talents" | "roles">("basic");
+  const [activeTab, setActiveTab] = useState<"overview" | "basic" | "attendance" | "exams" | "notes" | "talents" | "roles" | "behavior">("basic");
   const [formData, setFormData] = useState<Partial<Student>>({});
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -186,6 +188,15 @@ export default function StudentDetailPage({ params }: StudentPageProps) {
         <Button
           variant="ghost"
           size="icon"
+          title="Examinations"
+          onClick={() => setActiveTab("exams")}
+          className={cn(activeTab === "exams" ? "text-purple-600 bg-purple-50" : "text-slate-500")}
+        >
+          <GraduationCap className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
           title="Notes"
           onClick={() => setActiveTab("notes")}
           className={cn(activeTab === "notes" ? "text-purple-600 bg-purple-50" : "text-slate-500")}
@@ -210,6 +221,15 @@ export default function StudentDetailPage({ params }: StudentPageProps) {
         >
           <Trophy className="h-4 w-4" />
         </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Overview"
+          onClick={() => setActiveTab("overview")}
+          className={cn(activeTab === "overview" ? "text-purple-600 bg-purple-50" : "text-slate-500")}
+        >
+          <LayoutDashboard className="h-4 w-4" />
+        </Button>
       </VerticalToolbar>
 
       <div className="p-6 space-y-8">
@@ -224,6 +244,8 @@ export default function StudentDetailPage({ params }: StudentPageProps) {
         />
 
         <div className="pt-2">
+          {activeTab === "overview" && <OverviewTab data={student360} />}
+
           {activeTab === "basic" && (
             <BasicInfoSection 
               student={{ ...student, ...formData } as Student} 
@@ -232,7 +254,9 @@ export default function StudentDetailPage({ params }: StudentPageProps) {
             />
           )}
 
-          {activeTab === "attendance" && <AttendanceTab student={student as Student} attendanceData={attendance} />}
+          {activeTab === "attendance" && <AttendanceTab data={student360} />}
+
+          {activeTab === "exams" && <ExamsTab data={student360} />}
 
           {activeTab === "notes" && (
             <NotesTab
@@ -244,41 +268,14 @@ export default function StudentDetailPage({ params }: StudentPageProps) {
 
           {activeTab === "talents" && (
             <TalentsSection
-              talents={talents || []}
+              data={student360}
               onAddTalent={() => {}}
               onRemoveTalent={() => {}}
             />
           )}
 
           {activeTab === "roles" && (
-            <RolesAndActivitiesTab
-              student={student as Student}
-              prefectship={
-                prefectHistory && prefectHistory.length > 0
-                  ? {
-                      isPrefect: true,
-                      rank: (prefectHistory[0].myEntry?.rank || prefectHistory[0].students?.find((s: any) => s.studentId === studentId)?.rank) as any,
-                      year: prefectHistory[0].year,
-                      appointmentDate: prefectHistory[0].appointedDate,
-                      responsibilities: [],
-                    }
-                  : { isPrefect: false }
-              }
-              clubs={(clubs || []).map((c: any) => {
-                const member = c.members?.find((m: any) => m.studentId === studentId);
-                const position = positions.find((p) => p.id === member?.positionId);
-                return {
-                  id: c.id,
-                  name: c.nameEn,
-                  role: position ? position.nameEn : "Member",
-                  year: c.year,
-                  isActive: true,
-                };
-              })}
-              activities={competitions || []}
-              houseHistory={houseHistory || []}
-              houseWins={[]} // Add if available in 360
-            />
+            <RolesAndActivitiesTab data={student360} />
           )}
         </div>
       </div>

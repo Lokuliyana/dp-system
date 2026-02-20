@@ -499,19 +499,20 @@ export function EventsManagement() {
                           </TableHeader>
                           <TableBody>
                             {eventRegistrations.map((reg) => {
-                              const student = allStudents.find(s => s.id === reg.studentId);
+                              const regStudentId = typeof reg.studentId === 'string' ? reg.studentId : (reg.studentId as any)?._id || (reg.studentId as any)?.id;
+                              const student = allStudents.find(s => s.id === regStudentId) || (typeof reg.studentId === 'object' ? reg.studentId as any : null);
                               return (
                                 <TableRow key={reg.id} className="group hover:bg-slate-50/50 transition-colors border-slate-100">
                                   <TableCell className="py-3">
                                     <Avatar className="h-8 w-8 border-white shadow-sm ring-1 ring-slate-100">
                                       <AvatarFallback className="bg-indigo-50 text-indigo-600 text-[10px] font-bold">
-                                        {student ? student.firstNameEn?.[0] || student.firstNameSi?.[0] : (reg.studentId?.slice(0, 1) || "S").toUpperCase()}
+                                        {student ? student.firstNameEn?.[0] || student.firstNameSi?.[0] : (regStudentId?.slice(0, 1) || "S").toUpperCase()}
                                       </AvatarFallback>
                                     </Avatar>
                                   </TableCell>
                                   <TableCell className="py-3">
                                     <div className="text-xs font-semibold text-slate-900">
-                                      {student ? `${student.firstNameEn} ${student.lastNameEn}` : `Student ${reg.studentId?.slice(-6)}`}
+                                      {student ? `${student.firstNameEn || ''} ${student.lastNameEn || ''}` : `Student ${regStudentId?.slice(-6)}`}
                                     </div>
                                     <div className="flex flex-col gap-0.5 mt-0.5">
                                       {student?.fullNameSi && (
@@ -528,7 +529,7 @@ export function EventsManagement() {
                                   </TableCell>
                                   <TableCell className="py-3">
                                     <Badge variant="outline" className="text-[10px] font-semibold bg-slate-50 text-slate-600 border-slate-200">
-                                      {reg.gradeId?.nameEn || "N/A"}
+                                      {(reg.gradeId as any)?.nameEn || "N/A"}
                                     </Badge>
                                   </TableCell>
                                   <TableCell className="py-3">

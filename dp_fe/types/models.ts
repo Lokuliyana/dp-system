@@ -137,6 +137,11 @@ export type Student = BaseDoc & {
   status?: "active" | "inactive";
   activeNote?: string;
   inactiveNote?: string;
+  
+  // Compatibility fields
+  firstName?: string;
+  lastName?: string;
+  talents?: any[];
 };
 
 /* -------------------- STUDENT TALENT (F6) -------------------- */
@@ -492,8 +497,8 @@ export type Event = BaseDoc & {
 export type EventRegistration = BaseDoc & {
   eventId: Id;
 
-  studentId: Id;
-  gradeId: Id;
+  studentId: Id | { id: Id; _id?: Id; firstNameEn?: string; lastNameEn?: string; fullNameSi?: string; nameWithInitialsSi?: string; admissionNumber?: string };
+  gradeId: Id | { id: Id; _id?: Id; nameEn: string };
 
   starLevel?: 1 | 2 | 3;
   noteSi?: string;
@@ -637,4 +642,129 @@ export type TeamReport = {
   level: TeamLevel;
   year: number;
   teams: TeamSelection[];
+};
+/* -------------------- STUDENT 360 (Unified) -------------------- */
+export type ExamHistoryEntry = {
+  _id: Id;
+  studentId: Id;
+  examId: {
+    _id: Id;
+    nameSi: string;
+    nameEn: string;
+    date: string;
+    type: string;
+    year: number;
+  };
+  gradeId: {
+    _id: Id;
+    nameEn: string;
+  };
+  isPresent: boolean;
+  mark: number;
+  comment?: string;
+};
+
+export type HouseHistoryEntry = BaseDoc & {
+  studentId: Id;
+  year: number;
+  gradeId: Id;
+  houseId: {
+    _id: Id;
+    nameSi: string;
+    nameEn: string;
+    color: string;
+  };
+  assignedDate: string;
+};
+
+export type CompetitionEntry = BaseDoc & {
+  competitionId: {
+    _id: Id;
+    nameSi: string;
+    nameEn: string;
+    scope: string;
+    year: number;
+  };
+  studentId: Id;
+  gradeId: Id;
+  houseId: Id;
+  mode: string;
+  year: number;
+};
+
+export type CompetitionWinEntry = BaseDoc & {
+  competitionId: {
+    _id: Id;
+    nameSi: string;
+    nameEn: string;
+    scope: string;
+    year: number;
+  };
+  place: number;
+  year: number;
+  studentId: Id;
+};
+
+export type HigherTeamEntry = {
+  _id: Id;
+  level: TeamLevel;
+  year: number;
+  entries: {
+    competitionId: {
+      _id: Id;
+      nameSi: string;
+      nameEn: string;
+    };
+    studentId: Id;
+    place: number;
+  }[];
+  totalMarks?: number;
+};
+
+export type PrefectHistoryEntry = BaseDoc & {
+  year: number;
+  appointedDate: string;
+  students: {
+    studentId: Id;
+    studentNameSi: string;
+    studentNameEn: string;
+    rank: string;
+    positionIds: Id[];
+  }[];
+  myEntry?: {
+    studentId: Id;
+    studentNameSi: string;
+    studentNameEn: string;
+    rank: string;
+    positionIds: Id[];
+  };
+};
+
+export type Student360 = {
+  student: Student;
+  attendance: Attendance[];
+  examResults: any[];
+  examMarks: ExamHistoryEntry[];
+  houseHistory: HouseHistoryEntry[];
+  competitions: CompetitionEntry[];
+  competitionWins: CompetitionWinEntry[];
+  teams: any[];
+  higherTeams: HigherTeamEntry[];
+  clubs: Club[];
+  prefectHistory: PrefectHistoryEntry[];
+  events: (BaseDoc & {
+    year: number;
+    studentId: Id;
+    eventId: {
+      _id: Id;
+      nameSi: string;
+      nameEn: string;
+      date: string;
+    };
+    gradeId: Id;
+    registeredAt?: string;
+    noteEn?: string;
+  })[];
+  talents: StudentTalent[];
+  parents: Parent[];
 };

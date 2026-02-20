@@ -1,262 +1,141 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { Student } from "@/types/models";
+import { useMemo } from "react";
+import type { Student360 } from "@/types/models";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
-import { Calendar, TrendingUp, AlertCircle, CheckCircle, XCircle } from "lucide-react";
-
-interface AttendanceRecord {
-  date: string;
-  status: "present" | "absent" | "leave";
-  remarks?: string;
-}
+import { 
+  CheckCircle2, 
+  XCircle,
+  Activity,
+  Calendar,
+  Monitor,
+  ArrowUpRight,
+  ListFilter
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface AttendanceTabProps {
-  student: Student;
-  attendanceData?: AttendanceRecord[];
+  data: Student360;
 }
 
-export function AttendanceTab({ student, attendanceData }: AttendanceTabProps) {
-  // For now: generate synthetic demo data; later you can replace with real records via props
-  const [syntheticAttendance] = useState<AttendanceRecord[]>(() => {
-    const records: AttendanceRecord[] = [];
-    const today = new Date();
-    for (let i = 90; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dow = date.getDay();
-      if (dow === 0 || dow === 6) continue;
-
-      const random = Math.random();
-      const status = random > 0.92 ? "leave" : random > 0.85 ? "absent" : "present";
-      records.push({
-        date: date.toISOString().split("T")[0],
-        status: status as any,
-        remarks: status === "leave" ? "Medical Leave" : undefined,
-      });
-    }
-    return records;
-  });
-
-  const attendanceRecords = attendanceData || syntheticAttendance;
-
-  const [filterStatus, setFilterStatus] = useState<"all" | "present" | "absent">("all");
+export function AttendanceTab({ data }: AttendanceTabProps) {
+  const attendanceRecords = data.attendance || [];
 
   const statistics = useMemo(() => {
-    const filtered =
-      filterStatus === "all" ? attendanceRecords : attendanceRecords.filter((r) => r.status === filterStatus);
-
-    const total = filtered.length;
-    const present = filtered.filter((r) => r.status === "present").length;
-    const absent = filtered.filter((r) => r.status === "absent").length;
-    const leave = filtered.filter((r) => r.status === "leave").length;
+    const total = attendanceRecords.length;
+    // Map any non-present status to absent for the simplified view if needed, 
+    // but the user only wants Present/Absent.
+    const present = attendanceRecords.filter((r) => r.status === "present").length;
+    const absent = attendanceRecords.filter((r) => r.status === "absent").length;
 
     const attendancePercentage = total > 0 ? Math.round((present / (present + absent)) * 100) : 0;
-    const lastAbsentDate = attendanceRecords.filter((r) => r.status === "absent").slice(-1)[0]?.date;
-    const consecutivePresent = attendanceRecords
-      .slice()
-      .reverse()
-      .findIndex((r) => r.status !== "present");
-
+    
     return {
       total,
       present,
       absent,
-      leave,
       attendancePercentage,
-      lastAbsentDate,
-      consecutivePresent: consecutivePresent === -1 ? attendanceRecords.length : consecutivePresent,
     };
-  }, [attendanceRecords, filterStatus]);
+  }, [attendanceRecords]);
 
-  const groupedByMonth = useMemo(() => {
-    const grouped: Record<string, AttendanceRecord[]> = {};
-    attendanceRecords.forEach((record) => {
-      const month = record.date.substring(0, 7);
-      if (!grouped[month]) grouped[month] = [];
-      grouped[month].push(record);
-    });
-    return Object.entries(grouped)
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([month, records]) => ({
-        month,
-        records: filterStatus === "all" ? records : records.filter((r) => r.status === filterStatus),
-      }));
-  }, [attendanceRecords, filterStatus]);
+  // Sort records by date descending
+  const sortedRecords = useMemo(() => {
+     return [...attendanceRecords].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [attendanceRecords]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "present":
-        return "bg-green-50 border-green-200 text-green-700";
-      case "absent":
-        return "bg-red-50 border-red-200 text-red-700";
-      case "leave":
-        return "bg-blue-50 border-blue-200 text-blue-700";
-      default:
-        return "bg-slate-50 border-slate-200";
-    }
-  };
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      {/* 1. Core Lifecycle Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CompactMetricCard 
+          label="Attendance Rate" 
+          value={`${statistics.attendancePercentage}%`} 
+          icon={<Activity className="h-4 w-4 text-emerald-500" />}
+          variant="emerald"
+        />
+        <CompactMetricCard 
+          label="Present Sessions" 
+          value={statistics.present.toString()} 
+          icon={<CheckCircle2 className="h-4 w-4 text-blue-500" />}
+          variant="blue"
+        />
+        <CompactMetricCard 
+          label="Absent Sessions" 
+          value={statistics.absent.toString()} 
+          icon={<XCircle className="h-4 w-4 text-red-500" />}
+          variant="red"
+        />
+      </div>
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "present":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "absent":
-        return <XCircle className="h-4 w-4 text-red-600" />;
-      case "leave":
-        return <AlertCircle className="h-4 w-4 text-blue-600" />;
-    }
+      {/* 2. High-Density Attendance Ledger */}
+      <Card className="border-none shadow-none ring-1 ring-slate-100 bg-white overflow-hidden rounded-xl">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-5 flex flex-row items-center justify-between">
+          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+            <Monitor className="h-3.5 w-3.5" /> High-Density Attendance Log
+          </CardTitle>
+          <div className="flex items-center gap-3">
+             <Badge className="bg-white border-slate-200 text-slate-400 font-bold h-5 px-2 text-[8px] uppercase tracking-widest">
+               {attendanceRecords.length} Records Detected
+             </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[1px] bg-slate-100 border-b border-slate-100">
+              {sortedRecords.length > 0 ? (
+                sortedRecords.map((record, idx) => (
+                  <div key={idx} className="bg-white p-3 flex items-center justify-between group hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "h-6 w-6 rounded-md flex items-center justify-center border text-[10px] font-black",
+                        record.status === 'present' ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-red-50 border-red-100 text-red-600"
+                      )}>
+                        {record.status === 'present' ? 'P' : 'A'}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold text-slate-800 leading-none truncate">{format(new Date(record.date), 'MMM d, yyyy')}</p>
+                        <p className="text-[9px] font-medium text-slate-400 mt-0.5 uppercase tracking-tighter">{format(new Date(record.date), 'EEEE')}</p>
+                      </div>
+                    </div>
+                    {/* Status indicator on the right */}
+                    <div className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      record.status === 'present' ? "bg-emerald-500" : "bg-red-500"
+                    )} />
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full py-20 text-center bg-white">
+                  <Calendar className="h-8 w-8 mx-auto text-slate-100 mb-2" />
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No Attendance Data Portfolioed</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function CompactMetricCard({ label, value, icon, variant }: any) {
+  const styles: any = {
+    emerald: "bg-emerald-50/20 ring-emerald-100 border-emerald-100",
+    blue: "bg-blue-50/20 ring-blue-100 border-blue-100",
+    red: "bg-red-50/20 ring-red-100 border-red-100"
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Top stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-slate-600">Attendance %</p>
-            <p
-              className={`text-3xl font-bold ${
-                statistics.attendancePercentage >= 80 ? "text-green-600" : "text-amber-600"
-              }`}
-            >
-              {statistics.attendancePercentage}%
-            </p>
-            <p className="text-xs text-slate-500">Based on present/absent</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <p className="flex items-center gap-1 text-sm text-slate-600">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              Present
-            </p>
-            <p className="text-3xl font-bold text-green-600">{statistics.present}</p>
-            <p className="text-xs text-slate-500">Total days</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <p className="flex items-center gap-1 text-sm text-slate-600">
-              <XCircle className="h-4 w-4 text-red-600" />
-              Absent
-            </p>
-            <p className="text-3xl font-bold text-red-600">{statistics.absent}</p>
-            <p className="text-xs text-slate-500">Total days</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <p className="flex items-center gap-1 text-sm text-slate-600">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
-              Leave
-            </p>
-            <p className="text-3xl font-bold text-blue-600">{statistics.leave}</p>
-            <p className="text-xs text-slate-500">Total days</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Insights */}
-      <Card className="border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-indigo-600" />
-            Attendance Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded border border-indigo-100 bg-white p-3">
-              <p className="text-sm text-slate-600">Consecutive Present Days</p>
-              <p className="text-2xl font-bold text-indigo-600">{statistics.consecutivePresent}</p>
-            </div>
-            {statistics.lastAbsentDate && (
-              <div className="rounded border border-indigo-100 bg-white p-3">
-                <p className="text-sm text-slate-600">Last Absent</p>
-                <p className="text-lg font-bold text-indigo-600">
-                  {new Date(statistics.lastAbsentDate).toLocaleDateString()}
-                </p>
-              </div>
-            )}
-          </div>
-          <p className="text-sm text-slate-700">
-            {statistics.attendancePercentage >= 90
-              ? "Excellent attendance record."
-              : statistics.attendancePercentage >= 80
-              ? "Good attendance. Target 90% for stronger performance."
-              : "Attendance below 80%. Monitor closely."}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* History */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
-              Attendance History
-            </CardTitle>
-            <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
-              <SelectTrigger className="h-9 w-32">
-                <SelectValue placeholder="Filter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="present">Present</SelectItem>
-                <SelectItem value="absent">Absent</SelectItem>
-                <SelectItem value="leave">Leave</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {groupedByMonth.length === 0 ? (
-            <p className="py-8 text-center text-slate-500">No attendance records</p>
-          ) : (
-            groupedByMonth.map(({ month, records }) => (
-              <div key={month} className="space-y-3">
-                <h3 className="font-semibold text-slate-900">
-                  {new Date(month + "-01").toLocaleDateString(undefined, { month: "long", year: "numeric" })}
-                </h3>
-                {records.length === 0 ? (
-                  <p className="text-sm italic text-slate-500">
-                    No records for this month with selected filter.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
-                    {records.map((record) => (
-                      <div
-                        key={record.date}
-                        className={`space-y-1 rounded border p-3 text-center text-sm ${getStatusColor(
-                          record.status
-                        )}`}
-                      >
-                        <div className="flex justify-center">{getStatusIcon(record.status)}</div>
-                        <p className="font-medium capitalize">{record.status}</p>
-                        <p className="font-mono text-xs">
-                          {new Date(record.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                        {record.remarks && (
-                          <p className="text-xs font-medium">{record.remarks}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+    <div className={cn("p-4 rounded-xl border flex items-center justify-between bg-white shadow-sm ring-1 ring-slate-100", styles[variant])}>
+       <div className="space-y-1">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+          <p className="text-xl font-black text-slate-900 leading-none">{value}</p>
+       </div>
+       <div className="h-8 w-8 rounded-lg bg-white shadow-sm border border-slate-50 flex items-center justify-center">
+          {icon}
+       </div>
     </div>
   );
 }

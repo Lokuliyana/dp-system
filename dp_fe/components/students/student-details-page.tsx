@@ -6,9 +6,16 @@ import { StudentTalents } from "@/components/students/student-tabs/talents"
 import { StudentNotes } from "@/components/students/student-tabs/notes"
 import { StudentAttendanceTab } from "@/components/students/student-tabs/attendance"
 import { StudentExamsTab } from "@/components/students/student-tabs/exams"
-import type { Student } from "@/lib/school-data"
+import { OverviewTab } from "@/components/students/student-tabs/overview"
+import { StudentActivityPortfolio } from "@/components/students/student-tabs/activity-portfolio"
+import type { Student, Student360 } from "@/types/models"
 import { StudentAvatar } from "@/components/students/student-avatar"
-import { User, Star, FileText, Crown, Activity, Trophy } from "lucide-react"
+import { User, Star, FileText, Crown, Activity, Trophy, LayoutDashboard, Loader, History, Users } from "lucide-react"
+import { useStudent360 } from "@/hooks/useStudents"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle, Separator } from "@/components/ui"
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
 
 interface StudentDetailsPageProps {
   student: Student
@@ -19,6 +26,8 @@ interface StudentDetailsPageProps {
 
 export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: StudentDetailsPageProps) {
   const [editingStudent, setEditingStudent] = useState(student)
+  const studentId = student.id || (student as any)._id;
+  const { data: viewData, isLoading } = useStudent360(studentId);
 
   const handleSaveBasicInfo = (updatedStudent: Student) => {
     setEditingStudent(updatedStudent)
@@ -34,7 +43,7 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
   const handleAddTalent = (talent: any) => {
     const updated = {
       ...editingStudent,
-      talents: [...editingStudent.talents, { ...talent, id: Date.now().toString() }],
+      talents: [...(editingStudent.talents || []), { ...talent, id: Date.now().toString() }],
     }
     setEditingStudent(updated)
     onUpdate(updated)
@@ -43,7 +52,7 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
   const handleRemoveTalent = (talentId: string) => {
     const updated = {
       ...editingStudent,
-      talents: editingStudent.talents.filter((t) => t.id !== talentId),
+      talents: (editingStudent.talents || []).filter((t) => (t as any).id !== talentId),
     }
     setEditingStudent(updated)
     onUpdate(updated)
@@ -53,7 +62,7 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
     const updated = {
       ...editingStudent,
       notes: [
-        ...editingStudent.notes,
+        ...(editingStudent.notes || []),
         { ...note, id: Date.now().toString(), date: new Date().toISOString().split("T")[0] },
       ],
     }
@@ -64,24 +73,38 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
   const handleDeleteNote = (noteId: string) => {
     const updated = {
       ...editingStudent,
-      notes: editingStudent.notes.filter((n) => n.id !== noteId),
+      notes: (editingStudent.notes || []).filter((n) => (n as any).id !== noteId),
     }
     setEditingStudent(updated)
     onUpdate(updated)
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center gap-2 text-sm text-slate-500">
+        <Loader className="h-4 w-4 animate-spin" /> Gathering 360 data...
+      </div>
+    );
+  }
+
   const tabs: LayoutTab[] = [
+    {
+      id: "overview",
+      label: "Overview",
+      icon: <LayoutDashboard className="h-4 w-4" />,
+      component: () => <OverviewTab data={viewData} />,
+    },
     {
       id: "basic-info",
       label: "Basic Information",
       icon: <User className="h-4 w-4" />,
-      component: () => <StudentBasicInfo student={editingStudent} onSave={handleSaveBasicInfo} />,
+      component: () => <StudentBasicInfo student={editingStudent as any} onSave={handleSaveBasicInfo as any} />,
     },
     {
       id: "roles",
-      label: "Roles & Responsibilities",
-      icon: <Crown className="h-4 w-4" />,
-      component: () => <RolesAndResponsibilities studentId={editingStudent.id} student={editingStudent} />,
+      label: "Portfolio & Activities",
+      icon: <LayoutDashboard className="h-4 w-4" />,
+      component: () => <StudentActivityPortfolio data={viewData} />,
     },
     {
       id: "talents",
@@ -89,51 +112,51 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
       icon: <Star className="h-4 w-4" />,
       component: () => (
         <StudentTalents
-          talents={editingStudent.talents}
+          talents={editingStudent.talents || []}
           onAddTalent={handleAddTalent}
           onRemoveTalent={handleRemoveTalent}
         />
       ),
-      badge: editingStudent.talents.length,
+      badge: (editingStudent.talents || []).length,
     },
     {
       id: "attendance",
       label: "Attendance",
       icon: <Activity className="h-4 w-4" />,
-      component: () => <StudentAttendanceTab student={editingStudent} />,
+      component: () => <StudentAttendanceTab student={editingStudent as any} />,
     },
     {
       id: "exams",
       label: "Exams",
       icon: <Trophy className="h-4 w-4" />,
-      component: () => <StudentExamsTab student={editingStudent} />,
+      component: () => <StudentExamsTab student={editingStudent as any} />,
     },
     {
       id: "notes",
       label: "Notes & Remarks",
       icon: <FileText className="h-4 w-4" />,
       component: () => (
-        <StudentNotes notes={editingStudent.notes} onAddNote={handleAddNote} onDeleteNote={handleDeleteNote} />
+        <StudentNotes notes={(editingStudent as any).notes || []} onAddNote={handleAddNote} onDeleteNote={handleDeleteNote} />
       ),
-      badge: editingStudent.notes.length,
+      badge: (editingStudent.notes || []).length,
     },
   ]
 
   return (
     <LayoutController
-      title={editingStudent.nameWithInitialsSi || `${editingStudent.firstName} ${editingStudent.lastName}`}
-      subtitle={`Roll No: ${editingStudent.admissionNumber} | Grade: ${editingStudent.gradeId && typeof editingStudent.gradeId === 'object' ? editingStudent.gradeId.nameEn : editingStudent.gradeId || "N/A"}`}
+      title={editingStudent.nameWithInitialsSi || `${editingStudent.fullNameEn}`}
+      subtitle={`Roll No: ${editingStudent.admissionNumber} | Grade: ${editingStudent.gradeId && typeof editingStudent.gradeId === 'object' ? (editingStudent.gradeId as any).nameEn : editingStudent.gradeId || "N/A"}`}
       icon={
         <StudentAvatar 
-          studentId={editingStudent.id}
+          studentId={(editingStudent as any).id || (editingStudent as any)._id}
           photoUrl={editingStudent.photoUrl}
-          firstName={editingStudent.nameWithInitialsSi || editingStudent.firstName}
-          lastName={editingStudent.lastName}
+          firstName={editingStudent.fullNameEn?.split(' ')[0] || editingStudent.firstNameSi || "S"}
+          lastName={editingStudent.fullNameEn?.split(' ').slice(1).join(' ') || editingStudent.lastNameSi || "T"}
           onUpdate={handlePhotoUpdate}
         />
       }
       tabs={tabs}
-      defaultTabId="basic-info"
+      defaultTabId="overview"
       onClose={onClose}
       onBack={onBack}
       backButton={true}
@@ -142,161 +165,3 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
   )
 }
 
-function RolesAndResponsibilities({ studentId, student }: { studentId: string; student: Student }) {
-  // In a real app, these would be fetched from global state or database
-  const [prefectData] = useState(() => {
-    // Simulate checking if student is a prefect by their ID hash
-    const isPrefect = Math.abs(Number.parseInt(studentId.split("-").pop() || "0")) % 4 === 0
-    return {
-      isPrefect,
-      rank: ["prefect", "vice-prefect", "head-prefect"][
-        Math.abs(Number.parseInt(studentId.split("-").pop() || "0")) % 3
-      ] as "prefect" | "vice-prefect" | "head-prefect",
-      appointmentDate: isPrefect ? new Date(2024, 3, 15).toISOString().split("T")[0] : undefined,
-      responsibilities: isPrefect ? ["Roll Call During Assembly", "Classroom Cleanliness", "Behavior Monitoring"] : [],
-    }
-  })
-
-  const [clubData] = useState(() => {
-    // Simulate club memberships
-    const clubCount = Math.abs(Number.parseInt(studentId.split("-").pop() || "0")) % 3
-    const clubs = []
-    const allClubs = [
-      { name: "Science Club", role: "member" },
-      { name: "Debate Society", role: "president" },
-      { name: "Sports Club", role: "vice-president" },
-    ]
-    for (let i = 0; i < clubCount; i++) {
-      clubs.push(allClubs[i])
-    }
-    return clubs
-  })
-
-  const [houseData] = useState(() => {
-    // Simulate house assignment
-    const houses = ["Red House", "Blue House", "Green House", "Yellow House"]
-    const houseIndex = Math.abs(Number.parseInt(studentId.split("-").pop() || "0")) % 4
-    return {
-      houseName: houses[houseIndex],
-      position: ["member", "leader"][Math.abs(Number.parseInt(studentId.split("-").pop() || "0")) % 2],
-    }
-  })
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Prefect Status</h3>
-
-        {prefectData.isPrefect ? (
-          <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center gap-3">
-                <div className="text-2xl">👑</div>
-                <div>
-                  <p className="text-sm font-medium text-slate-700">Prefect Rank</p>
-                  <p className="text-lg font-bold text-blue-600 capitalize">{prefectData.rank}</p>
-                </div>
-              </div>
-            </div>
-
-            {prefectData.appointmentDate && (
-              <div className="bg-slate-50 p-3 rounded">
-                <p className="text-sm text-slate-600">
-                  <span className="font-medium">Appointment Date:</span>{" "}
-                  {new Date(prefectData.appointmentDate).toLocaleDateString()}
-                </p>
-              </div>
-            )}
-
-            {prefectData.responsibilities.length > 0 && (
-              <div>
-                <p className="text-sm font-medium text-slate-900 mb-2">Assigned Responsibilities</p>
-                <ul className="space-y-2">
-                  {prefectData.responsibilities.map((resp, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
-                      <span className="text-blue-600 font-bold mt-0.5">✓</span>
-                      <span>{resp}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="bg-slate-50 p-4 rounded text-center">
-            <p className="text-sm text-slate-600">Not currently assigned as a prefect</p>
-          </div>
-        )}
-      </div>
-
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">House Information</h3>
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="text-2xl">🏠</div>
-            <p className="text-lg font-bold text-amber-900">{houseData.houseName}</p>
-          </div>
-          <p className="text-sm text-slate-700">
-            <span className="font-medium">Position:</span>
-            <span className="ml-2 inline-block bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-medium capitalize">
-              {houseData.position}
-            </span>
-          </p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Club Memberships</h3>
-
-        {clubData.length > 0 ? (
-          <div className="space-y-3">
-            {clubData.map((club, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">{club.name}</p>
-                  <p className="text-xs text-slate-600">Joined: {new Date().getFullYear()}</p>
-                </div>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    club.role === "president"
-                      ? "bg-purple-100 text-purple-800"
-                      : club.role === "vice-president"
-                        ? "bg-indigo-100 text-indigo-800"
-                        : "bg-blue-100 text-blue-800"
-                  }`}
-                >
-                  {club.role.replace("-", " ")}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-slate-50 p-4 rounded text-center">
-            <p className="text-sm text-slate-600">Not a member of any clubs</p>
-          </div>
-        )}
-      </div>
-
-      <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg border border-indigo-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-3">Role Summary</h3>
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-2xl font-bold text-indigo-600">{prefectData.isPrefect ? "1" : "0"}</p>
-            <p className="text-xs text-slate-600 mt-1">Prefect Roles</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-indigo-600">{clubData.length}</p>
-            <p className="text-xs text-slate-600 mt-1">Club Memberships</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-indigo-600">{prefectData.responsibilities.length}</p>
-            <p className="text-xs text-slate-600 mt-1">Responsibilities</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}

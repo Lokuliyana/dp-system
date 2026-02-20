@@ -10,6 +10,7 @@ import { Save, UserCheck, UserX } from "lucide-react";
 import { StudentAvatar } from "@/components/students/student-avatar";
 import { Badge } from "@/components/ui/badge";
 import { StudentStatusDialog } from "@/components/students/student-status-dialog";
+import { cn } from "@/lib/utils";
 
 interface BasicInfoSectionProps {
   student: Student;
@@ -49,31 +50,34 @@ export function BasicInfoSection({ student, onSave, onChange }: BasicInfoSection
   return (
     <div className="grid max-w-5xl gap-6">
       {/* Personal Information */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>Personal Information</CardTitle>
+      <Card className="border-none shadow-sm ring-1 ring-slate-100 overflow-hidden bg-white">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6 flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-800">Critical Personal Data</CardTitle>
           <div className="flex items-center gap-2">
             <Badge 
               variant={student.status === "inactive" ? "destructive" : "default"}
-              className={`px-3 py-1 capitalize ${student.status !== "inactive" ? "bg-green-600 hover:bg-green-700" : ""}`}
+              className={cn(
+                "px-3 py-1 capitalize font-black text-[10px] border-none",
+                student.status !== "inactive" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+              )}
             >
-              {student.status || "active"}
+              System {student.status || "active"}
             </Badge>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsStatusDialogOpen(true)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 h-8 text-[10px] font-bold border-slate-200"
             >
               {student.status === "inactive" ? (
                 <>
-                  <UserCheck className="h-4 w-4 text-green-500" />
-                  Make Active
+                  <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                  Enable Student
                 </>
               ) : (
                 <>
-                  <UserX className="h-4 w-4 text-red-500" />
-                  Make Inactive
+                  <UserX className="h-3.5 w-3.5 text-red-500" />
+                  Suspend Profile
                 </>
               )}
             </Button>
@@ -214,15 +218,17 @@ export function BasicInfoSection({ student, onSave, onChange }: BasicInfoSection
       </Card>
 
       {/* Guardian Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Guardian Details</CardTitle>
+      <Card className="border-none shadow-sm ring-1 ring-slate-100 overflow-hidden bg-white">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6">
+          <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-800">Guardian & Emergency Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
           {/* Father */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-slate-700 border-b pb-2">Father&apos;s Details</h3>
-            <div className="grid gap-6 md:grid-cols-2">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+               <div className="h-1 w-1 rounded-full bg-blue-500" /> Primary Guardian (Father)
+            </h3>
+            <div className="grid gap-6 md:grid-cols-3">
               <Field label="Name (En)">
                 <Input
                   value={student.fatherNameEn || ""}
@@ -248,9 +254,11 @@ export function BasicInfoSection({ student, onSave, onChange }: BasicInfoSection
           </div>
 
           {/* Mother */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-slate-700 border-b pb-2">Mother&apos;s Details</h3>
-            <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4 pt-4 border-t border-slate-50">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+               <div className="h-1 w-1 rounded-full bg-pink-500" /> Secondary Guardian (Mother)
+            </h3>
+            <div className="grid gap-6 md:grid-cols-3">
               <Field label="Name (En)">
                 <Input
                   value={student.motherNameEn || ""}
@@ -275,9 +283,10 @@ export function BasicInfoSection({ student, onSave, onChange }: BasicInfoSection
             </div>
           </div>
 
-          {/* Emergency Contact */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-slate-700 border-b pb-2">Emergency Contact</h3>
+          <div className="space-y-4 pt-4 border-t border-slate-50">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+               <div className="h-1 w-1 rounded-full bg-red-500" /> Emergency & Supplemental Contact
+            </h3>
             <div className="grid gap-6 md:grid-cols-2">
               <Field label="Emergency Number">
                 <Input
@@ -342,7 +351,7 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-700">{label}</label>
+      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</label>
       {children}
     </div>
   );

@@ -5,314 +5,287 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
-import { Badge } from "@/components/ui";
-import { Plus, Trash2, Star } from "lucide-react";
-import { TALENT_CATEGORIES } from "@/lib/school-data";
-import type { Talent } from "@/types/models";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Plus, 
+  Trash2, 
+  Star, 
+  Award, 
+  Shield, 
+  Zap, 
+  Sparkles, 
+  MapPin, 
+  Globe,
+  Milestone,
+  Medal,
+  Dribbble,
+  Music,
+  Palette,
+  Lightbulb
+} from "lucide-react";
+import type { Student360, StudentTalent } from "@/types/models";
+import { cn } from "@/lib/utils";
 
 interface TalentsSectionProps {
-  talents: Talent[];
-  onAddTalent: (talent: Omit<Talent, "id">) => void;
+  data: Student360;
+  onAddTalent: (talent: any) => void;
   onRemoveTalent: (talentId: string) => void;
 }
 
-export function TalentsSection({ talents, onAddTalent, onRemoveTalent }: TalentsSectionProps) {
+export function TalentsSection({ data, onAddTalent, onRemoveTalent }: TalentsSectionProps) {
+  const talents = data.talents || [];
+  
   const [formData, setFormData] = useState({
-    name: "",
-    category: "academic" as Talent["category"],
-    level: "beginner" as Talent["level"],
-    description: "",
+    areaEn: "",
+    level: "school",
+    notes: "",
   });
 
-  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"level" | "name">("level");
 
   const filteredAndSortedTalents = useMemo(() => {
     let filtered = [...talents];
 
-    if (filterCategory !== "all") {
-      filtered = filtered.filter((t) => t.category === filterCategory);
-    }
-
     if (filterLevel !== "all") {
       filtered = filtered.filter((t) => t.level === filterLevel);
     }
 
     filtered.sort((a, b) => {
-      if (sortBy === "name") return a.name.localeCompare(b.name);
+      if (sortBy === "name") return (a.areaEn || "").localeCompare(b.areaEn || "");
       const order: Record<string, number> = {
-        expert: 0,
-        advanced: 1,
-        intermediate: 2,
-        beginner: 3,
+        international: 0,
+        national: 1,
+        provincial: 2,
+        district: 3,
+        zonal: 4,
+        school: 5,
       };
-      return order[a.level] - order[b.level];
+      return (order[a.level || "school"] || 99) - (order[b.level || "school"] || 99);
     });
 
     return filtered;
-  }, [talents, filterCategory, filterLevel, sortBy]);
-
-  const talentAnalytics = useMemo(() => {
-    const byCategory: Record<string, number> = {};
-    const byLevel: Record<string, number> = {};
-
-    talents.forEach((talent) => {
-      byCategory[talent.category] = (byCategory[talent.category] || 0) + 1;
-      byLevel[talent.level] = (byLevel[talent.level] || 0) + 1;
-    });
-
-    return { byCategory, byLevel };
-  }, [talents]);
+  }, [talents, filterLevel, sortBy]);
 
   const handleAddTalent = () => {
-    if (!formData.name.trim()) return;
+    if (!formData.areaEn.trim()) return;
     onAddTalent(formData);
     setFormData({
-      name: "",
-      category: "academic",
-      level: "beginner",
-      description: "",
+      areaEn: "",
+      level: "school",
+      notes: "",
     });
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      academic: "bg-blue-100 text-blue-800",
-      sports: "bg-red-100 text-red-800",
-      arts: "bg-purple-100 text-purple-800",
-      leadership: "bg-amber-100 text-amber-800",
-      other: "bg-slate-100 text-slate-800",
-    };
-    return colors[category] || "bg-slate-100 text-slate-800";
-  };
-
-  const getLevelColor = (level: string) => {
-    const colors: Record<string, string> = {
-      beginner: "bg-blue-100 text-blue-800",
-      intermediate: "bg-yellow-100 text-yellow-800",
-      advanced: "bg-orange-100 text-orange-800",
-      expert: "bg-green-100 text-green-800",
-    };
-    return colors[level] || "bg-slate-100 text-slate-800";
-  };
-
-  const getLevelIcon = (level: string) => {
-    const map: Record<string, string> = {
-      beginner: "⭐",
-      intermediate: "⭐⭐",
-      advanced: "⭐⭐⭐",
-      expert: "⭐⭐⭐⭐",
-    };
-    return map[level] || "";
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
-      {/* Add form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-yellow-600" />
-            Add Talent / Skill
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      {/* 1. Skill Acquisition Form */}
+      <Card className="border-none shadow-none ring-1 ring-slate-100 overflow-hidden bg-white rounded-xl">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-5">
+          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+            <Lightbulb className="h-3.5 w-3.5 text-primary" /> Endorse Student Talent Record
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Name</label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
-              placeholder="e.g., Basketball, Singing, Olympiad Maths"
-              className="bg-white"
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Category</label>
-              <Select
-                value={formData.category}
-                onValueChange={(val) => setFormData((p) => ({ ...p, category: val as any }))}
-              >
-                <SelectTrigger className="bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TALENT_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mastery Area</label>
+              <Input
+                value={formData.areaEn}
+                onChange={(e) => setFormData((p) => ({ ...p, areaEn: e.target.value }))}
+                placeholder="e.g., Classical Piano, Table Tennis, Debate"
+                className="h-9 bg-white border-slate-200 text-xs font-bold"
+              />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Level</label>
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Institutional Recognition</label>
               <Select
                 value={formData.level}
-                onValueChange={(val) => setFormData((p) => ({ ...p, level: val as any }))}
+                onValueChange={(val) => setFormData((p) => ({ ...p, level: val }))}
               >
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="h-9 bg-white border-slate-200 text-xs font-bold">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="beginner">Beginner ⭐</SelectItem>
-                  <SelectItem value="intermediate">Intermediate ⭐⭐</SelectItem>
-                  <SelectItem value="advanced">Advanced ⭐⭐⭐</SelectItem>
-                  <SelectItem value="expert">Expert ⭐⭐⭐⭐</SelectItem>
+                  <SelectItem value="school">School Level</SelectItem>
+                  <SelectItem value="zonal">Zonal Level</SelectItem>
+                  <SelectItem value="district">District Level</SelectItem>
+                  <SelectItem value="provincial">Provincial Level</SelectItem>
+                  <SelectItem value="national">National Level</SelectItem>
+                  <SelectItem value="international">International Level</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="flex items-end">
-              <Button
-                onClick={handleAddTalent}
-                className="w-full gap-2 bg-blue-600 hover:bg-blue-700"
-              >
-                <Plus className="h-4 w-4" />
-                Add
-              </Button>
-            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Description (optional)</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={2}
-              placeholder="Short description of skill or achievements…"
-            />
+          <div className="mt-4 flex flex-col md:flex-row gap-4 items-end">
+             <div className="flex-1 space-y-2 w-full">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Auxiliary Notes</label>
+                <Input
+                  value={formData.notes}
+                  onChange={(e) => setFormData((p) => ({ ...p, notes: e.target.value }))}
+                  placeholder="briefly describe specific mastery or awards…"
+                  className="h-9 bg-white border-slate-200 text-xs font-medium"
+                />
+             </div>
+             <Button
+                onClick={handleAddTalent}
+                className="h-9 px-6 gap-2 bg-primary hover:bg-primary/90 rounded-lg text-xs font-bold"
+                disabled={!formData.areaEn.trim()}
+              >
+                <Plus className="h-3.5 w-3.5" /> Log Achievement
+              </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Analytics + list */}
+      {/* 2. Recorded Portfolio Ledger */}
       {talents.length > 0 && (
-        <>
-          <Card className="border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100">
-            <CardHeader>
-              <CardTitle className="text-lg">Skills Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-slate-900">{talents.length}</p>
-                  <p className="text-sm text-slate-600">Total Skills</p>
-                </div>
-                {Object.entries(talentAnalytics.byLevel).map(([level, count]) => (
-                  <div key={level} className="text-center">
-                    <p className="text-2xl font-bold text-slate-900">{count}</p>
-                    <p className="mt-1 text-sm capitalize text-slate-600">{level}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 border-t border-slate-200 pt-4">
-                <p className="mb-3 text-sm font-medium text-slate-700">By Category</p>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(talentAnalytics.byCategory).map(([category, count]) => (
-                    <Badge key={category} className={getCategoryColor(category)}>
-                      {category}: {count}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-600" />
-                  Current Talents ({filteredAndSortedTalents.length})
-                </CardTitle>
-                <div className="flex flex-wrap gap-2">
-                  <Select value={filterCategory} onValueChange={setFilterCategory}>
-                    <SelectTrigger className="h-9 w-32">
-                      <SelectValue placeholder="Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {TALENT_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
+         <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+               <div className="flex items-center gap-3">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Talent Ledger</h3>
+                  <Badge className="bg-slate-100 text-slate-500 border-none font-black h-4 text-[8px] uppercase">{talents.length} Entries</Badge>
+               </div>
+               
+               <div className="flex gap-2">
                   <Select value={filterLevel} onValueChange={setFilterLevel}>
-                    <SelectTrigger className="h-9 w-32">
+                    <SelectTrigger className="h-7 w-24 bg-white text-[9px] font-black border-slate-200">
                       <SelectValue placeholder="Level" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Levels</SelectItem>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
-                      <SelectItem value="expert">Expert</SelectItem>
+                      <SelectItem value="school">School</SelectItem>
+                      <SelectItem value="zonal">Zonal</SelectItem>
+                      <SelectItem value="district">District</SelectItem>
+                      <SelectItem value="provincial">Provincial</SelectItem>
+                      <SelectItem value="national">National</SelectItem>
+                      <SelectItem value="international">International</SelectItem>
                     </SelectContent>
                   </Select>
 
                   <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
-                    <SelectTrigger className="h-9 w-28">
+                    <SelectTrigger className="h-7 w-20 bg-white text-[9px] font-black border-slate-200">
                       <SelectValue placeholder="Sort" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="level">By Level</SelectItem>
-                      <SelectItem value="name">By Name</SelectItem>
+                      <SelectItem value="level">Prestige</SelectItem>
+                      <SelectItem value="name">Name</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {filteredAndSortedTalents.length === 0 ? (
-                <p className="py-8 text-center text-slate-500">
-                  No talents for current filters.
-                </p>
-              ) : (
-                filteredAndSortedTalents.map((talent) => (
-                  <div
-                    key={talent.id}
-                    className="rounded-lg border border-slate-200 p-4 hover:shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-semibold text-slate-900">{talent.name}</h3>
-                          <Badge className={getCategoryColor(talent.category)}>
-                            {talent.category}
-                          </Badge>
-                          <Badge className={getLevelColor(talent.level)}>
-                            {getLevelIcon(talent.level)} {talent.level}
-                          </Badge>
-                        </div>
-                        {talent.description && (
-                          <p className="text-sm text-slate-700">{talent.description}</p>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemoveTalent(talent.id)}
-                        className="flex-shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredAndSortedTalents.map((talent, idx) => (
+                <div
+                  key={idx}
+                  className="group relative bg-white border border-slate-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                     <div className={cn(
+                       "h-10 w-10 rounded-lg flex items-center justify-center border shadow-sm transition-transform",
+                       getLevelColorClass(talent.level || 'school')
+                     )}>
+                       {getLevelIcon(talent.level || 'school')}
+                     </div>
+                     <Button
+                       onClick={() => onRemoveTalent(talent.id)}
+                       variant="ghost"
+                       size="icon"
+                       className="h-6 w-6 text-slate-200 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                     >
+                       <Trash2 className="h-3.5 w-3.5" />
+                     </Button>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="font-black text-slate-800 leading-tight text-[13px]">{talent.areaEn}</h3>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      <Badge className={cn("text-[8px] font-black uppercase tracking-tighter h-4 border-none py-0", getLevelBadgeStyles(talent.level || "school"))}>
+                        {talent.level} Selection
+                      </Badge>
+                      {talent.starLevel === 2 && (
+                         <Badge className="bg-amber-100 text-amber-700 h-4 border-none py-0 text-[8px] font-black uppercase">Elite Tier</Badge>
+                      )}
                     </div>
                   </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </>
+
+                  {talent.notes && (
+                     <p className="text-[10px] text-slate-500 mt-3 line-clamp-2 leading-relaxed italic font-medium">"{talent.notes}"</p>
+                  )}
+
+                  <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                     <div className="flex gap-0.5">
+                        {[1, 2, 3, 4].map(s => (
+                          <Star key={s} className={cn(
+                            "h-3 w-3",
+                            s <= getPrestigeNum(talent.level || 'school') 
+                              ? "fill-amber-400 text-amber-400" : "text-slate-100"
+                          )} />
+                        ))}
+                     </div>
+                     <span className="text-[8px] font-black text-slate-300 uppercase">Profiled Record</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+         </div>
+      )}
+
+      {talents.length === 0 && (
+         <div className="py-20 text-center border-2 border-dashed border-slate-100 rounded-xl bg-slate-50/10">
+            <Zap className="h-10 w-10 mx-auto text-slate-200 mb-2" />
+            <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Digital Portfolio Empty</h4>
+            <p className="text-[11px] text-slate-200 mt-1 max-w-xs mx-auto italic">No identified talents or mastery areas have been officialized for this profile.</p>
+         </div>
       )}
     </div>
   );
+}
+
+// Visual Helpers
+function getLevelIcon(level: string) {
+  switch (level.toLowerCase()) {
+    case 'international': return <Globe className="h-5 w-5" />;
+    case 'national': return <Award className="h-5 w-5" />;
+    case 'provincial': return <Milestone className="h-5 w-5" />;
+    case 'district': return <MapPin className="h-5 w-5" />;
+    case 'zonal': return <MapPin className="h-5 w-5" />;
+    default: return <Shield className="h-5 w-5" />;
+  }
+}
+
+function getLevelColorClass(level: string) {
+  switch (level.toLowerCase()) {
+    case 'international': return "bg-indigo-50 text-indigo-600 border-indigo-100";
+    case 'national': return "bg-red-50 text-red-600 border-red-100";
+    case 'provincial': return "bg-orange-50 text-orange-600 border-orange-100";
+    case 'district': return "bg-amber-50 text-amber-600 border-amber-100";
+    case 'zonal': return "bg-blue-50 text-blue-600 border-blue-100";
+    default: return "bg-slate-50 text-slate-400 border-slate-200";
+  }
+}
+
+function getLevelBadgeStyles(level: string) {
+  const styles: Record<string, string> = {
+    school: "bg-slate-100 text-slate-600",
+    zonal: "bg-blue-50 text-blue-700",
+    district: "bg-amber-50 text-amber-700",
+    provincial: "bg-orange-50 text-orange-700",
+    national: "bg-red-50 text-red-700",
+    international: "bg-indigo-50 text-indigo-700",
+  };
+  return styles[level.toLowerCase()] || "bg-slate-100 text-slate-800";
+}
+
+function getPrestigeNum(level: string) {
+  switch (level.toLowerCase()) {
+    case 'international': return 4;
+    case 'national': return 3;
+    case 'provincial':
+    case 'district': return 2;
+    default: return 1;
+  }
 }

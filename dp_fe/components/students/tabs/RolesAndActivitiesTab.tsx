@@ -1,603 +1,276 @@
 "use client";
 
-import { useState } from "react";
-import type { Student } from "@/types/models";
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { Badge } from "@/components/ui";
-import { Button } from "@/components/ui";
-import { Input } from "@/components/ui";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui";
-import {
-  Crown,
-  Users,
+import { Badge } from "@/components/ui/badge";
+import { 
+  Shield, 
+  Trophy, 
+  Users, 
+  Target, 
+  Calendar, 
+  CheckCircle2, 
   Award,
-  Flag,
-  Trophy,
-  Plus,
-  Calendar,
+  ChevronRight,
+  TrendingUp,
+  MapPin,
+  Flame,
+  Star,
+  Activity,
+  UserCheck,
+  Building,
+  Club,
+  ArrowUpRight,
+  History,
+  FileText,
+  Map,
+  Globe
 } from "lucide-react";
-
-export interface ClubMembership {
-  id: string;
-  name: string;
-  role: string;
-  year: number;
-  isActive: boolean;
-}
-
-export interface ActivityRecord {
-  id: string;
-  name: string;
-  category: "sports" | "cultural" | "academic" | "other";
-  level: "school" | "zonal" | "district" | "national" | "international";
-  year: number;
-  result?: string;
-}
-
-export interface HouseHistoryEntry {
-  id: string;
-  houseName: string;
-  yearFrom: number;
-  yearTo?: number;
-  position?: "member" | "vice-captain" | "captain";
-}
-
-export interface HouseCompetitionWin {
-  id: string;
-  year: number;
-  houseName: string;
-  event: string;
-  position: "1st" | "2nd" | "3rd" | "participant";
-}
-
-export interface PrefectshipInfo {
-  isPrefect: boolean;
-  rank?: "prefect" | "vice-prefect" | "head-prefect";
-  year?: number;
-  appointmentDate?: string;
-  responsibilities?: string[];
-}
+import type { Student360 } from "@/types/models";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface RolesAndActivitiesTabProps {
-  student: Student;
-
-  // read-only from system modules (optional)
-  prefectship?: PrefectshipInfo;
-  houseHistory?: HouseHistoryEntry[];
-  houseWins?: HouseCompetitionWin[];
-
-  // editable from this screen (optional)
-  clubs?: ClubMembership[];
-  activities?: ActivityRecord[];
-  onAddClub?: (club: Omit<ClubMembership, "id">) => void;
-  onRemoveClub?: (id: string) => void;
-  onAddActivity?: (activity: Omit<ActivityRecord, "id">) => void;
-  onRemoveActivity?: (id: string) => void;
+  data: Student360;
 }
 
-export function RolesAndActivitiesTab({
-  student,
-  prefectship,
-  houseHistory,
-  houseWins,
-  clubs,
-  activities,
-  onAddClub,
-  onRemoveClub,
-  onAddActivity,
-  onRemoveActivity,
-}: RolesAndActivitiesTabProps) {
-  // Safe defaults so we never read `.length` on undefined
-  const safePrefectship: PrefectshipInfo = prefectship ?? { isPrefect: false };
-  const safeClubs: ClubMembership[] = clubs ?? [];
-  const safeActivities: ActivityRecord[] = activities ?? [];
-  const safeHouseHistory: HouseHistoryEntry[] = houseHistory ?? [];
-  const safeHouseWins: HouseCompetitionWin[] = houseWins ?? [];
+export function RolesAndActivitiesTab({ data }: RolesAndActivitiesTabProps) {
+  const { 
+    houseHistory = [], 
+    prefectHistory = [], 
+    clubs = [], 
+    competitionWins = [], 
+    higherTeams = [], 
+    events = [],
+    competitions = [] 
+  } = data;
 
-  const [clubDraft, setClubDraft] = useState<Omit<ClubMembership, "id">>({
-    name: "",
-    role: "member",
-    year: new Date().getFullYear(),
-    isActive: true,
-  });
+  const currentHouse = houseHistory[0]?.houseId;
+  const currentPrefectEntry = prefectHistory[0]?.myEntry;
 
-  const [activityDraft, setActivityDraft] = useState<Omit<ActivityRecord, "id">>({
-    name: "",
-    category: "sports",
-    level: "school",
-    year: new Date().getFullYear(),
-    result: "",
-  });
-
-  const handleAddClub = () => {
-    if (!onAddClub || !clubDraft.name.trim()) return;
-    onAddClub(clubDraft);
-    setClubDraft((prev) => ({ ...prev, name: "" }));
-  };
-
-  const handleAddActivity = () => {
-    if (!onAddActivity || !activityDraft.name.trim()) return;
-    onAddActivity(activityDraft);
-    setActivityDraft((prev) => ({ ...prev, name: "", result: "" }));
-  };
+  // Split wins into Internal (House) and External if level is traceable, 
+  // but based on user prompt, we treat competitionWins as House Competitions 
+  // and higherTeams as External (Zonal/District/National).
+  
+  const interactionJournal = useMemo(() => {
+    return [...events, ...competitions].sort((a,b) => (b.year || 0) - (a.year || 0));
+  }, [events, competitions]);
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Prefectship: READ-ONLY */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5 text-amber-600" />
-            Prefectship / Leadership
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {safePrefectship.isPrefect ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-amber-900">Current Designation</p>
-                  {safePrefectship.year && (
-                    <Badge className="bg-amber-600 font-bold text-white hover:bg-amber-700">
-                      {safePrefectship.year}
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-2xl font-black capitalize tracking-tight text-amber-950">
-                  {safePrefectship.rank || "Prefect"}
-                </p>
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800">
-                  <Award className="h-3 w-3" />
-                  Official Leadership Member
-                </div>
-              </div>
-              <div className="flex flex-col justify-center space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-                {safePrefectship.appointmentDate && (
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-500">
-                      <Calendar className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Appointed On</p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {new Date(safePrefectship.appointmentDate).toLocaleDateString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                <p className="text-[10px] italic text-slate-400">
-                  Leadership records are managed centrally by the School Administration.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-6 text-center">
-              <p className="text-sm text-slate-500">
-                This student is not currently assigned a leadership role for the current academic year.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      
+      {/* 1. Institutional Identity Headers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-5 rounded-xl border border-slate-100 bg-white shadow-sm flex items-center gap-4">
+          <div className={cn(
+            "h-10 w-10 rounded-lg flex items-center justify-center border shadow-sm",
+            (currentHouse as any)?.color === 'Red' ? "bg-red-50 text-red-600 border-red-100" :
+            (currentHouse as any)?.color === 'Blue' ? "bg-blue-50 text-blue-600 border-blue-100" :
+            (currentHouse as any)?.color === 'Green' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+            (currentHouse as any)?.color === 'Yellow' ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-slate-50 text-slate-400 border-slate-100"
+          )}>
+            <Building className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">House Cluster</p>
+            <p className="text-sm font-black text-slate-900">{(currentHouse as any)?.nameEn || "General"}</p>
+          </div>
+        </div>
 
-      {/* Clubs & societies: EDITABLE */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-600" />
-              Clubs & Societies
-            </span>
-            <Badge variant="outline" className="border-blue-200 text-xs text-blue-700">
-              Managed here (student-level)
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {onAddClub && (
-            <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 md:grid-cols-4">
-              <div className="md:col-span-2 space-y-1">
-                <label className="text-xs font-medium text-slate-700">Club Name</label>
-                <Input
-                  value={clubDraft.name}
-                  onChange={(e) =>
-                    setClubDraft((p) => ({ ...p, name: e.target.value }))
-                  }
-                  placeholder="e.g., Science Club"
-                  className="h-9 bg-white"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Role</label>
-                <Select
-                  value={clubDraft.role}
-                  onValueChange={(v) =>
-                    setClubDraft((p) => ({
-                      ...p,
-                      role: v as ClubMembership["role"],
-                    }))
-                  }
-                >
-                  <SelectTrigger className="h-9 bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="member">Member</SelectItem>
-                    <SelectItem value="secretary">Secretary</SelectItem>
-                    <SelectItem value="vice-president">Vice President</SelectItem>
-                    <SelectItem value="president">President</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Year</label>
-                <Input
-                  type="number"
-                  value={clubDraft.year}
-                  onChange={(e) =>
-                    setClubDraft((p) => ({
-                      ...p,
-                      year: Number.isNaN(Number(e.target.value))
-                        ? new Date().getFullYear()
-                        : Number(e.target.value),
-                    }))
-                  }
-                  className="h-9 bg-white"
-                />
-              </div>
-              <div className="md:col-span-4 flex justify-end pt-1">
-                <Button
-                  type="button"
-                  size="sm"
-                  className="gap-2 bg-blue-600 hover:bg-blue-700"
-                  onClick={handleAddClub}
-                  disabled={!clubDraft.name.trim()}
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Club
-                </Button>
-              </div>
-            </div>
-          )}
+        <div className="p-5 rounded-xl border border-slate-100 bg-white shadow-sm flex items-center gap-4">
+          <div className={cn(
+            "h-10 w-10 rounded-lg flex items-center justify-center border shadow-sm",
+            currentPrefectEntry ? "bg-indigo-50 text-indigo-600 border-indigo-100" : "bg-slate-50 text-slate-300 border-slate-100"
+          )}>
+            <Award className={cn("h-5 w-5", currentPrefectEntry && "fill-indigo-500")} />
+          </div>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Prefect Council</p>
+            <p className="text-sm font-black text-slate-900 leading-none capitalize">{currentPrefectEntry?.rank || "General Student"}</p>
+          </div>
+        </div>
+      </div>
 
-          {safeClubs.length === 0 ? (
-            <p className="py-4 text-sm text-slate-500">
-              No clubs/societies recorded for this student.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {safeClubs
-                .slice()
-                .sort((a, b) => b.year - a.year)
-                .map((club) => (
-                  <div
-                    key={club.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-slate-900">{club.name}</span>
-                        <Badge variant="outline" className="border-slate-200 text-xs capitalize">
-                          {club.role.replace("-", " ")}
-                        </Badge>
-                        {club.isActive && (
-                          <Badge className="bg-emerald-50 text-xs text-emerald-700">
-                            Active
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-600">
-                        <Calendar className="mr-1 inline-block h-3 w-3" />
-                        {club.year}
-                      </p>
-                    </div>
-                    {onRemoveClub && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemoveClub(club.id)}
-                        className="flex-shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                      >
-                        Remove
-                      </Button>
-                    )}
-                  </div>
-                ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Activities: EDITABLE */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-indigo-600" />
-              Extracurricular Activities
-            </span>
-            <Badge variant="outline" className="border-indigo-200 text-xs text-indigo-700">
-              Managed here (student-level)
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {onAddActivity && (
-            <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 md:grid-cols-4">
-              <div className="md:col-span-2 space-y-1">
-                <label className="text-xs font-medium text-slate-700">Activity</label>
-                <Input
-                  value={activityDraft.name}
-                  onChange={(e) =>
-                    setActivityDraft((p) => ({ ...p, name: e.target.value }))
-                  }
-                  placeholder="e.g., Inter-house Athletics, Drama Competition"
-                  className="h-9 bg-white"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Category</label>
-                <Select
-                  value={activityDraft.category}
-                  onValueChange={(v) =>
-                    setActivityDraft((p) => ({
-                      ...p,
-                      category: v as ActivityRecord["category"],
-                    }))
-                  }
-                >
-                  <SelectTrigger className="h-9 bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sports">Sports</SelectItem>
-                    <SelectItem value="cultural">Cultural</SelectItem>
-                    <SelectItem value="academic">Academic</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Level</label>
-                <Select
-                  value={activityDraft.level}
-                  onValueChange={(v) =>
-                    setActivityDraft((p) => ({
-                      ...p,
-                      level: v as ActivityRecord["level"],
-                    }))
-                  }
-                >
-                  <SelectTrigger className="h-9 bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="school">School</SelectItem>
-                    <SelectItem value="zonal">Zonal</SelectItem>
-                    <SelectItem value="district">District</SelectItem>
-                    <SelectItem value="national">National</SelectItem>
-                    <SelectItem value="international">International</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Year</label>
-                <Input
-                  type="number"
-                  value={activityDraft.year}
-                  onChange={(e) =>
-                    setActivityDraft((p) => ({
-                      ...p,
-                      year: Number.isNaN(Number(e.target.value))
-                        ? new Date().getFullYear()
-                        : Number(e.target.value),
-                    }))
-                  }
-                  className="h-9 bg-white"
-                />
-              </div>
-              <div className="md:col-span-3 space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Result (optional)
-                </label>
-                <Input
-                  value={activityDraft.result}
-                  onChange={(e) =>
-                    setActivityDraft((p) => ({ ...p, result: e.target.value }))
-                  }
-                  placeholder="e.g., 1st place, Participation"
-                  className="h-9 bg-white"
-                />
-              </div>
-              <div className="md:col-span-1 flex items-end justify-end">
-                <Button
-                  type="button"
-                  size="sm"
-                  className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700"
-                  onClick={handleAddActivity}
-                  disabled={!activityDraft.name.trim()}
-                >
-                  <Plus className="h-4 w-4" />
-                  Add
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {safeActivities.length === 0 ? (
-            <p className="py-4 text-sm text-slate-500">
-              No extracurricular activities recorded.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {safeActivities
-                .slice()
-                .sort((a, b) => b.year - a.year)
-                .map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-slate-900">
-                          {activity.name}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="border-slate-200 text-xs capitalize"
-                        >
-                          {activity.category}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className="border-slate-200 text-xs capitalize"
-                        >
-                          {activity.level}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-slate-600">
-                        <Calendar className="mr-1 inline-block h-3 w-3" />
-                        {activity.year}
-                        {activity.result && (
-                          <>
-                            {" "}
-                            • <Trophy className="mr-1 inline-block h-3 w-3" />
-                            {activity.result}
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    {onRemoveActivity && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemoveActivity(activity.id)}
-                        className="flex-shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                      >
-                        Remove
-                      </Button>
-                    )}
-                  </div>
-                ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Houses & competitions: READ-ONLY */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Flag className="h-5 w-5 text-emerald-600" />
-            House History & Inter-house Wins
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* House history */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-slate-800">House Assignments</p>
-            {safeHouseHistory.length === 0 ? (
-              <p className="text-sm text-slate-500">
-                No house history recorded for this student. This is maintained by
-                the house module.
-              </p>
-            ) : (
-              <div className="overflow-x-auto rounded-lg border border-slate-200">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-xs font-semibold text-slate-700">
-                    <tr>
-                      <th className="px-3 py-2">House</th>
-                      <th className="px-3 py-2">From</th>
-                      <th className="px-3 py-2">To</th>
-                      <th className="px-3 py-2">Position</th>
+      {/* 2. Balanced Portfolio Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* Left Section: High-Volume Data (House Competitions & Journal) */}
+        <div className="lg:col-span-8 space-y-8">
+          
+          {/* House Competitions Ledger */}
+          <Card className="border-none shadow-none ring-1 ring-slate-100 bg-white overflow-hidden rounded-xl">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-5">
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                <Trophy className="h-3.5 w-3.5" /> House Competitions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/10 border-b border-slate-50">
+                      <th className="px-5 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest w-24">Year</th>
+                      <th className="px-5 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Competition</th>
+                      <th className="px-5 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right w-32">Place</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {safeHouseHistory
-                      .slice()
-                      .sort((a, b) => b.yearFrom - a.yearFrom)
-                      .map((entry) => (
-                        <tr key={entry.id} className="border-t">
-                          <td className="px-3 py-2 text-slate-900">
-                            {entry.houseName}
+                  <tbody className="divide-y divide-slate-50">
+                    {competitionWins.length > 0 ? (
+                      competitionWins.map((win, idx) => (
+                        <tr key={idx} className="group hover:bg-slate-50/50 transition-colors">
+                          <td className="px-5 py-3.5">
+                            <span className="text-[11px] font-black text-slate-900">{win.year}</span>
                           </td>
-                          <td className="px-3 py-2">{entry.yearFrom}</td>
-                          <td className="px-3 py-2">
-                            {entry.yearTo ? entry.yearTo : "Present"}
+                          <td className="px-5 py-3.5">
+                            <p className="text-[11px] font-bold text-slate-700 leading-tight">{win.competitionId?.nameEn || "N/A"}</p>
                           </td>
-                          <td className="px-3 py-2 capitalize">
-                            {entry.position ?? "Member"}
+                          <td className="px-5 py-3.5 text-right">
+                             <Badge className="bg-amber-100 text-amber-700 border-none text-[9px] font-black px-1.5 h-4.5 rounded uppercase">
+                               Place {win.place}
+                             </Badge>
                           </td>
                         </tr>
-                      ))}
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="px-5 py-10 text-center text-[10px] text-slate-300 font-bold uppercase italic italic tracking-widest">
+                           No internal wins recorded
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
 
-          {/* Competition wins */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-slate-800">
-              House Competition Performance
-            </p>
-            {safeHouseWins.length === 0 ? (
-              <p className="text-sm text-slate-500">
-                No inter-house competition records. Maintained by the competitions
-                module.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {safeHouseWins
-                  .slice()
-                  .sort((a, b) => b.year - a.year)
-                  .map((win) => (
-                    <div
-                      key={win.id}
-                      className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium text-slate-900">
-                            {win.event}
+          {/* Interaction Journal Ledger */}
+          <Card className="border-none shadow-none ring-1 ring-slate-100 bg-white overflow-hidden rounded-xl">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-5">
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5" /> Interaction & Engagement Journal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/10 border-b border-slate-50">
+                      <th className="px-5 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest w-24">Year</th>
+                      <th className="px-5 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Registered Activity</th>
+                      <th className="px-5 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Type</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {interactionJournal.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <span className="text-[11px] font-black text-slate-600">{item.year}</span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <p className="text-[11px] font-bold text-slate-700 truncate">
+                            {(item as any).eventId?.nameEn || (item as any).competitionId?.nameEn}
+                          </p>
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                            {(item as any).eventId ? "Event" : "Entry"}
                           </span>
-                          <Badge className="bg-emerald-50 text-xs text-emerald-700">
-                            {win.houseName}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-slate-600">
-                          <Calendar className="mr-1 inline-block h-3 w-3" />
-                          {win.year} •{" "}
-                          <Trophy className="mr-1 inline-block h-3 w-3" />
-                          {win.position}
-                        </p>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className="flex-shrink-0 border-slate-200 text-xs text-slate-700"
-                      >
-                        Source: Competitions Module
-                      </Badge>
-                    </div>
-                  ))}
+                        </td>
+                      </tr>
+                    ))}
+                    {interactionJournal.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-5 py-10 text-center text-[10px] text-slate-300 font-bold uppercase italic">No entries found</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Section: Low-Volume & Grouped Data (External & Clubs) */}
+        <div className="lg:col-span-4 space-y-8">
+          
+          {/* External Zonal/National Ledger */}
+          <Card className="border-none shadow-none ring-1 ring-slate-100 bg-white overflow-hidden rounded-xl">
+             <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-5">
+               <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                 <Globe className="h-3.5 w-3.5" /> External Representation
+               </CardTitle>
+             </CardHeader>
+             <CardContent className="p-0">
+                <div className="divide-y divide-slate-100">
+                  {higherTeams.length > 0 ? (
+                    higherTeams.map((team, idx) => (
+                      <div key={idx} className="p-0">
+                         <div className="bg-indigo-50/30 px-5 py-2 border-b border-indigo-100/50 flex items-center justify-between">
+                            <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">{team.level} Level</span>
+                            <span className="text-[9px] font-bold text-indigo-400">{team.year}</span>
+                         </div>
+                         <table className="w-full text-left">
+                            <tbody className="divide-y divide-slate-50">
+                               {team.entries.map((entry, eIdx) => (
+                                  <tr key={eIdx} className="text-[11px]">
+                                     <td className="px-5 py-3 font-bold text-slate-700">
+                                        {entry.competitionId?.nameEn}
+                                     </td>
+                                     <td className="px-5 py-3 text-right">
+                                        <Badge className="bg-indigo-100 text-indigo-700 text-[8px] font-black uppercase h-4 py-0 border-none">
+                                           Place {entry.place}
+                                        </Badge>
+                                     </td>
+                                  </tr>
+                               ))}
+                            </tbody>
+                         </table>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-12 text-center text-[10px] text-slate-300 font-bold uppercase italic">
+                       No external representations identified
+                    </div>
+                  )}
+                </div>
+             </CardContent>
+          </Card>
+
+          {/* Club Memberships Ledger */}
+          <Card className="border-none shadow-none ring-1 ring-slate-100 bg-white overflow-hidden rounded-xl">
+             <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-5">
+                <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                  <Users className="h-3.5 w-3.5" /> Institutional Clubs
+                </CardTitle>
+             </CardHeader>
+             <CardContent className="p-0">
+                <table className="w-full text-left">
+                   <tbody className="divide-y divide-slate-50">
+                      {clubs.map((club, idx) => (
+                         <tr key={idx} className="text-[11px]">
+                            <td className="px-5 py-3">
+                               <p className="font-bold text-slate-700 leading-tight">{club.nameEn}</p>
+                               <p className="text-[9px] text-slate-400">{club.nameSi}</p>
+                            </td>
+                            <td className="px-5 py-3 text-right">
+                               <Badge className="bg-slate-100 text-slate-500 text-[8px] font-black uppercase h-4 border-none">Member</Badge>
+                            </td>
+                         </tr>
+                      ))}
+                      {clubs.length === 0 && (
+                         <tr>
+                            <td className="px-5 py-10 text-center text-[10px] text-slate-300 font-bold uppercase italic">No memberships identified</td>
+                         </tr>
+                      )}
+                   </tbody>
+                </table>
+             </CardContent>
+          </Card>
+
+        </div>
+      </div>
+
     </div>
   );
 }

@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
 import { Button } from "@/components/ui"
 import { Input } from "@/components/ui"
 import { useState, useMemo } from "react"
-import { Plus, Trash2, Star } from "lucide-react"
+import { Plus, Trash2, Star, Award, Shield, Zap } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui"
-import { Badge } from "@/components/ui"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 interface TalentsProps {
   talents: Talent[]
@@ -82,12 +83,12 @@ export function StudentTalents({ talents, onAddTalent, onRemoveTalent }: Talents
 
   const getLevelColor = (level: string) => {
     const colors: Record<string, string> = {
-      beginner: "bg-blue-100 text-blue-800",
-      intermediate: "bg-yellow-100 text-yellow-800",
-      advanced: "bg-orange-100 text-orange-800",
-      expert: "bg-green-100 text-green-800",
+      beginner: "bg-blue-50 text-blue-600 border-blue-100",
+      intermediate: "bg-amber-50 text-amber-600 border-amber-100",
+      advanced: "bg-orange-50 text-orange-600 border-orange-100",
+      expert: "bg-emerald-50 text-emerald-600 border-emerald-100",
     }
-    return colors[level] || "bg-gray-100 text-gray-800"
+    return colors[level] || "bg-slate-50 text-slate-600"
   }
 
   const getLevelIcon = (level: string) => {
@@ -274,31 +275,58 @@ export function StudentTalents({ talents, onAddTalent, onRemoveTalent }: Talents
                     : "No talents match your selected filters."}
                 </div>
               ) : (
-                <div className="grid gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {filteredAndSortedTalents.map((talent) => (
                     <div
                       key={talent.id}
-                      className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="group relative bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
                     >
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <h3 className="font-semibold text-slate-900">{talent.name}</h3>
-                            <Badge className={getCategoryColor(talent.category)}>{talent.category}</Badge>
-                            <Badge className={getLevelColor(talent.level)}>
-                              {getLevelIcon(talent.level)} {talent.level}
-                            </Badge>
-                          </div>
-                          {talent.description && <p className="text-sm text-slate-600 mb-2">{talent.description}</p>}
+                      <div className="flex justify-between items-start mb-4">
+                         <div className={cn(
+                           "h-12 w-12 rounded-2xl flex items-center justify-center text-xl shadow-sm border",
+                           talent.level === 'expert' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                           talent.level === 'advanced' ? "bg-orange-50 text-orange-600 border-orange-100" :
+                           talent.level === 'intermediate' ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-blue-50 text-blue-600 border-blue-100"
+                         )}>
+                           {talent.category === 'sports' ? '⚽' : talent.category === 'arts' ? '🎨' : talent.category === 'academic' ? '📚' : talent.category === 'leadership' ? '👑' : '✨'}
+                         </div>
+                         <Button
+                           onClick={() => onRemoveTalent(talent.id)}
+                           variant="ghost"
+                           size="icon"
+                           className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                         >
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                      </div>
+
+                      <div className="space-y-1">
+                        <h3 className="font-black text-slate-900 leading-tight group-hover:text-primary transition-colors">{talent.name}</h3>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          <Badge variant="outline" className={cn("text-[9px] font-black uppercase tracking-tighter h-5 border-none", getCategoryColor(talent.category))}>
+                            {talent.category}
+                          </Badge>
+                          <Badge variant="outline" className={cn("text-[9px] font-black uppercase tracking-tighter h-5 border-none", getLevelColor(talent.level))}>
+                            {talent.level}
+                          </Badge>
                         </div>
-                        <Button
-                          onClick={() => onRemoveTalent(talent.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      </div>
+
+                      {talent.description && (
+                         <p className="text-[11px] text-slate-500 mt-3 line-clamp-2 leading-relaxed italic font-medium">"{talent.description}"</p>
+                      )}
+
+                      <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                         <div className="flex gap-0.5">
+                            {[1, 2, 3, 4].map(s => (
+                              <Star key={s} className={cn(
+                                "h-3 w-3",
+                                s <= (talent.level === 'expert' ? 4 : talent.level === 'advanced' ? 3 : talent.level === 'intermediate' ? 2 : 1) 
+                                  ? "fill-amber-400 text-amber-400" : "text-slate-100"
+                              )} />
+                            ))}
+                         </div>
+                         <Badge className="bg-slate-50 text-slate-400 border-none text-[9px] font-black uppercase px-2 py-0 h-5">Verified</Badge>
                       </div>
                     </div>
                   ))}
