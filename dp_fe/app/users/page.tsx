@@ -48,33 +48,29 @@ export default function UsersPage() {
         title="User Management"
         subtitle="Manage system access, define roles, and configure granular permissions."
         icon={Users}
-        actions={
-          <Button 
-            onClick={() => router.push("/users/create")}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" /> Add User
-          </Button>
-        }
+        actions={[
+          {
+            type: "search",
+            props: {
+              value: searchTerm,
+              onChange: setSearchTerm,
+              placeholder: "Search users...",
+            },
+          },
+          {
+            type: "button",
+            props: {
+              variant: "default",
+              icon: Plus,
+              children: "Add User",
+              onClick: () => router.push("/users/create"),
+            },
+          },
+        ]}
       />
 
       <div className="p-4 sm:p-6 space-y-6">
-        {/* Search & Filters */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input 
-              placeholder="Search users..." 
-              className="pl-10" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Filter className="h-4 w-4" />
-            Filter
-          </Button>
-        </div>
+
 
         {/* Main Content */}
         <Card>

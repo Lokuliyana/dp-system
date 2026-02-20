@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Shield, Plus } from "lucide-react";
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
+import { ExportButton } from "@/components/reusable";
 import { PrefectsMenu } from "@/components/prefects/prefects-menu";
 import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui";
 import { usePrefects, useCreatePrefectYear } from "@/hooks/usePrefects";
@@ -28,13 +29,29 @@ export default function PrefectsPage() {
         title="Prefects Management"
         subtitle="Manage student prefects and positions."
         icon={Shield}
-        actions={
-          <Button className="gap-2" onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className="h-4 w-4" />
-            New Prefect Year
-          </Button>
-        }
+        actions={[
+          {
+            type: "custom",
+            render: (
+              <ExportButton 
+                endpoint="/reports/teams" 
+                filename="prefects_guild_report"
+                className="h-9"
+              />
+            )
+          },
+          {
+            type: "button",
+            props: {
+              variant: "default",
+              icon: Plus,
+              children: "New Prefect Year",
+              onClick: () => setIsCreateModalOpen(true),
+            },
+          },
+        ]}
       />
+
 
       <div className="p-6 space-y-6">
         <Card>

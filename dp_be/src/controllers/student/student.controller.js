@@ -52,6 +52,17 @@ exports.listStudentsByGrade = asyncHandler(async (req, res) => {
   res.json(ApiResponse.ok(items))
 })
 
+exports.listStudentsWithResultsByGrade = asyncHandler(async (req, res) => {
+  const items = await service.listStudentsWithResultsByGrade({
+    schoolId: req.schoolId,
+    gradeId: req.query.gradeId,
+    academicYear: req.query.academicYear,
+    sex: req.query.sex,
+    restrictedGradeIds: req.user.restrictedGradeIds,
+  })
+  res.json(ApiResponse.ok(items))
+})
+
 
 exports.updateStudentBasicInfo = asyncHandler(async (req, res) => {
   const doc = await service.updateStudentBasicInfo({

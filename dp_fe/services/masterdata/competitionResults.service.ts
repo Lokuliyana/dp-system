@@ -3,11 +3,12 @@ import { endpoints } from "@/lib/endpoints"
 import type { CompetitionResult } from "@/types/models"
 
 export type ResultEntryPayload = {
-  place: 1 | 2 | 3 | 4 | 5
+  place: 0 | 1 | 2 | 3 | 4 | 5
   studentId?: string
   teamId?: string
   houseId?: string
   gradeId?: string
+  personalAwardWinners?: any[]
 }
 
 export type CreateCompetitionResultPayload = {

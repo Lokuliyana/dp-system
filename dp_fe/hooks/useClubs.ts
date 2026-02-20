@@ -94,3 +94,26 @@ export function useAssignClubMember(clubId: string) {
     },
   })
 }
+
+export function useBulkAssignClubMember(clubId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (assignments: { studentId: string; positionId?: string | null }[]) => 
+      clubsService.bulkAssignMember(clubId, assignments),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.clubs.all })
+      qc.invalidateQueries({ queryKey: qk.clubs.byId(clubId) })
+    },
+  })
+}
+
+export function useRemoveClubMember(clubId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (studentId: string) => clubsService.removeMember(clubId, studentId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.clubs.all })
+      qc.invalidateQueries({ queryKey: qk.clubs.byId(clubId) })
+    },
+  })
+}

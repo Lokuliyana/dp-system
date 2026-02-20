@@ -224,8 +224,8 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
   const renderStudentName = (student: any) => {
     if (!student) return "—";
     if (typeof student === "string") return student;
-    return (student.nameWithInitialsSi || student.nameSi) 
-      ? `${student.nameWithInitialsSi || student.nameSi} (${student.admissionNumber})`
+    return (student.nameWithInitialsSi || student.nameSi || student.fullNameEn) 
+      ? `${student.nameWithInitialsSi || student.nameSi || student.fullNameEn} (${student.admissionNumber})`
       : `${student.firstNameEn} ${student.lastNameEn} (${student.admissionNumber})`;
   };
 
@@ -384,7 +384,7 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
                                           className="w-full p-3 rounded-lg border text-left hover:bg-slate-50 flex items-center justify-between group/btn"
                                         >
                                           <div className="flex flex-col">
-                                            <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
+                                            <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || (reg.studentId as any).fullNameEn || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
                                             <span className="text-xs text-slate-500">{(reg.studentId as any).admissionNumber}</span>
                                           </div>
                                           <Plus className="h-4 w-4 text-slate-300 group-hover/btn:text-blue-500" />
@@ -429,7 +429,7 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
                                                 )}
                                               >
                                                 <div className="flex flex-col">
-                                                  <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
+                                                  <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || (reg.studentId as any).fullNameEn || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
                                                   <span className="text-xs text-slate-500">{(reg.studentId as any).admissionNumber}</span>
                                                 </div>
                                                 {isSelected && <Check className="h-4 w-4 text-blue-500" />}
@@ -487,7 +487,7 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
                                               className="w-full p-3 rounded-lg border border-transparent text-left hover:bg-slate-50 flex items-center justify-between group/add"
                                             >
                                               <div className="flex flex-col">
-                                                <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
+                                                <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || (reg.studentId as any).fullNameEn || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
                                                 <span className="text-xs text-slate-500">{(reg.studentId as any).admissionNumber}</span>
                                               </div>
                                               <Plus className="h-4 w-4 text-slate-300 group-hover/add:text-blue-500" />

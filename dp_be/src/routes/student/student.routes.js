@@ -34,6 +34,13 @@ router.get(
 )
 
 router.get(
+  '/with-results-by-grade',
+  // permit([P.STUDENT.READ]),
+  validate(V.listStudentsWithResultsByGradeSchema),
+  ctrl.listStudentsWithResultsByGrade
+)
+
+router.get(
   '/:id/360',
   // permit([P.STUDENT.READ]),
   validate(V.getStudent360Schema),

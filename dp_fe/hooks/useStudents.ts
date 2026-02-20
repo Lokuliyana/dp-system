@@ -30,6 +30,15 @@ export function useStudentsByGrade(gradeId: string, year?: number, status?: stri
   })
 }
 
+export function useStudentsWithResultsByGrade(gradeId: string, year?: number, status?: string, sex?: string) {
+  return useQuery({
+    queryKey: [...qk.students.byGrade(gradeId, year, status, sex), "with-results"],
+    queryFn: () => studentsService.listWithResultsByGrade(gradeId, year, status, sex),
+    enabled: !!gradeId,
+    staleTime: 60_000,
+  })
+}
+
 export function useStudent360(studentId: string, year?: number) {
   return useQuery({
     queryKey: qk.students.view360(studentId, year),

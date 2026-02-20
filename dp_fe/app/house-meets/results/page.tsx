@@ -119,20 +119,27 @@ export default function HouseResultsPage() {
     return filtered;
   }, [registrations, search, competitionId, selectedGrade, selectedCompetition]);
 
+  // Helper to get student ID (string) from populated or unpopulated studentId field
+  const getStudentId = (doc: any) => {
+    if (!doc) return null;
+    if (typeof doc === 'string') return doc;
+    return doc._id || doc.id;
+  };
+
   const handleToggleResult = async (studentId: string, place: 1 | 2 | 3 | 4 | 5) => {
     if (!competitionId) return;
 
     // Check if student already has a result
-    const existingResult = results.find((r) => r.studentId === studentId && r.place !== 0);
+    const existingResult = results.find((r) => getStudentId(r.studentId) === studentId && r.place !== 0);
 
     // If clicking the same place, remove it
     if (existingResult && existingResult.place === place) {
-      await deleteResult.mutateAsync(existingResult.id);
+      await deleteResult.mutateAsync(existingResult.id || (existingResult as any)._id);
       return;
     }
 
     if (existingResult) {
-      await deleteResult.mutateAsync(existingResult.id);
+      await deleteResult.mutateAsync(existingResult.id || (existingResult as any)._id);
     }
 
     // Find registration to get houseId
@@ -235,55 +242,50 @@ export default function HouseResultsPage() {
         title="Competition Results"
         subtitle="Record results for registered students."
         icon={Medal}
-        actions={
-          <Button onClick={handleSaveAll} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
-            Save & Finalize
-          </Button>
-        }
+        actions={[
+          {
+            type: "select",
+            props: {
+              label: "Year",
+              value: year.toString(),
+              onValueChange: () => {},
+              options: [{ label: year.toString(), value: year.toString() }],
+            },
+          },
+          {
+            type: "select",
+            props: {
+              label: "Grade",
+              value: selectedGrade || "",
+              onValueChange: setSelectedGrade,
+              options: grades.map(g => ({ label: g.nameEn, value: g.id })),
+              placeholder: "Select Grade",
+            },
+          },
+          {
+            type: "search",
+            props: {
+              value: search,
+              onChange: setSearch,
+              placeholder: "Search students...",
+            },
+          },
+          {
+            type: "button",
+            props: {
+              variant: "default",
+              children: "Save & Finalize",
+              onClick: handleSaveAll,
+            },
+          },
+        ]}
       />
+
 
       <div className="flex h-[calc(100vh-140px)]">
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Toolbar */}
-          <div className="p-4 border-b bg-white flex items-center gap-4 shrink-0">
-            <div className="flex-1">
-                <h2 className="text-lg font-semibold text-slate-800">
-                    {selectedCompetition?.nameSi || selectedCompetition?.nameEn}
-                </h2>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="capitalize">{selectedCompetition?.scope}</span>
-                    <span>•</span>
-                    <span className="capitalize">{selectedCompetition?.participationType || 'Individual'}</span>
-                </div>
-            </div>
-            
-            <div className="w-[200px]">
-                <Select value={selectedGrade || "all"} onValueChange={(v) => setSelectedGrade(v === "all" ? null : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by Grade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Grades</SelectItem>
-                    {grades.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
-                        {g.nameEn}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-            </div>
 
-            <div className="w-[250px] relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Search students..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30">
             {loading ? (
@@ -402,7 +404,7 @@ export default function HouseResultsPage() {
                                         {registeredStudents.map(reg => {
                                             const s = reg.studentId as any;
                                             const house = houses.find(h => getId(h) === reg.houseId);
-                                            const result = results.find(r => r.studentId === (s.id || s._id) && r.place > 0);
+                                            const result = results.find(r => getStudentId(r.studentId) === (s.id || s._id) && r.place > 0);
 
                                             return (
                                                 <TableRow key={s.id || s._id}>

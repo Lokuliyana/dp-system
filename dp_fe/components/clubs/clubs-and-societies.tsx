@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Edit, Trash2, Users, Shield, Loader } from "lucide-react";
-import { Button, Input } from "@/components/ui";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { Badge } from "@/components/ui";
+import { Plus, Edit, Trash2, Users, Shield, Loader, Search, Info, UserCheck, GraduationCap } from "lucide-react";
+import { Button, Input, Card, CardContent, CardHeader, CardTitle, Badge, Separator, ScrollArea, Avatar, AvatarFallback } from "@/components/ui";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -14,28 +20,34 @@ import {
 } from "@/components/ui/select";
 import { LiveUserSearch, type SearchableUser } from "@/components/shared";
 import {
-  ManagementConsole,
   StatCard,
   CrudModal,
   DeleteConfirmationModal,
 } from "@/components/reusable";
-import {
-  useClubs,
-  useCreateClub,
-  useUpdateClub,
-  useDeleteClub,
-  useAssignClubMember,
+import { 
+  useClubs, 
+  useCreateClub, 
+  useUpdateClub, 
+  useDeleteClub, 
+  useAssignClubMember, 
+  useCreateClubPosition, 
+  useUpdateClubPosition, 
+  useDeleteClubPosition, 
+  useClubPositions, 
+  useRemoveClubMember,
+  useBulkAssignClubMember
 } from "@/hooks/useClubs";
 import { useTeachers } from "@/hooks/useTeachers";
-import { useStudents } from "@/hooks/useStudents";
-import { useClubPositions } from "@/hooks/useClubs";
+import { useStudents, useStudentsByGrade } from "@/hooks/useStudents";
+import { useGrades } from "@/hooks/useGrades";
 import { useToast } from "@/hooks/use-toast";
 import type { Club } from "@/types/models";
+import { cn } from "@/lib/utils";
 
 export function ClubsAndSocieties() {
   const { data: clubs = [], isLoading: isLoadingClubs } = useClubs();
   const { data: teachers = [], isLoading: isLoadingTeachers } = useTeachers();
-  const { data: students = [], isLoading: isLoadingStudents } = useStudents();
+  const { data: grades = [] } = useGrades();
   const { data: positions = [] } = useClubPositions();
 
   const createClub = useCreateClub();
@@ -51,34 +63,59 @@ export function ClubsAndSocieties() {
   const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<SearchableUser[]>([]);
   const [showMemberSearch, setShowMemberSearch] = useState(false);
   const [selectedPositionId, setSelectedPositionId] = useState<string>("member");
+  const [selectedGradeId, setSelectedGradeId] = useState<string>("");
+
+  const { data: studentsData } = useStudentsByGrade(selectedGradeId, new Date().getFullYear());
+  // const removeMemberMutation = useRemoveClubMember(selectedClubId); (Removed as it's defined below)
+
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
+    nameSi: "",
+    nameEn: "",
+    descriptionSi: "",
+    descriptionEn: "",
     teacherInChargeId: "",
     year: new Date().getFullYear(),
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [isPositionModalOpen, setIsPositionModalOpen] = useState(false);
+  const [editingPositionId, setEditingPositionId] = useState<string | null>(null);
+  const [positionFormData, setPositionFormData] = useState({
+    nameSi: "",
+    nameEn: "",
+    responsibilitySi: "",
+    responsibilityEn: "",
+  });
+
+  const createPosition = useCreateClubPosition();
+  const updatePosition = useUpdateClubPosition();
+  const deletePosition = useDeleteClubPosition();
 
   useEffect(() => {
-    if (clubs.length > 0 && !clubs.find((c) => c.id === selectedClubId)) {
-      setSelectedClubId(clubs[0].id);
+    if (clubs.length > 0 && !selectedClubId) {
+      const firstClub = clubs[0];
+      setSelectedClubId(firstClub.id || (firstClub as any)._id);
     }
   }, [clubs, selectedClubId]);
 
-  const selectedClub = clubs.find((c) => c.id === selectedClubId) || null;
-  const assignMemberMutation = useAssignClubMember(selectedClubId);
+  const selectedClub = clubs.find((c) => (c.id || (c as any)._id) === selectedClubId) || null;
+  const bulkAssignMutation = useBulkAssignClubMember(selectedClubId);
+  const removeMemberMutation = useRemoveClubMember(selectedClubId);
 
   const searchableUsers: SearchableUser[] = useMemo(
-    () =>
-      students.map((s) => ({
-        id: s.id,
-        firstName: s.firstNameEn ?? s.firstName,
-        lastName: s.lastNameEn ?? s.lastName,
+    () => {
+      const items = Array.isArray(studentsData) ? studentsData : (studentsData as any)?.items || [];
+      return items.map((s: any) => ({
+        id: s.id || s._id,
+        firstName: s.firstNameEn || s.firstNameSi,
+        lastName: s.lastNameEn || s.lastNameSi,
         email: s.email,
-        gradeId: s.gradeId,
+        admissionNumber: s.admissionNumber,
+        gradeId: typeof s.gradeId === "string" ? s.gradeId : s.gradeId?._id,
+        fullNameSi: s.fullNameSi || s.nameWithInitialsSi,
         type: "student",
-      })),
-    [students],
+      }));
+    },
+    [studentsData],
   );
 
   const filteredClubs = useMemo(() => {
@@ -110,8 +147,10 @@ export function ClubsAndSocieties() {
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      description: "",
+      nameSi: "",
+      nameEn: "",
+      descriptionSi: "",
+      descriptionEn: "",
       teacherInChargeId: "",
       year: new Date().getFullYear(),
     });
@@ -123,10 +162,10 @@ export function ClubsAndSocieties() {
     e.preventDefault();
 
     const payload = {
-      nameSi: formData.name,
-      nameEn: formData.name,
-      descriptionSi: formData.description,
-      descriptionEn: formData.description,
+      nameSi: formData.nameSi,
+      nameEn: formData.nameEn,
+      descriptionSi: formData.descriptionSi,
+      descriptionEn: formData.descriptionEn,
       teacherInChargeId: formData.teacherInChargeId,
       year: formData.year,
     };
@@ -158,8 +197,10 @@ export function ClubsAndSocieties() {
 
   const handleEdit = (club: Club) => {
     setFormData({
-      name: club.nameEn,
-      description: club.descriptionEn || "",
+      nameSi: club.nameSi,
+      nameEn: club.nameEn,
+      descriptionSi: club.descriptionSi || "",
+      descriptionEn: club.descriptionEn || "",
       teacherInChargeId: club.teacherInChargeId,
       year: club.year,
     });
@@ -175,218 +216,553 @@ export function ClubsAndSocieties() {
   const handleAssignMembers = () => {
     if (!selectedClubId || !selectedMembersToAdd.length) return;
 
-    selectedMembersToAdd.forEach((user) => {
-      assignMemberMutation.mutate({
-        studentId: user.id,
-        positionId: selectedPositionId === "member" ? null : selectedPositionId,
-      });
-    });
+    const assignments = selectedMembersToAdd.map((user) => ({
+      studentId: user.id,
+      positionId: selectedPositionId === "member" ? null : selectedPositionId,
+    }));
 
-    setSelectedMembersToAdd([]);
-    setShowMemberSearch(false);
+    bulkAssignMutation.mutate(assignments, {
+      onSuccess: () => {
+        toast({ title: `Successfully enrolled ${selectedMembersToAdd.length} student(s)` });
+        setSelectedMembersToAdd([]);
+        setShowMemberSearch(false);
+      },
+      onError: (err: any) => {
+        toast({ 
+          title: "Enrollment failed", 
+          description: err.response?.data?.message || err.message,
+          variant: "destructive" 
+        });
+      }
+    });
   };
 
-  const totalMembers = clubs.reduce((acc, c) => acc + (c.members?.length || 0), 0);
+  const handlePositionSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingPositionId) {
+      updatePosition.mutate(
+        { id: editingPositionId, payload: positionFormData },
+        {
+          onSuccess: () => {
+            toast({ title: "Position updated successfully" });
+            setEditingPositionId(null);
+            setPositionFormData({ nameSi: "", nameEn: "", responsibilitySi: "", responsibilityEn: "" });
+          },
+        }
+      );
+    } else {
+      createPosition.mutate(positionFormData, {
+        onSuccess: () => {
+          toast({ title: "Position created successfully" });
+          setPositionFormData({ nameSi: "", nameEn: "", responsibilitySi: "", responsibilityEn: "" });
+        },
+      });
+    }
+  };
 
-  if (isLoadingClubs || isLoadingTeachers || isLoadingStudents) {
+  const handlePositionEdit = (pos: any) => {
+    setEditingPositionId(pos.id);
+    setPositionFormData({
+      nameSi: pos.nameSi,
+      nameEn: pos.nameEn,
+      responsibilitySi: pos.responsibilitySi || "",
+      responsibilityEn: pos.responsibilityEn || "",
+    });
+  };
+
+  const mic = teachers.find((t) => t.id === selectedClub?.teacherInChargeId);
+
+  if (isLoadingClubs || isLoadingTeachers) {
     return (
-      <div className="flex items-center gap-2 text-sm text-slate-500">
+      <div className="flex h-[400px] items-center justify-center gap-2 text-sm text-slate-500">
         <Loader className="h-4 w-4 animate-spin" /> Loading clubs...
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <ManagementConsole
-        title="Clubs & Societies"
-        description="Create clubs, assign MIC, and manage memberships."
-        actionLabel="New Club"
-        onAction={() => {
-          setEditingId(null);
-          setIsFormOpen(true);
-        }}
-        searchPlaceholder="Search clubs or teachers..."
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <StatCard
-            title="Total Clubs"
-            value={clubs.length}
-            icon={Shield}
-          />
-          <StatCard
-            title="Active MICs"
-            value={new Set(clubs.map((c) => c.teacherInChargeId)).size}
-            icon={Users}
-          />
-          <StatCard
-            title="Members"
-            value={totalMembers}
-            icon={Users}
-          />
-          <StatCard
-            title="Positions"
-            value={positions.length}
-            icon={Shield}
+    <div className="flex h-[calc(100vh-220px)] flex-col gap-6 lg:flex-row">
+      {/* Left Sidebar - Club List */}
+      <div className="flex w-full flex-col gap-4 lg:w-80">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            placeholder="Search clubs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
           />
         </div>
+        
+        <div className="flex flex-col gap-2 overflow-y-auto pr-1">
+          {filteredClubs.map((club) => (
+            <button
+              key={club.id || (club as any)._id}
+              onClick={() => setSelectedClubId(club.id || (club as any)._id)}
+              className={cn(
+                "group flex flex-col gap-1 rounded-xl border p-4 text-left transition-all hover:border-primary/50",
+                selectedClubId === (club.id || (club as any)._id)
+                  ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
+                  : "border-slate-200 bg-white"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className={cn(
+                    "font-semibold transition-colors",
+                    selectedClubId === club.id ? "text-primary" : "text-slate-900"
+                  )}>
+                    {club.nameEn}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">{club.nameSi}</span>
+                </div>
+                <Badge variant="outline" className="text-[10px] font-normal uppercase">
+                  {club.year}
+                </Badge>
+              </div>
+              <p className="line-clamp-1 text-xs text-slate-500">{club.descriptionEn || "No description"}</p>
+              <div className="mt-2 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                  <Users className="h-3 w-3" />
+                  <span>{club.members?.length ?? 0} Members</span>
+                </div>
+                <Users className={cn(
+                  "h-4 w-4 transition-all opacity-0 group-hover:opacity-100",
+                  selectedClubId === club.id ? "text-primary opacity-100" : "text-slate-300"
+                )} />
+              </div>
+            </button>
+          ))}
+          {filteredClubs.length === 0 && (
+            <div className="flex flex-col items-center justify-center p-8 text-center border-2 border-dashed rounded-xl">
+              <p className="text-sm text-slate-400">No clubs found</p>
+            </div>
+          )}
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 space-y-3">
-            {filteredClubs.map((club) => {
-              const mic = teachers.find((t) => t.id === club.teacherInChargeId);
-              return (
-                <Card key={club.id} className="shadow-sm border">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-base font-semibold">
-                      {club.nameEn}
-                    </CardTitle>
+        <div className="mt-auto flex flex-col gap-2">
+          <Button 
+            onClick={() => setIsPositionModalOpen(true)}
+            variant="outline"
+            className="w-full gap-2 border-primary/20 text-primary hover:bg-primary/5"
+          >
+            <Shield className="h-4 w-4" /> Manage Positions
+          </Button>
+          <Button 
+            onClick={() => {
+              setEditingId(null);
+              setIsFormOpen(true);
+            }}
+            className="w-full gap-2"
+          >
+            <Plus className="h-4 w-4" /> New Club
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content - Club Details */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {selectedClub ? (
+          <ScrollArea className="h-full pr-4">
+            <div className="space-y-6">
+              {/* Header Card */}
+              <Card className="overflow-hidden border border-slate-200 bg-white shadow-sm">
+                <CardContent className="p-8">
+                  <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100">
+                          <Shield className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <h1 className="text-3xl font-bold tracking-tight text-slate-900">{selectedClub.nameEn}</h1>
+                          <p className="text-lg text-primary font-medium mb-1">{selectedClub.nameSi}</p>
+                          <p className="text-slate-500 text-sm max-w-2xl">{selectedClub.descriptionEn || selectedClub.descriptionSi || "A student-led organization at the school."}</p>
+                        </div>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
-                      <Button size="icon" variant="ghost" onClick={() => handleEdit(club)}>
-                        <Edit className="h-4 w-4" />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleEdit(selectedClub)}
+                        className="h-9 px-4"
+                      >
+                        <Edit className="mr-2 h-4 w-4" /> Edit Details
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => handleDelete(club.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDelete(selectedClub.id)}
+                        className="h-9 px-3"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-4 border border-slate-100">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                        <Users className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Members</p>
+                        <p className="text-xl font-bold text-slate-900">{selectedClub.members?.length ?? 0}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-4 border border-slate-100">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                        <UserCheck className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Teacher In Charge</p>
+                        <p className="text-sm font-bold text-slate-900 truncate">
+                          {mic ? (mic.nameWithInitialsSi || `${mic.firstNameEn} ${mic.lastNameEn}`) : "Not Assigned"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-4 border border-slate-100">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
+                        <GraduationCap className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Academic Year</p>
+                        <p className="text-xl font-bold text-slate-900">{selectedClub.year}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                {/* Member Management */}
+                <Card className="lg:col-span-2 border-slate-200 shadow-sm overflow-hidden">
+                  <CardHeader className="border-b bg-slate-50/50 pb-4 pt-4">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-bold flex items-center gap-2">
+                        <Users className="h-4 w-4 text-primary" /> Members & Roles
+                      </CardTitle>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => setShowMemberSearch(!showMemberSearch)}
+                        className={cn("h-8 gap-2", showMemberSearch && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary")}
+                      >
+                        {showMemberSearch ? "Cancel Addition" : <><Plus className="h-4 w-4" /> Add Student</>}
                       </Button>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-2">
-                    <p className="text-sm text-slate-600">{club.descriptionEn}</p>
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
-                      <Badge variant="outline">Year {club.year}</Badge>
-                      <Badge variant="secondary">
-                        MIC: {mic ? `${mic.firstNameEn} ${mic.lastNameEn}` : "—"}
-                      </Badge>
-                      <Badge variant="outline">{club.members?.length ?? 0} members</Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {(club.members || []).map((m) => {
-                        const pos = positions.find((p) => p.id === m.positionId);
-                        return (
-                          <Badge key={m.studentId} variant="outline" className={pos ? "border-primary/20 bg-primary/5 text-primary" : ""}>
-                            Student {m.studentId} {pos ? `• ${pos.nameEn}` : ""}
-                          </Badge>
-                        );
-                      })}
+                  <CardContent className="p-0">
+                    {showMemberSearch && (
+                      <div className="border-b bg-slate-50/40 p-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="h-2 w-2 rounded-full bg-primary" />
+                          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest">New Enrollment</h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Stage 1: Filter Grade</label>
+                            <Select value={selectedGradeId} onValueChange={setSelectedGradeId}>
+                              <SelectTrigger className="bg-white h-11 border-slate-200 shadow-sm focus:ring-primary/20">
+                                <SelectValue placeholder="Select Grade" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {grades.map((g) => (
+                                  <SelectItem key={g.id || (g as any)._id} value={g.id || (g as any)._id}>
+                                    {g.nameEn}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Stage 2: Search Student</label>
+                            <LiveUserSearch
+                              users={searchableUsers}
+                              selectedUsers={selectedMembersToAdd}
+                              onSelect={(u) => setSelectedMembersToAdd(prev => [...prev, u])}
+                              onRemove={(id) => setSelectedMembersToAdd(prev => prev.filter(u => u.id !== id))}
+                              placeholder={selectedGradeId ? "Search name or ID..." : "← Select grade first"}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Stage 3: Assign Role</label>
+                            <Select value={selectedPositionId} onValueChange={setSelectedPositionId}>
+                              <SelectTrigger className="bg-white h-11 border-slate-200 shadow-sm focus:ring-primary/20">
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="member">General Member</SelectItem>
+                                {positions.map((p) => (
+                                  <SelectItem key={p.id || (p as any)._id} value={p.id || (p as any)._id}>
+                                    <span className="flex items-center gap-2">
+                                      {p.nameEn} <span className="text-[10px] text-slate-400 italic">/ {p.nameSi}</span>
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setShowMemberSearch(false)}
+                            className="text-slate-500 h-11 px-6"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            className="h-11 px-8 shadow-sm transition-all active:scale-[0.98]"
+                            onClick={handleAssignMembers}
+                            disabled={!selectedMembersToAdd.length || bulkAssignMutation.isPending}
+                          >
+                            {bulkAssignMutation.isPending ? <Loader className="animate-spin h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                            Enroll {selectedMembersToAdd.length > 0 ? `${selectedMembersToAdd.length} Student${selectedMembersToAdd.length > 1 ? 's' : ''}` : 'Students'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="overflow-hidden">
+                      {(selectedClub.members || []).length > 0 ? (
+                        <Table>
+                          <TableHeader className="bg-slate-50/50">
+                            <TableRow>
+                              <TableHead className="w-[40%] pl-6">Student</TableHead>
+                              <TableHead>Admission No</TableHead>
+                              <TableHead>Position</TableHead>
+                              <TableHead className="text-right pr-6">Action</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {(selectedClub.members || []).map((m: any) => {
+                              const student = m.studentId;
+                              const pos = m.positionId;
+                              const studentNameEn = student?.firstNameEn ? `${student.firstNameEn} ${student.lastNameEn}` : `Student ${m.studentId}`;
+                              const studentNameSi = student?.fullNameSi || student?.nameWithInitialsSi || studentNameEn;
+                              const admissionNo = student?.admissionNumber || "N/A";
+
+                              return (
+                                <TableRow key={typeof student === 'string' ? student : student?.id}>
+                                  <TableCell className="pl-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                      <Avatar className="h-9 w-9 border border-slate-200">
+                                        <AvatarFallback className="bg-slate-100 text-slate-500 text-xs font-bold">
+                                          {typeof student === 'string' ? student.slice(0, 2).toUpperCase() : (student?.firstNameEn?.[0] || 'S')}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div>
+                                        <div className="text-sm font-semibold text-slate-900">{studentNameEn}</div>
+                                        <div className="text-[10px] text-slate-500">{studentNameSi}</div>
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-sm font-medium text-slate-600">
+                                    {admissionNo}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className={cn(
+                                        "px-2 py-0 text-[10px] uppercase font-bold tracking-tight",
+                                        pos ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-slate-50 text-slate-500 border-slate-100"
+                                      )}>
+                                        {pos?.nameEn || "Member"}
+                                      </Badge>
+                                      {pos?.nameSi && <span className="text-[9px] text-slate-400 font-medium">{pos.nameSi}</span>}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-right pr-6">
+                                    <Button 
+                                      size="icon" 
+                                      variant="ghost" 
+                                      className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                      onClick={() => removeMemberMutation.mutate(typeof student === 'string' ? student : (student.id || student._id))}
+                                      disabled={removeMemberMutation.isPending}
+                                    >
+                                      {removeMemberMutation.isPending ? <Loader className="animate-spin h-3 w-3" /> : <Trash2 className="h-4 w-4" />}
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center p-16 text-center bg-slate-50/20">
+                          <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                            <Users className="h-8 w-8 text-slate-400 opacity-50" />
+                          </div>
+                          <h3 className="text-sm font-bold text-slate-900 mb-1 tracking-tight">No Members Enrolled</h3>
+                          <p className="text-xs text-slate-500 max-w-[240px] leading-relaxed">
+                            This club currently has no students assigned. Use the 'Add Student' tool above to begin.
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-6 h-9 px-6 text-[11px] font-bold uppercase tracking-wider bg-white shadow-sm hover:bg-slate-50"
+                            onClick={() => setShowMemberSearch(true)}
+                          >
+                            Enroll Students
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
-              );
-            })}
-            {!filteredClubs.length && (
-              <p className="text-sm text-slate-500">No clubs match the search.</p>
-            )}
-          </div>
 
-          <div className="space-y-3">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-semibold">Add Members</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setShowMemberSearch((s) => !s)}
-                  disabled={!selectedClubId}
-                >
-                  <Plus className="h-4 w-4" /> Add students
-                </Button>
-                {showMemberSearch && (
-                  <>
-                    <LiveUserSearch
-                      users={searchableUsers}
-                      selected={selectedMembersToAdd}
-                      onChange={setSelectedMembersToAdd}
-                    />
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-slate-500">Role / Position</label>
-                      <Select value={selectedPositionId} onValueChange={setSelectedPositionId}>
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="member">Member</SelectItem>
-                          {positions.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.nameEn}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={handleAssignMembers}
-                      disabled={!selectedMembersToAdd.length}
-                    >
-                      Assign to club
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                {/* Sidebar Cards */}
+                <div className="space-y-6">
+                  <Card className="border-slate-200 shadow-sm overflow-hidden">
+                    <CardHeader className="bg-slate-50/50 border-b pb-3 pt-3">
+                      <CardTitle className="text-sm font-bold flex items-center gap-2">
+                        <Info className="h-4 w-4 text-blue-500" /> Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-4">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Teacher In Charge</p>
+                        {mic ? (
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-blue-50 text-blue-600 font-bold">
+                                {mic.firstNameEn?.[0]}{mic.lastNameEn?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">{mic.firstNameEn} {mic.lastNameEn}</p>
+                              <p className="text-[10px] text-slate-600 font-medium">{mic.nameWithInitialsSi}</p>
+                              <p className="text-[10px] text-slate-500 italic mt-0.5">Master In Charge</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-500 italic">No teacher assigned</p>
+                        )}
+                      </div>
+                      <Separator className="bg-slate-100" />
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Overview</p>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <div className="rounded-lg bg-orange-50 p-2 border border-orange-100">
+                            <p className="text-[9px] font-bold text-orange-600 uppercase tracking-tighter">Positions</p>
+                            <p className="text-lg font-bold text-orange-700">{selectedClub.members?.filter(m => m.positionId).length ?? 0}</p>
+                          </div>
+                          <div className="rounded-lg bg-emerald-50 p-2 border border-emerald-100">
+                            <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-tighter">Activity</p>
+                            <p className="text-lg font-bold text-emerald-700">High</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-12 text-center">
+             <div className="h-20 w-20 flex items-center justify-center rounded-3xl bg-white shadow-xl ring-1 ring-slate-100">
+                <Shield className="h-10 w-10 text-slate-300" />
+             </div>
+             <div className="max-w-[280px]">
+                <h3 className="text-lg font-bold text-slate-900">Select a Club</h3>
+                <p className="text-sm text-slate-500 mt-1">Pick a club from the left sidebar to manage its members, roles and details.</p>
+             </div>
           </div>
-        </div>
-      </ManagementConsole>
+        )}
+      </div>
 
       <CrudModal
         title={editingId ? "Edit Club" : "Create Club"}
         isOpen={isFormOpen}
         onClose={resetForm}
+        onSubmit={handleSubmit}
+        isEditing={!!editingId}
+        isLoading={createClub.isPending || updateClub.isPending}
       >
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Name</label>
-            <Input name="name" value={formData.name} onChange={handleInputChange} required />
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5 font-sans">
+              <label className="text-sm font-semibold text-slate-700">Name (English)</label>
+              <Input 
+                name="nameEn" 
+                value={formData.nameEn} 
+                onChange={handleInputChange} 
+                required 
+                placeholder="e.g. Science Society" 
+                className="h-11 border-slate-200 focus:ring-primary/20"
+              />
+            </div>
+            <div className="space-y-1.5 font-sans">
+              <label className="text-sm font-semibold text-slate-700">Name (Sinhala)</label>
+              <Input 
+                name="nameSi" 
+                value={formData.nameSi} 
+                onChange={handleInputChange} 
+                required 
+                placeholder="උදා: විද්‍යා සංගමය" 
+                className="h-11 border-slate-200 focus:ring-primary/20"
+              />
+            </div>
           </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Description</label>
-            <Input
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Description (optional)"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5 font-sans">
+              <label className="text-sm font-semibold text-slate-700">Description (English)</label>
+              <Input
+                name="descriptionEn"
+                value={formData.descriptionEn}
+                onChange={handleInputChange}
+                placeholder="English description"
+                className="h-11 border-slate-200 focus:ring-primary/20"
+              />
+            </div>
+            <div className="space-y-1.5 font-sans">
+              <label className="text-sm font-semibold text-slate-700">Description (Sinhala)</label>
+              <Input
+                name="descriptionSi"
+                value={formData.descriptionSi}
+                onChange={handleInputChange}
+                placeholder="Sinhala description"
+                className="h-11 border-slate-200 focus:ring-primary/20"
+              />
+            </div>
           </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Teacher in charge</label>
-            <select
-              name="teacherInChargeId"
-              value={formData.teacherInChargeId}
-              onChange={handleInputChange}
-              className="w-full rounded border px-3 py-2 text-sm"
-              required
-            >
-              <option value="">Select teacher</option>
-              {teachers.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.firstNameEn} {t.lastNameEn}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5 font-sans">
+              <label className="text-sm font-semibold text-slate-700">Master In Charge</label>
+              <select
+                name="teacherInChargeId"
+                value={formData.teacherInChargeId}
+                onChange={handleInputChange}
+                className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                required
+              >
+                <option value="">Select teacher</option>
+                {teachers.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.firstNameEn} {t.lastNameEn}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5 font-sans">
+              <label className="text-sm font-semibold text-slate-700">Active Year</label>
+              <Input
+                type="number"
+                name="year"
+                value={formData.year}
+                onChange={handleInputChange}
+                required
+                className="h-11 border-slate-200 focus:ring-primary/20"
+              />
+            </div>
           </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Year</label>
-            <Input
-              type="number"
-              name="year"
-              value={formData.year}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={resetForm}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createClub.isPending || updateClub.isPending}>
-              {editingId ? "Update" : "Create"}
-            </Button>
-          </div>
-        </form>
+        </div>
       </CrudModal>
 
       <DeleteConfirmationModal
@@ -395,16 +771,102 @@ export function ClubsAndSocieties() {
         onConfirm={() => {
           if (itemToDelete) {
             deleteClub.mutate(itemToDelete, {
-              onSuccess: () => toast({ title: "Club deleted" }),
+              onSuccess: () => {
+                toast({ title: "Club deleted" });
+                if (selectedClubId === itemToDelete) {
+                  setSelectedClubId(clubs.find(c => c.id !== itemToDelete)?.id || "");
+                }
+              },
               onError: () =>
                 toast({ title: "Failed to delete club", variant: "destructive" }),
             });
           }
           setIsDeleteModalOpen(false);
         }}
-        title="Delete club?"
-        description="This will remove the club and its memberships."
+        title="Permanently delete club?"
+        description="This action cannot be undone. All membership data for this club will be lost forever."
       />
+
+      <CrudModal
+        title="Manage Positions"
+        isOpen={isPositionModalOpen}
+        onClose={() => {
+          setIsPositionModalOpen(false);
+          setEditingPositionId(null);
+          setPositionFormData({ nameSi: "", nameEn: "", responsibilitySi: "", responsibilityEn: "" });
+        }}
+        onSubmit={handlePositionSubmit}
+        isEditing={!!editingPositionId}
+        isLoading={createPosition.isPending || updatePosition.isPending}
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700">Position Name (English)</label>
+              <Input
+                value={positionFormData.nameEn}
+                onChange={(e) => setPositionFormData({ ...positionFormData, nameEn: e.target.value })}
+                placeholder="e.g. President"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700">Position Name (Sinhala)</label>
+              <Input
+                value={positionFormData.nameSi}
+                onChange={(e) => setPositionFormData({ ...positionFormData, nameSi: e.target.value })}
+                placeholder="උදා: සභාපති"
+                required
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700">Responsibility (English)</label>
+              <textarea
+                className="w-full min-h-[80px] rounded-lg border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-sans"
+                value={positionFormData.responsibilityEn}
+                onChange={(e) => setPositionFormData({ ...positionFormData, responsibilityEn: e.target.value })}
+                placeholder="English responsibility description"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700">Responsibility (Sinhala)</label>
+              <textarea
+                className="w-full min-h-[80px] rounded-lg border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-sans"
+                value={positionFormData.responsibilitySi}
+                onChange={(e) => setPositionFormData({ ...positionFormData, responsibilitySi: e.target.value })}
+                placeholder="Sinhala responsibility description"
+              />
+            </div>
+          </div>
+
+          <Separator className="my-4" />
+          
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Existing Positions</h4>
+            <ScrollArea className="h-[150px] w-full rounded-md border p-4">
+              <div className="space-y-2">
+                {positions.map((pos) => (
+                  <div key={pos.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100">
+                    <div>
+                      <p className="text-sm font-medium">{pos.nameEn} <span className="text-xs text-slate-400">({pos.nameSi})</span></p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handlePositionEdit(pos)}>
+                        <Edit className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500" onClick={() => deletePosition.mutate(pos.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+      </CrudModal>
     </div>
   );
 }

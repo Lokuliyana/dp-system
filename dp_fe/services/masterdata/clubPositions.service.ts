@@ -5,8 +5,8 @@ import type { ClubPosition } from "@/types/models"
 export type CreateClubPositionPayload = {
   nameSi: string
   nameEn: string
-  descriptionSi?: string
-  descriptionEn?: string
+  responsibilitySi?: string
+  responsibilityEn?: string
   clubId?: string | null
 }
 

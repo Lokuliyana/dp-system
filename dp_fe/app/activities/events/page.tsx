@@ -7,6 +7,7 @@ import {
   DynamicPageHeader,
 } from "@/components/layout/dynamic";
 import { ActivitiesMenu } from "@/components/activities/activities-menu";
+import { ExportButton } from "@/components/reusable";
 
 export default function EventsPage() {
   return (
@@ -17,6 +18,13 @@ export default function EventsPage() {
         title="Events & Activities"
         subtitle="Plan events, register students, and manage ND / CN highlight stars."
         icon={Trophy}
+        actions={
+          <ExportButton 
+            endpoint="/reports/teams" 
+            filename="events_and_activities_report"
+            size="sm"
+          />
+        }
       />
 
       <div className="p-6">

@@ -35,15 +35,17 @@ exports.reportGrade = async ({ schoolId, gradeId, restrictedGradeIds }) => {
     throw new ApiError(403, 'You do not have permission to view reports for this grade')
   }
 
-  const grade = await Grade.findOne({ _id: gradeId, schoolId }).lean()
+  const [grade, students] = await Promise.all([
+    Grade.findOne({ _id: gradeId, schoolId }).lean(),
+    Student.find({ schoolId, gradeId }).sort({ admissionNumber: 1 }).lean()
+  ])
+
   if (!grade) throw new ApiError(404, 'Grade not found')
-
-
-  const studentCount = await Student.countDocuments({ schoolId, gradeId })
 
   return {
     grade,
-    studentCount,
+    studentCount: students.length,
+    students
   }
 }
 

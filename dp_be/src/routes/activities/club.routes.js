@@ -37,4 +37,16 @@ router.post(
   ctrl.assignPosition
 )
 
+router.post(
+  '/:id/members/bulk',
+  // permit([P.CLUB.UPDATE]),
+  ctrl.bulkAssignMembers
+)
+
+router.delete(
+  '/:id/members/:studentId',
+  // permit([P.CLUB.UPDATE]),
+  ctrl.removeMember
+)
+
 module.exports = router

@@ -3,15 +3,15 @@ import { endpoints } from "@/lib/endpoints"
 import type { Event, EventRegistration, EventCategory } from "@/types/models"
 
 export type CreateEventPayload = {
-  titleSi: string
-  titleEn: string
+  nameSi: string
+  nameEn: string
   descriptionSi?: string
   descriptionEn?: string
-  category: EventCategory
-  startDate: string
+  eventType: EventCategory
+  date: string
   endDate?: string
   gradeIds?: string[]
-  chairHeadTeacherId?: string
+  teacherInChargeId?: string
   clubId?: string
   squadId?: string
   year: number
@@ -20,6 +20,7 @@ export type CreateEventPayload = {
 export type RegisterEventPayload = {
   eventId: string
   studentId: string
+  gradeId: string
   year: number
   noteEn?: string
 }
@@ -48,6 +49,11 @@ export const eventsService = {
   registerStudent(payload: RegisterEventPayload) {
     return axiosInstance.post(`${endpoints.events}/register`, payload)
       .then(r => r.data.data as EventRegistration)
+  },
+
+  bulkRegisterStudents(eventId: string, payload: { studentIds: string[]; gradeId: string; year: number; noteEn?: string }) {
+    return axiosInstance.post(`${endpoints.events}/${eventId}/registrations/bulk`, payload)
+      .then(r => r.data.data as EventRegistration[])
   },
 
   listRegistrations(filters?: { eventId?: string; studentId?: string; year?: number }) {

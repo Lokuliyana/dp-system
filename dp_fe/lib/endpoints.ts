@@ -47,6 +47,7 @@ export const endpoints = {
     teams: "/reports/teams",
   },
 
+  exams: "/exams",
   examResults: "/exam-results", 
 
   promotion: "/promotion/trigger",

@@ -45,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: Home, group: "overview" },
   { id: "students", label: "Students", href: "/students", icon: Users, group: "academics" },
   { id: "attendance", label: "Attendance", href: "/attendance", icon: Calendar, group: "academics" },
+  { id: "exams", label: "Exam Results", href: "/exams", icon: FileText, group: "academics" },
   { id: "house-meets", label: "House Meets", href: "/house-meets", icon: Trophy, group: "engagement" },
   { id: "champions", label: "Champions", href: "/champions", icon: Trophy, group: "engagement" },
   { id: "activities", label: "Activities", href: "/activities", icon: Award, group: "engagement" },
@@ -84,7 +85,7 @@ export function MainNavigation() {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
-      <SidebarHeader className="border-b border-sidebar-border py-4">
+      <SidebarHeader className="border-b border-sidebar-border py-2">
         <div className="px-3">
           {/* <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-primary/20 overflow-hidden">
@@ -107,8 +108,8 @@ export function MainNavigation() {
           if (!items || items.length === 0) return null;
 
           return (
-            <SidebarGroup key={groupKey} className="py-2 px-3">
-              <SidebarGroupLabel className="h-6 text-[10px] uppercase tracking-widest font-bold text-slate-400/80 px-2 mb-1">
+            <SidebarGroup key={groupKey} className="py-1 px-3">
+              <SidebarGroupLabel className="h-5 text-[9px] uppercase tracking-widest font-bold text-slate-400/80 px-2 mb-1 group-data-[collapsible=icon]:hidden">
                 {GROUP_LABELS[groupKey]}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -122,11 +123,11 @@ export function MainNavigation() {
                           asChild 
                           isActive={active} 
                           tooltip={item.label} 
-                          className="h-10 text-sm px-3 transition-all duration-200"
+                          className="h-9 text-sm px-3 transition-all duration-200"
                         >
                           <Link href={item.href}>
-                            <Icon className="!size-5" />
-                            <span className="font-semibold">{item.label}</span>
+                            <Icon className="!size-4" />
+                            <span className="font-semibold group-data-[collapsible=icon]:hidden">{item.label}</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

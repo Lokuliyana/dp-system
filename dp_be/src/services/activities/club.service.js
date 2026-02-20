@@ -26,6 +26,8 @@ exports.listClubs = async ({ schoolId, filters }) => {
   if (filters?.year) q.year = Number(filters.year)
 
   const items = await Club.find(q)
+    .populate('members.studentId', 'firstNameEn lastNameEn fullNameSi nameWithInitialsSi admissionNumber')
+    .populate('members.positionId', 'nameEn nameSi')
     .sort({ nameEn: 1 })
     .lean()
 
@@ -75,7 +77,10 @@ exports.assignPosition = async ({ schoolId, id, payload, userId }) => {
   club.updatedById = userId
   await club.save()
 
-  return club.toJSON()
+  return await Club.findById(club._id)
+    .populate('members.studentId', 'firstNameEn lastNameEn nameWithInitialsSi admissionNumber')
+    .populate('members.positionId', 'nameEn nameSi')
+    .lean()
 }
 
 exports.removeMember = async ({ schoolId, id, studentId, userId }) => {
@@ -89,5 +94,37 @@ exports.removeMember = async ({ schoolId, id, studentId, userId }) => {
   club.updatedById = userId
   await club.save()
 
-  return club.toJSON()
+  return await Club.findById(club._id)
+    .populate('members.studentId', 'firstNameEn lastNameEn nameWithInitialsSi admissionNumber')
+    .populate('members.positionId', 'nameEn nameSi')
+    .lean()
+}
+exports.bulkAssignMembers = async ({ schoolId, id, payload, userId }) => {
+  const club = await Club.findOne({ _id: id, schoolId })
+  if (!club) throw new ApiError(404, 'Club not found')
+
+  const { assignments } = payload // Array of { studentId, positionId }
+
+  // Create a map of existing members for quick lookup
+  const memberMap = new Map()
+  ;(club.members || []).forEach(m => {
+    memberMap.set(String(m.studentId), m)
+  })
+
+  // Apply assignments
+  assignments.forEach(({ studentId, positionId }) => {
+    memberMap.set(String(studentId), {
+      studentId,
+      positionId: positionId || null
+    })
+  })
+
+  club.members = Array.from(memberMap.values())
+  club.updatedById = userId
+  await club.save()
+
+  return await Club.findById(club._id)
+    .populate('members.studentId', 'firstNameEn lastNameEn nameWithInitialsSi admissionNumber')
+    .populate('members.positionId', 'nameEn nameSi')
+    .lean()
 }

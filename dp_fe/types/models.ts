@@ -311,6 +311,12 @@ export type CompetitionResultEntry = {
   gradeId?: Id;
 };
 
+export type PersonalAwardWinner = {
+  awardName: string;
+  studentId: Id;
+  houseId?: Id;
+};
+
 export type CompetitionResult = BaseDoc & {
   competitionId: Id;
   year: number;
@@ -319,6 +325,7 @@ export type CompetitionResult = BaseDoc & {
   teamId?: Id;
   houseId?: Id;
   gradeId?: Id;
+  personalAwardWinners?: PersonalAwardWinner[];
   recordedById?: Id;
   recordedDate?: string;
 };
@@ -382,6 +389,7 @@ export type Teacher = BaseDoc & {
   firstNameSi?: string;
   lastNameSi?: string;
   fullNameSi?: string;
+  nameWithInitialsSi?: string;
 
   firstNameEn: string;
   lastNameEn: string;
@@ -403,15 +411,15 @@ export type Teacher = BaseDoc & {
 export type ClubPosition = BaseDoc & {
   nameSi: string;
   nameEn: string;
-  descriptionSi?: string;
-  descriptionEn?: string;
+  responsibilitySi?: string;
+  responsibilityEn?: string;
   clubId?: Id | null; // global or club-specific
 };
 
 /* -------------------- CLUB (F29–F30) -------------------- */
 export type ClubMember = {
-  studentId: Id;
-  positionId?: Id | null;
+  studentId: Id | { id: Id; firstNameEn?: string; lastNameEn?: string; nameWithInitialsSi?: string; admissionNumber?: string };
+  positionId?: Id | { id: Id; nameEn: string; nameSi: string } | null;
 };
 
 export type Club = BaseDoc & {
@@ -462,18 +470,18 @@ export type EventCategory =
   | "main";
 
 export type Event = BaseDoc & {
-  titleSi: string;
-  titleEn: string;
+  nameSi: string;
+  nameEn: string;
   descriptionSi?: string;
   descriptionEn?: string;
 
-  category: EventCategory;
+  eventType: EventCategory;
 
   clubId?: Id;
   squadId?: Id;
-  chairHeadTeacherId?: Id;
+  teacherInChargeId?: Id;
 
-  startDate: string;
+  date: string;
   endDate?: string;
   year: number;
 
@@ -492,6 +500,7 @@ export type EventRegistration = BaseDoc & {
   noteEn?: string;
 
   year: number;
+  registeredAt?: string;
   registeredById?: Id;
 };
 

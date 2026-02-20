@@ -51,6 +51,17 @@ export function useRegisterEventStudent(eventId: string) {
   })
 }
 
+export function useBulkRegisterEventStudents(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: { studentIds: string[]; gradeId: string; year: number; noteEn?: string }) => 
+      eventsService.bulkRegisterStudents(eventId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.eventRegistrations.byEvent(eventId) })
+    },
+  })
+}
+
 export function useEventRegistrations(eventId: string) {
   return useQuery({
     queryKey: qk.eventRegistrations.byEvent(eventId),

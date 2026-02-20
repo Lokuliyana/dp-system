@@ -192,46 +192,50 @@ export default function HouseRegistrationsPage() {
         title="Event Registrations"
         subtitle="Register students for competitions with house quotas."
         icon={Trophy}
-        actions={
-          <Button onClick={handleSaveAll} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
-            Save & Finish
-          </Button>
-        }
+        actions={[
+          {
+            type: "select",
+            props: {
+              label: "Year",
+              value: year.toString(),
+              onValueChange: () => {},
+              options: [{ label: year.toString(), value: year.toString() }],
+            },
+          },
+          {
+            type: "select",
+            props: {
+              label: "Grade",
+              value: selectedGrade || "",
+              onValueChange: setSelectedGrade,
+              options: grades.map(g => ({ label: g.nameEn, value: g.id })),
+              placeholder: "Select Grade",
+            },
+          },
+          {
+            type: "search",
+            props: {
+              value: search,
+              onChange: setSearch,
+              placeholder: "Search students...",
+            },
+          },
+          {
+            type: "button",
+            props: {
+              variant: "default",
+              children: "Save & Finish",
+              onClick: handleSaveAll,
+            },
+          },
+        ]}
       />
+
 
       <div className="p-6 h-[calc(100vh-140px)] flex gap-6">
         {/* Right Content: Registration Area */}
         <div className="flex-1 flex flex-col gap-6 min-w-0 h-full">
-            {/* Filters */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 shrink-0">
-            <div>
-                <label className="text-sm text-muted-foreground">Grade</label>
-                <Select value={selectedGrade || ""} onValueChange={setSelectedGrade}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Select grade" />
-                </SelectTrigger>
-                <SelectContent>
-                    {grades.map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                        {g.nameSi || g.nameEn}
-                    </SelectItem>
-                    ))}
-                </SelectContent>
-                </Select>
-            </div>
-            <div>
-                <label className="text-sm text-muted-foreground">Search students</label>
-                <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                <Input
-                    placeholder="Search by name"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
-                />
-                </div>
-            </div>
-            </div>
+
 
             {/* Registration Panels */}
             <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-6">

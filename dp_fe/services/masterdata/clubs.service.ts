@@ -43,4 +43,14 @@ export const clubsService = {
     return axiosInstance.post(`${endpoints.clubs}/${clubId}/assign`, payload)
       .then(r => r.data.data as Club)
   },
+
+  bulkAssignMember(clubId: string, assignments: { studentId: string; positionId?: string | null }[]) {
+    return axiosInstance.post(`${endpoints.clubs}/${clubId}/members/bulk`, { assignments })
+      .then(r => r.data.data as Club)
+  },
+
+  removeMember(clubId: string, studentId: string) {
+    return axiosInstance.delete(`${endpoints.clubs}/${clubId}/members/${studentId}`)
+      .then(r => r.data.data as Club)
+  },
 }

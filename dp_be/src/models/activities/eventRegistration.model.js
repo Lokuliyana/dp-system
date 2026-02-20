@@ -16,6 +16,15 @@ const eventRegistrationSchema = new mongoose.Schema(
       required: true,
       index: true
     },
+    gradeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Grade',
+      required: true,
+      index: true
+    },
+    noteEn: { type: String, trim: true },
+    noteSi: { type: String, trim: true },
+    starLevel: { type: Number, min: 1, max: 3 },
 
     year: { type: Number, required: true, index: true },
 

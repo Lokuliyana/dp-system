@@ -45,6 +45,12 @@ export const studentsService = {
       .then((r) => r.data.data as Student[]);
   },
 
+  listWithResultsByGrade(gradeId: string, academicYear?: number, status?: string, sex?: string) {
+    return axiosInstance
+      .get(`${endpoints.students}/with-results-by-grade`, { params: { gradeId, academicYear, status, sex } })
+      .then((r) => r.data.data as (Student & { competitions: any[] })[]);
+  },
+
   update(id: string, payload: UpdateStudentPayload) {
     return axiosInstance
       .patch(`${endpoints.students}/${id}`, payload)

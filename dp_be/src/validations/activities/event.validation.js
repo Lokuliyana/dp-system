@@ -13,6 +13,8 @@ exports.createEventSchema = z.object({
     gradeIds: z.array(objectId).optional(),
     teacherInChargeId: objectId,
     year: z.number().int().min(2000),
+    clubId: objectId.optional(),
+    squadId: objectId.optional(),
   }),
 })
 
@@ -28,6 +30,8 @@ exports.updateEventSchema = z.object({
     gradeIds: z.array(objectId).optional(),
     teacherInChargeId: objectId.optional(),
     year: z.number().int().min(2000).optional(),
+    clubId: objectId.optional(),
+    squadId: objectId.optional(),
   }),
 })
 

@@ -48,6 +48,48 @@ export function useDeleteGradingSchema() {
   })
 }
 
+import { examsService } from "@/services/exams.service"
+
+/* ---- Exams ---- */
+export function useExamsList(params?: { year?: number; gradeId?: string }) {
+  return useQuery({
+    queryKey: qk.exams.list(params),
+    queryFn: () => examsService.list(params),
+  })
+}
+
+export function useCreateExam() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: examsService.create,
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.exams.all }),
+  })
+}
+
+export function useExamMarks(examId: string, gradeId: string) {
+  return useQuery({
+    queryKey: qk.exams.marks(examId, gradeId),
+    queryFn: () => examsService.getMarks(examId, gradeId),
+    enabled: !!examId && !!gradeId,
+  })
+}
+
+export function useUpdateExamMarks(examId: string, gradeId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: any) => examsService.updateMarks(examId, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.exams.marks(examId, gradeId) }),
+  })
+}
+
+export function useStudentExamHistory(studentId: string) {
+  return useQuery({
+    queryKey: qk.exams.history(studentId),
+    queryFn: () => examsService.getStudentHistory(studentId),
+    enabled: !!studentId,
+  })
+}
+
 /* ---- Exam Results (local keys; qk has no examResults section) ---- */
 const examKeys = {
   byStudent: (studentId: string) => ["examResults", "student", studentId] as const,

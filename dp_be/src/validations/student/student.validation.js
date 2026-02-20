@@ -75,6 +75,15 @@ exports.listStudentsByGradeSchema = z.object({
   query: z.object({
     gradeId: objectId,
     academicYear: z.string().optional(),
+    sex: z.enum(['male', 'female']).optional(),
+  }),
+})
+
+exports.listStudentsWithResultsByGradeSchema = z.object({
+  query: z.object({
+    gradeId: objectId,
+    academicYear: z.string().optional(),
+    sex: z.enum(['male', 'female']).optional(),
   }),
 })
 

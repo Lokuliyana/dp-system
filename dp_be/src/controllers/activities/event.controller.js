@@ -65,3 +65,13 @@ exports.deleteEventRegistration = asyncHandler(async (req, res) => {
   })
   res.json(ApiResponse.ok({ deleted: true }))
 })
+
+exports.bulkRegisterStudents = asyncHandler(async (req, res) => {
+  const doc = await service.bulkRegisterStudents({
+    schoolId: req.schoolId,
+    id: req.params.id,
+    payload: req.body,
+    userId: req.user.id,
+  })
+  res.json(ApiResponse.ok(doc))
+})

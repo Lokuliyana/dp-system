@@ -173,6 +173,13 @@ export const qk = {
       ["attendance", "student", studentId] as const,
   },
 
+  exams: {
+    all: ["exams", "all"] as const,
+    list: (params?: any) => ["exams", "list", params] as const,
+    marks: (examId: string, gradeId: string) => ["exams", "marks", examId, gradeId] as const,
+    history: (studentId: string) => ["exams", "history", studentId] as const,
+  },
+
   examResults: {
     byStudent: (studentId: string) =>
       ["examResults", "student", studentId] as const,

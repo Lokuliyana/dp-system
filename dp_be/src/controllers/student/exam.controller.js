@@ -6,11 +6,15 @@ const ApiError = require('../../utils/apiError')
 const httpStatus = require('http-status')
 
 const createExam = catchAsync(async (req, res) => {
+    console.log('[DEBUG] createExam body:', JSON.stringify(req.body));
+    console.log('[DEBUG] req.user:', { id: req.user.id, schoolId: req.user.schoolId });
+    
     const exam = await Exam.create({
         ...req.body,
         schoolId: req.user.schoolId,
         createdById: req.user.id
     })
+    console.log('[DEBUG] Exam created:', exam._id);
     res.status(httpStatus.CREATED).send({ status: 'success', data: exam })
 })
 
@@ -45,7 +49,7 @@ const getExamMarksOrStudents = catchAsync(async (req, res) => {
         gradeId,
         status: 'active'
     })
-        .select('firstNameEn lastNameEn admissionNumber photoUrl')
+        .select('firstNameEn lastNameEn admissionNumber photoUrl nameWithInitialsSi fullNameEn')
         .sort({ admissionNumber: 1 })
 
     // 2. Get existing marks for this exam + grade
@@ -115,7 +119,7 @@ const getStudentExamHistory = catchAsync(async (req, res) => {
         studentId,
         schoolId: req.user.schoolId
     })
-        .populate('examId', 'name date type')
+        .populate('examId', 'nameSi nameEn date type')
         .populate('gradeId', 'nameEn')
         .sort({ 'examId.date': -1 })
 

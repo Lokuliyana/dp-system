@@ -12,6 +12,8 @@ const eventSchema = new mongoose.Schema(
     eventType: { type: String, trim: true }, // e.g. sports, cultural, seminar
 
     date: { type: Date, required: true },
+    endDate: { type: Date },
+    isRegistrable: { type: Boolean, default: true },
 
     gradeIds: [
       { type: mongoose.Schema.Types.ObjectId, ref: 'Grade' }
@@ -21,6 +23,18 @@ const eventSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Teacher',
       required: true
+    },
+
+    clubId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Club',
+      index: true
+    },
+
+    squadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Squad',
+      index: true
     },
 
     year: { type: Number, required: true, index: true },

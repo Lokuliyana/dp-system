@@ -253,6 +253,17 @@ export default function StudentDetailPage({ params }: StudentPageProps) {
           {activeTab === "roles" && (
             <RolesAndActivitiesTab
               student={student as Student}
+              prefectship={
+                prefectHistory && prefectHistory.length > 0
+                  ? {
+                      isPrefect: true,
+                      rank: (prefectHistory[0].myEntry?.rank || prefectHistory[0].students?.find((s: any) => s.studentId === studentId)?.rank) as any,
+                      year: prefectHistory[0].year,
+                      appointmentDate: prefectHistory[0].appointedDate,
+                      responsibilities: [],
+                    }
+                  : { isPrefect: false }
+              }
               clubs={(clubs || []).map((c: any) => {
                 const member = c.members?.find((m: any) => m.studentId === studentId);
                 const position = positions.find((p) => p.id === member?.positionId);

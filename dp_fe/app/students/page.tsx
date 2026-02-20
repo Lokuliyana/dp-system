@@ -31,6 +31,7 @@ import {
   DynamicPageHeader,
 } from "@/components/layout/dynamic";
 import { StudentsMenu } from "@/components/students/students-menu";
+import { ExportButton } from "@/components/reusable";
 
 export default function StudentsPage() {
   const router = useRouter();
@@ -175,31 +176,45 @@ export default function StudentsPage() {
         title="Student Management"
         subtitle="Browse grades and manage student profiles across the school."
         icon={Users}
-        actions={
-          <div className="flex items-center gap-2">
-
-            <Button 
-              variant="outline"
-              className="gap-2" 
-              onClick={() => {
+        actions={[
+          {
+            type: "custom",
+            render: (
+              <ExportButton 
+                endpoint="/reports/teams" 
+                filename="championship_selections"
+                className="h-9"
+              />
+            )
+          },
+          {
+            type: "button",
+            props: {
+              variant: "outline",
+              icon: Plus, // Use Plus instead of Layers if we want consistency, or I can keep the icons from implementation plan
+              children: "Add Section",
+              onClick: () => {
                 setEditingSection(null);
                 setIsSectionModalOpen(true);
-              }}
-            >
-              <Layers className="h-4 w-4" />
-              Add Section
-            </Button>
-            <Button className="gap-2" onClick={() => {
-              setEditingGrade(null);
-              setTargetSectionId(null);
-              setIsGradeModalOpen(true);
-            }}>
-              <Plus className="h-4 w-4" />
-              Add Grade
-            </Button>
-          </div>
-        }
+              },
+            },
+          },
+          {
+            type: "button",
+            props: {
+              variant: "default",
+              icon: Plus,
+              children: "Add Grade",
+              onClick: () => {
+                setEditingGrade(null);
+                setTargetSectionId(null);
+                setIsGradeModalOpen(true);
+              },
+            },
+          },
+        ]}
       />
+
 
       {/* 3. Content */}
       <div className="p-4 sm:p-6 space-y-6">

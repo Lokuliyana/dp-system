@@ -113,86 +113,62 @@ export default function AttendanceHistoryPage() {
         title="Attendance History"
         subtitle="View monthly attendance records."
         icon={History}
+        actions={[
+          {
+            type: "select",
+            props: {
+              label: "Grade",
+              value: selectedGradeId,
+              onValueChange: setSelectedGradeId,
+              options: grades.map((g) => ({ label: g.nameEn, value: g.id })),
+              placeholder: "Select Grade",
+            },
+          },
+          {
+            type: "select",
+            props: {
+              label: "Range",
+              value: viewRange,
+              onValueChange: (v: any) => setViewRange(v),
+              options: [
+                { label: "1 Month", value: "1m" },
+                { label: "6 Months", value: "6m" },
+                { label: "1 Year", value: "1y" },
+              ],
+            },
+          },
+          {
+            type: "select",
+            props: {
+              label: "Month",
+              value: selectedMonth.toString(),
+              onValueChange: (v) => setSelectedMonth(parseInt(v)),
+              options: MONTHS.map((m, idx) => ({ label: m, value: idx.toString() })),
+            },
+          },
+          {
+            type: "select",
+            props: {
+              label: "Year",
+              value: selectedYear.toString(),
+              onValueChange: (v) => setSelectedYear(parseInt(v)),
+              options: years.map((y) => ({ label: y.toString(), value: y.toString() })),
+            },
+          },
+          {
+            type: "search",
+            props: {
+              value: searchQuery,
+              onChange: setSearchQuery,
+              placeholder: "Search students...",
+            },
+          },
+        ]}
       />
 
+
       <div className="p-4 md:p-6 space-y-6 max-w-[100vw] overflow-hidden">
-        {/* Controls Section */}
-        <Card className="border-none shadow-sm bg-slate-50/50">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4 items-center flex-wrap">
-              <div className="w-full md:w-48">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">Grade</label>
-                <Select value={selectedGradeId} onValueChange={setSelectedGradeId}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Select Grade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {grades.map(g => (
-                      <SelectItem key={g.id} value={g.id}>{g.nameEn}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="w-full md:w-40">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">View Range</label>
-                <Select value={viewRange} onValueChange={(v: any) => setViewRange(v)}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1m">1 Month View</SelectItem>
-                    <SelectItem value="6m">6 Month View</SelectItem>
-                    <SelectItem value="1y">1 Year View</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="w-full md:w-32">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">End Year</label>
-                <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map(y => (
-                      <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="w-full md:w-40">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">End Month</label>
-                <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MONTHS.map((m, i) => (
-                      <SelectItem key={i} value={i.toString()}>{m}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedGradeId && (
-                <div className="w-full md:w-64 md:ml-auto">
-                  <label className="text-sm font-medium text-muted-foreground mb-1 block">Search Student</label>
-                  <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="Search name or admission..." 
-                      className="pl-8 bg-white" 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
         {selectedGradeId && (
           <Card className="overflow-hidden">

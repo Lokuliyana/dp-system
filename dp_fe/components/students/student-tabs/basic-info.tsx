@@ -62,7 +62,7 @@ export function StudentBasicInfo({ student, onSave }: BasicInfoProps) {
               />
               <div className="mt-4 text-center">
                 <h3 className="font-bold text-xl text-slate-900 leading-tight">
-                  {formData.firstName} {formData.lastName}
+                  {formData.nameWithInitialsSi || `${formData.firstName} ${formData.lastName}`}
                 </h3>
                 <p className="text-sm text-slate-500 font-medium">{formData.admissionNumber}</p>
               </div>
@@ -132,6 +132,13 @@ export function StudentBasicInfo({ student, onSave }: BasicInfoProps) {
             </div>
           </CardHeader>
           <CardContent className="pt-6 space-y-5">
+            <FormGroup label="Name with Initials (Sinhala)">
+              <Input
+                value={formData.nameWithInitialsSi || ''}
+                onChange={(e) => handleChange("nameWithInitialsSi", e.target.value)}
+                className="bg-white"
+              />
+            </FormGroup>
             <FormGroup label="Full Name (English)">
               <Input
                 value={formData.fullNameEn}

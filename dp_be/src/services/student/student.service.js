@@ -6,6 +6,7 @@ const xlsx = require('xlsx')
 // other models for 360 view (some may be added later)
 const Attendance = require('../../models/student/attendance.model')
 const ExamResult = require('../../models/student/examResult.model')
+const ExamMark = require('../../models/student/examMark.model')
 const StudentHouseAssignment = require('../../models/housemeets/studentHouseAssignment.model')
 const CompetitionRegistration = require('../../models/housemeets/competitionRegistration.model')
 const CompetitionResult = require('../../models/housemeets/competitionResult.model')
@@ -453,6 +454,115 @@ exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear, restrict
   return items.map((item) => ({ ...item, id: item._id }))
 }
 
+exports.listStudentsWithResultsByGrade = async ({ schoolId, gradeId, academicYear, restrictedGradeIds, sex }) => {
+  const q = { schoolId }
+  if (sex) q.sex = sex
+
+  await applyCohortFilter(q, schoolId, gradeId, academicYear, restrictedGradeIds)
+
+  const students = await Student.find(q)
+    .sort({ admissionNumber: 1 })
+    .populate('sectionId', 'nameEn')
+    .lean()
+
+  const studentIds = students.map((s) => s._id)
+
+  const [houseResults, teamSelections] = await Promise.all([
+    CompetitionResult.find({
+      schoolId,
+      studentId: { $in: studentIds },
+    })
+      .populate({
+        path: 'competitionId',
+        select: 'nameEn nameSi year scope squadId',
+        populate: { path: 'squadId', select: 'icon' },
+      })
+      .lean(),
+    TeamSelection.find({
+      schoolId,
+      'entries.studentId': { $in: studentIds },
+    })
+      .populate({
+        path: 'entries.competitionId',
+        select: 'nameEn nameSi squadId',
+        populate: { path: 'squadId', select: 'icon' },
+      })
+      .lean(),
+  ])
+
+  // Map results to students
+  const studentsWithResults = students.map((student) => {
+    const studentIdStr = String(student._id)
+
+    // Filter house results for this student
+    const studentHouseResults = houseResults.filter(
+      (hr) => String(hr.studentId) === studentIdStr
+    )
+
+    // Filter team selections (Zonal/District/All Island) for this student
+    const studentHigherResults = []
+    teamSelections.forEach((ts) => {
+      const matchingEntries = ts.entries.filter((e) => String(e.studentId) === studentIdStr)
+      matchingEntries.forEach((entry) => {
+        studentHigherResults.push({
+          level: ts.level,
+          year: ts.year,
+          competitionId: entry.competitionId,
+          place: entry.place,
+          totalMarks: ts.totalMarks,
+          teamPosition: ts.teamPosition,
+        })
+      })
+    })
+
+    // Group everything by competition
+    const competitionMap = new Map()
+
+    // Add house results
+    studentHouseResults.forEach((hr) => {
+      const cId = String(hr.competitionId?._id || hr.competitionId)
+      if (!competitionMap.has(cId)) {
+        competitionMap.set(cId, {
+          competition: hr.competitionId,
+          results: [],
+        })
+      }
+      competitionMap.get(cId).results.push({
+        level: 'house',
+        year: hr.year,
+        place: hr.place,
+        personalAwardWinners: hr.personalAwardWinners,
+      })
+    })
+
+    // Add higher level results
+    studentHigherResults.forEach((sr) => {
+      const cId = String(sr.competitionId?._id || sr.competitionId)
+      if (!competitionMap.has(cId)) {
+        competitionMap.set(cId, {
+          competition: sr.competitionId,
+          results: [],
+        })
+      }
+      competitionMap.get(cId).results.push({
+        level: sr.level,
+        year: sr.year,
+        place: sr.place,
+        totalMarks: sr.totalMarks,
+        teamPosition: sr.teamPosition,
+      })
+    })
+
+    return {
+      ...student,
+      id: student._id,
+      competitions: Array.from(competitionMap.values()),
+    }
+  })
+
+  return studentsWithResults
+}
+
 
 exports.updateStudentBasicInfo = async ({ schoolId, id, payload, userId }) => {
   try {
@@ -527,6 +637,7 @@ exports.getStudent360 = async ({ schoolId, id, year }) => {
     events,
     talents,
     parentLinks,
+    examMarks,
   ] = await Promise.all([
     Attendance.find({
       schoolId,
@@ -624,6 +735,13 @@ exports.getStudent360 = async ({ schoolId, id, year }) => {
     })
       .populate('parentId', 'firstNameEn lastNameEn email phone nic addressSi')
       .lean(),
+    ExamMark.find({
+      schoolId,
+      studentId: id,
+    })
+      .populate('examId', 'nameEn nameSi date type year')
+      .populate('gradeId', 'nameEn')
+      .lean(),
   ])
 
   // Post-processing for Prefects to only show relevant student entry?
@@ -639,6 +757,7 @@ exports.getStudent360 = async ({ schoolId, id, year }) => {
     student,
     attendance,
     examResults,
+    examMarks: y ? examMarks.filter(m => m.examId?.year === y) : examMarks,
     houseHistory,
     competitions, // Registrations
     competitionWins, // Results

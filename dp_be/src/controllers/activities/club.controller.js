@@ -56,3 +56,12 @@ exports.removeMember = asyncHandler(async (req, res) => {
   })
   res.json(ApiResponse.ok(doc))
 })
+exports.bulkAssignMembers = asyncHandler(async (req, res) => {
+  const doc = await service.bulkAssignMembers({
+    schoolId: req.schoolId,
+    id: req.params.id,
+    payload: req.body,
+    userId: req.user.id,
+  })
+  res.json(ApiResponse.ok(doc))
+})

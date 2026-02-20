@@ -10,7 +10,7 @@ import { useClubs } from "@/hooks/useClubs";
 import { useGrades, useUpdateGrade } from "@/hooks/useGrades";
 import { TeacherForm } from "@/components/staff/TeacherForm";
 import { CreateTeacherPayload } from "@/services/masterdata/teachers.service";
-import { DeleteConfirmationModal } from "@/components/reusable";
+import { DeleteConfirmationModal, ExportButton } from "@/components/reusable";
 import type { Teacher } from "@/types/models";
 
 export default function StaffPage() {
@@ -89,24 +89,39 @@ export default function StaffPage() {
         title="Staff Management"
         subtitle="Manage teachers and staff members."
         icon={Users}
-        actions={
-          <Button className="gap-2" onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Add Staff
-          </Button>
-        }
+        actions={[
+          {
+            type: "search",
+            props: {
+              value: searchQuery,
+              onChange: setSearchQuery,
+              placeholder: "Search staff...",
+            },
+          },
+          {
+            type: "custom",
+            render: (
+              <ExportButton 
+                endpoint="/reports/teams" 
+                filename="staff_management_report"
+                className="h-9"
+              />
+            )
+          },
+          {
+            type: "button",
+            props: {
+              variant: "default",
+              icon: Plus,
+              children: "Add Staff",
+              onClick: () => setIsCreateModalOpen(true),
+            },
+          },
+        ]}
       />
 
       <div className="p-6 space-y-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-          <Input
-            placeholder="Search staff by name or NIC..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+
 
         <Card>
           <CardHeader className="pb-3">

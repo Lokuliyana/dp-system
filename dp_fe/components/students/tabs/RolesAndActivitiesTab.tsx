@@ -59,6 +59,7 @@ export interface HouseCompetitionWin {
 export interface PrefectshipInfo {
   isPrefect: boolean;
   rank?: "prefect" | "vice-prefect" | "head-prefect";
+  year?: number;
   appointmentDate?: string;
   responsibilities?: string[];
 }
@@ -139,38 +140,51 @@ export function RolesAndActivitiesTab({
         <CardContent>
           {safePrefectship.isPrefect ? (
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                <p className="text-sm font-medium text-amber-900">Current Rank</p>
-                <p className="text-xl font-bold capitalize text-amber-900">
+              <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-amber-900">Current Designation</p>
+                  {safePrefectship.year && (
+                    <Badge className="bg-amber-600 font-bold text-white hover:bg-amber-700">
+                      {safePrefectship.year}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-2xl font-black capitalize tracking-tight text-amber-950">
                   {safePrefectship.rank || "Prefect"}
                 </p>
-                <p className="text-xs text-amber-800">
-                  Managed by the central leadership module. Changes must be done there.
-                </p>
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800">
+                  <Award className="h-3 w-3" />
+                  Official Leadership Member
+                </div>
               </div>
-              <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4">
+              <div className="flex flex-col justify-center space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                 {safePrefectship.appointmentDate && (
-                  <p className="text-sm text-slate-700">
-                    <span className="font-medium">Appointment Date: </span>
-                    {new Date(safePrefectship.appointmentDate).toLocaleDateString()}
-                  </p>
-                )}
-                {safePrefectship.responsibilities &&
-                  safePrefectship.responsibilities.length > 0 && (
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-slate-800">Key Responsibilities</p>
-                      <ul className="list-disc space-y-1 pl-4 text-sm text-slate-700">
-                        {safePrefectship.responsibilities.map((r, idx) => (
-                          <li key={idx}>{r}</li>
-                        ))}
-                      </ul>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-500">
+                      <Calendar className="h-4 w-4" />
                     </div>
-                  )}
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Appointed On</p>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {new Date(safePrefectship.appointmentDate).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <p className="text-[10px] italic text-slate-400">
+                  Leadership records are managed centrally by the School Administration.
+                </p>
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-              This student is not currently marked as a prefect in the leadership module.
+            <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-6 text-center">
+              <p className="text-sm text-slate-500">
+                This student is not currently assigned a leadership role for the current academic year.
+              </p>
             </div>
           )}
         </CardContent>

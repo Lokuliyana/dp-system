@@ -62,6 +62,10 @@ exports.registerStudentForEvent = async ({ schoolId, payload, userId }) => {
     const doc = await EventRegistration.create({
       eventId,
       studentId,
+      gradeId: payload.gradeId,
+      noteEn: payload.noteEn,
+      noteSi: payload.noteSi,
+      starLevel: payload.starLevel,
       year,
       schoolId,
       createdById: userId,
@@ -82,6 +86,40 @@ exports.listEventRegistrations = async ({ schoolId, filters }) => {
   if (filters.year) q.year = Number(filters.year)
 
   return await EventRegistration.find(q)
+    .populate('studentId', 'firstNameEn lastNameEn fullNameSi nameWithInitialsSi admissionNumber')
+    .populate('gradeId', 'nameEn')
     .sort({ registeredAt: -1 })
+    .lean()
+}
+
+exports.bulkRegisterStudents = async ({ schoolId, id, payload, userId }) => {
+  const event = await Event.findOne({ _id: id, schoolId })
+  if (!event) throw new ApiError(404, 'Event not found')
+
+  const { studentIds, gradeId, year, noteEn } = payload 
+
+  const ops = studentIds.map(studentId => ({
+    updateOne: {
+      filter: { schoolId, eventId: id, studentId, year },
+      update: {
+        $set: {
+          gradeId,
+          noteEn,
+          registeredAt: new Date(),
+          updatedById: userId
+        },
+        $setOnInsert: { createdById: userId }
+      },
+      upsert: true
+    }
+  }))
+
+  if (ops.length > 0) {
+    await EventRegistration.bulkWrite(ops)
+  }
+
+  return await EventRegistration.find({ schoolId, eventId: id, year })
+    .populate('studentId', 'firstNameEn lastNameEn fullNameSi nameWithInitialsSi admissionNumber')
+    .populate('gradeId', 'nameEn')
     .lean()
 }

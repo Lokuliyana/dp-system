@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/sheet";
 import { StudentForm } from "@/components/students/student-form";
 import type { Student } from "@/types/models";
+import { ExportButton } from "@/components/reusable";
 
 interface GradePageProps {
   params: {
@@ -130,6 +131,11 @@ export default function GradePage({ params }: GradePageProps) {
         icon={Users}
         actions={
           <div className="flex gap-2">
+            <ExportButton 
+              endpoint={`/reports/grade/${gradeId}`} 
+              filename={`student_list_${grade.nameEn.replace(/\s+/g, '_')}`}
+              size="sm"
+            />
             <Button variant="outline" size="sm" onClick={() => router.push("/students")}>
               <ChevronLeft className="mr-2 h-4 w-4" />
               Back to Grades

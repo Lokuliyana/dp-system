@@ -49,6 +49,7 @@ export * from "./textarea"
 export * from "./toast"
 export * from "./toggle-group"
 export * from "./toggle"
-export * from "./tooltip"
+export * from "./tooltip";
+export * from "./multi-select";
 export * from "./use-mobile"
 export * from "./use-toast"

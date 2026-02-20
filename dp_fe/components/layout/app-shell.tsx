@@ -78,17 +78,17 @@ export function AppShell({ children }: AppShellProps) {
       <SidebarInset className="flex flex-col h-screen overflow-hidden">
         {/* Desktop Header */}
         {!isMobile && (
-          <header className="flex h-14 items-center gap-4 border-b bg-white/80 backdrop-blur-md px-4 sticky top-0 z-30 shadow-sm flex-shrink-0">
-            <SidebarTrigger className="h-9 w-9 hover:bg-slate-100 transition-colors rounded-lg" />
+          <header className="flex h-12 items-center gap-4 border-b bg-white/80 backdrop-blur-md px-4 sticky top-0 z-30 shadow-sm flex-shrink-0">
+            <SidebarTrigger className="h-8 w-8 hover:bg-slate-100 transition-colors rounded-lg" />
             
             <div className="flex-1 flex justify-center">
               <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.02]">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] text-primary-foreground transform group-hover:rotate-6 transition-transform overflow-hidden">
-                  <Image src="/logo.png" alt="Sri Ananda Logo" width={36} height={36} className="h-full w-full object-cover" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] text-primary-foreground transform group-hover:rotate-6 transition-transform overflow-hidden">
+                  <Image src="/logo.png" alt="Sri Ananda Logo" width={32} height={32} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-lg font-black tracking-tight text-slate-900 leading-tight">SRI ANANDA</span>
-                  <div className="flex items-center gap-1.5 mt-[-2px]">
+                  <span className="text-base font-black tracking-tight text-slate-900 leading-tight">SRI ANANDA</span>
+                  <div className="flex items-center gap-1.5 mt-[-1px]">
                     <div className="h-[1px] w-4 bg-slate-300" />
                     <span className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">Admin Console</span>
                     <div className="h-[1px] w-4 bg-slate-300" />

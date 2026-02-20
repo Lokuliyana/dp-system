@@ -3,12 +3,13 @@ const { baseSchemaOptions } = require('../system/_base')
 
 const examSchema = new mongoose.Schema(
     {
-        name: { type: String, required: true, trim: true },
+        nameSi: { type: String, required: true, trim: true },
+        nameEn: { type: String, required: true, trim: true },
         date: { type: Date, required: true, index: true },
         type: {
             type: String,
-            enum: ['paper', 'exam', 'assignment'],
-            default: 'exam',
+            enum: ['SRIANANDA', 'DEPARTMENT'],
+            default: 'SRIANANDA',
             required: true
         },
 
@@ -17,7 +18,6 @@ const examSchema = new mongoose.Schema(
             ref: 'Grade'
         }],
 
-        term: { type: Number, min: 1, max: 3 }, // Optional: link to a term if needed
         year: { type: Number, required: true, index: true }, // Academic Year
 
         schoolId: {

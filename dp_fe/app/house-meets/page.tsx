@@ -80,7 +80,23 @@ export default function HouseMeetsPage() {
         title="House Meets Dashboard"
         subtitle="Real-time standings and performance metrics."
         icon={LayoutDashboard}
+        actions={[
+          {
+            type: "select",
+            props: {
+              label: "Year",
+              value: year.toString(),
+              onValueChange: () => {}, // Dashboard currently doesn't have setYear but we can add it if needed, or just display
+              options: [
+                { label: year.toString(), value: year.toString() },
+                { label: (year - 1).toString(), value: (year - 1).toString() },
+              ],
+              icon: Calendar,
+            },
+          },
+        ]}
       />
+
 
       <div className="p-6 space-y-6">
         {loading ? (

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader, Users, ArrowRight, X, ChevronsRight, Save, RotateCcw, Calendar, Wand2, Briefcase } from "lucide-react";
+import { Loader, Users, ArrowRight, X, ChevronsRight, Save, RotateCcw, Calendar, Wand2, Briefcase, Trophy, Medal, Award, Star, Info, Shield, ShieldCheck, ShieldAlert, Sparkles } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { HouseMeetsMenu } from "@/components/house-meets/house-meets-menu";
 import { 
@@ -20,10 +21,14 @@ import {
   Tabs,
   TabsContent,
   TabsList,
-  TabsTrigger
+  TabsTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui";
 import { useGrades } from "@/hooks/useGrades";
-import { useStudentsByGrade } from "@/hooks/useStudents";
+import { useStudentsWithResultsByGrade } from "@/hooks/useStudents";
 import { useAssignHouse, useHouseAssignments, useUnassignHouse, useBulkAssignHouse } from "@/hooks/useHouseAssignments";
 import { useHouses } from "@/hooks/useHouses";
 import { cn } from "@/lib/utils";
@@ -54,7 +59,7 @@ export default function HouseAssignmentsPage() {
   }, [selectedGrade, selectedYear]);
 
   const { data: houses = [], isLoading: housesLoading } = useHouses();
-  const { data: students = [], isLoading: studentsLoading } = useStudentsByGrade(selectedGrade || "", selectedYear);
+  const { data: students = [], isLoading: studentsLoading } = useStudentsWithResultsByGrade(selectedGrade || "", selectedYear);
   
   const assignmentFilters = useMemo(
     () => ({
@@ -82,14 +87,14 @@ export default function HouseAssignmentsPage() {
   }, [dbAssignmentMap, localAssignments]);
 
   const unassignedStudents = useMemo(() => {
-    return students.filter((s) => !effectiveAssignmentMap[s.id]);
+    return students.filter((s: any) => !effectiveAssignmentMap[s.id]);
   }, [students, effectiveAssignmentMap]);
 
   const houseStudents = useMemo(() => {
-    const map: Record<string, typeof students> = {};
-    houses.forEach((h) => (map[h.id] = []));
+    const map: Record<string, any[]> = {};
+    houses.forEach((h: any) => (map[h.id] = []));
     
-    students.forEach((s) => {
+    students.forEach((s: any) => {
       const houseId = effectiveAssignmentMap[s.id];
       if (houseId && map[houseId]) {
         map[houseId].push(s);
@@ -145,61 +150,55 @@ export default function HouseAssignmentsPage() {
         title="House Assignments"
         subtitle="Manage student and staff house assignments."
         icon={Users}
-        actions={
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-slate-100 rounded-md px-2 py-1 border border-slate-200">
-              <Calendar className="h-4 w-4 text-slate-500" />
-              <Select
-                value={selectedYear.toString()}
-                onValueChange={(v) => setSelectedYear(parseInt(v))}
-              >
-                <SelectTrigger className="h-8 w-24 border-none bg-transparent shadow-none focus:ring-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
-                    <SelectItem key={y} value={y.toString()}>
-                      {y}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsAutoDialogOpen(true)}
-              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-            >
-              <Wand2 className="mr-2 h-4 w-4" />
-              Automatic
-            </Button>
-
-            {hasChanges && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleReset}
-                  className="text-muted-foreground hover:text-slate-700"
-                >
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Reset
-                </Button>
-                <Button size="sm" onClick={handleSave} disabled={bulkAssign.isPending}>
-                  {bulkAssign.isPending ? (
-                    <Loader className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="mr-2 h-4 w-4" />
-                  )}
-                  Save Changes
-                </Button>
-              </>
-            )}
-          </div>
-        }
+        actions={[
+          {
+            type: "select",
+            props: {
+              label: "Year",
+              value: selectedYear.toString(),
+              onValueChange: (v) => setSelectedYear(parseInt(v)),
+              options: [currentYear - 1, currentYear, currentYear + 1].map((y) => ({
+                label: y.toString(),
+                value: y.toString(),
+              })),
+              icon: Calendar,
+            },
+          },
+          {
+            type: "button",
+            props: {
+              variant: "outline",
+              icon: Wand2,
+              children: "Automatic",
+              onClick: () => setIsAutoDialogOpen(true),
+            },
+          },
+          ...(hasChanges
+            ? ([
+                {
+                  type: "button",
+                  props: {
+                    variant: "ghost",
+                    icon: RotateCcw,
+                    children: "Reset",
+                    onClick: handleReset,
+                  },
+                },
+                {
+                  type: "button",
+                  props: {
+                    variant: "default",
+                    icon: Save,
+                    children: "Save Changes",
+                    onClick: handleSave,
+                    disabled: bulkAssign.isPending,
+                  },
+                },
+              ] as any[])
+            : []),
+        ]}
       />
+
 
       <div className="p-6 h-[calc(100vh-140px)] flex flex-col overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full overflow-hidden">
@@ -285,13 +284,21 @@ export default function HouseAssignmentsPage() {
                                 className="flex items-center justify-between gap-3 p-3 hover:bg-slate-50 transition-all group"
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                                  <div className="min-w-0">
-                                    <p className="font-medium text-sm text-slate-900 truncate">
-                                      {student.nameEn || student.nameWithInitialsSi}
-                                    </p>
-                                    <p className="text-[11px] text-slate-500">
-                                      ID: {student.admissionNumber}
-                                    </p>
+                                  <div className={cn(
+                                    "min-w-0 flex-1 flex items-center justify-between gap-3 p-1 rounded transition-all",
+                                    getStudentTalentLevel(student.competitions) === 4 && "border-l-4 border-amber-500 pl-3 bg-amber-50/20",
+                                    getStudentTalentLevel(student.competitions) === 3 && "border-l-4 border-slate-400 pl-3 bg-slate-50",
+                                    getStudentTalentLevel(student.competitions) === 2 && "border-l-4 border-slate-300 pl-3 bg-slate-50/50"
+                                  )}>
+                                    <div className="min-w-0 overflow-hidden">
+                                      <p className="font-bold text-sm text-slate-900 truncate tracking-tight">
+                                        {student.nameWithInitialsSi || student.fullNameEn}
+                                      </p>
+                                      <p className="text-[10px] text-slate-400 font-mono font-bold mt-0.5">
+                                        ID: {student.admissionNumber}
+                                      </p>
+                                    </div>
+                                    <AchievementBadges competitions={student.competitions} />
                                   </div>
                                 </div>
                                 
@@ -381,16 +388,26 @@ function HouseBox({
                   exit={{ opacity: 0, height: 0 }}
                   className="group flex items-center justify-between p-1.5 bg-slate-50/50 rounded border border-slate-100 hover:border-red-100 transition-colors"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className={cn(
+                    "flex items-center gap-2 min-w-0 flex-1 p-1 rounded transition-all",
+                    getStudentTalentLevel(student.competitions) === 4 && "border-l-2 border-amber-500 pl-2 bg-amber-50/10",
+                    getStudentTalentLevel(student.competitions) === 3 && "border-l-2 border-slate-400 pl-2 bg-slate-50/80",
+                    getStudentTalentLevel(student.competitions) === 2 && "border-l-2 border-slate-300 pl-2 bg-slate-50/30"
+                  )}>
                     <span
-                      className="text-[10px] font-bold px-1 rounded text-white shrink-0"
+                      className="text-[10px] font-black px-1.5 rounded-sm text-white shrink-0 tracking-tighter"
                       style={{ backgroundColor: house.color }}
                     >
                       {houseCode}
                     </span>
-                    <span className="text-xs font-medium text-slate-700 truncate">
-                      {student.nameEn || student.nameWithInitialsSi}
-                    </span>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[11px] font-black text-slate-800 truncate leading-none">
+                          {(student.nameWithInitialsSi || student.fullNameEn).split(' ').slice(-1)[0]}
+                        </span>
+                        <AchievementBadges competitions={student.competitions} />
+                      </div>
+                    </div>
                   </div>
                   <button
                     onClick={() => onUnassign(student.id)}
@@ -423,6 +440,118 @@ function HouseBox({
         </ScrollArea>
       </CardContent>
     </Card>
+  );
+}
+
+interface AchievementBadgesProps {
+  competitions: any[];
+}
+
+function getStudentTalentLevel(competitions: any[]) {
+  if (!competitions || competitions.length === 0) return 0;
+  
+  let maxLevel = 0;
+  competitions.forEach((c: any) => {
+    c.results?.forEach((r: any) => {
+      const level = r.level === 'allisland' ? 4 : r.level === 'district' ? 3 : r.level === 'zonal' ? 2 : 1;
+      if (level > maxLevel) maxLevel = level;
+    });
+  });
+  return maxLevel;
+}
+
+function AchievementBadges({ competitions }: AchievementBadgesProps) {
+  if (!competitions || competitions.length === 0) return null;
+
+  // Summarize achievements
+  const sortedAchievers = competitions.map(c => {
+    const results = c.results || [];
+    const levels = ['allisland', 'district', 'zonal', 'house'];
+    const bestResult = [...results].sort((a, b) => {
+      const idxA = levels.indexOf(a.level);
+      const idxB = levels.indexOf(b.level);
+      if (idxA !== idxB) return idxA - idxB;
+      return (a.place || 5) - (b.place || 5);
+    })[0];
+
+    return {
+      competition: c.competition,
+      bestLevel: bestResult?.level,
+      bestPlace: bestResult?.place,
+      allResults: results
+    };
+  }).filter(a => a.bestLevel);
+
+  if (sortedAchievers.length === 0) return null;
+
+  const renderSquadIcon = (ach: any, className: string) => {
+    const iconName = ach.competition?.squadId?.icon;
+    let LevelIcon = Shield;
+    let iconColor = "text-slate-400";
+    
+    if (ach.bestLevel === 'allisland') { LevelIcon = ShieldCheck; iconColor = "text-amber-600"; }
+    else if (ach.bestLevel === 'district') { LevelIcon = ShieldAlert; iconColor = "text-slate-500"; }
+    else if (ach.bestLevel === 'zonal') { LevelIcon = Shield; iconColor = "text-slate-600"; }
+    else { LevelIcon = Shield; iconColor = "text-slate-400"; }
+
+    const SquadIconComp = iconName ? ((LucideIcons as any)[iconName] || LevelIcon) : LevelIcon;
+    return <SquadIconComp className={cn(className, iconColor)} />;
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1 items-center ml-auto">
+      <TooltipProvider delayDuration={100}>
+        {sortedAchievers.map((ach, idx) => {
+          let borderColor = "border-slate-200";
+          let bgClass = "bg-slate-50";
+
+          if (ach.bestLevel === 'allisland') { borderColor = "border-amber-400"; bgClass = "bg-amber-50"; }
+          else if (ach.bestLevel === 'district') { borderColor = "border-slate-300"; bgClass = "bg-slate-50"; }
+          else if (ach.bestLevel === 'zonal') { borderColor = "border-slate-200"; bgClass = "bg-white"; }
+
+          return (
+            <Tooltip key={idx}>
+              <TooltipTrigger asChild>
+                <div className={cn(
+                  "flex items-center justify-center h-6 w-6 rounded border transition-colors cursor-help",
+                  bgClass,
+                  borderColor
+                )}>
+                  {renderSquadIcon(ach, "h-3.5 w-3.5")}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="p-0 border-slate-200 shadow-xl overflow-hidden rounded-md min-w-[220px]">
+                <div className="bg-slate-800 px-3 py-2 border-b border-slate-700">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-bold text-white truncate max-w-[160px]">
+                      {ach.competition?.nameEn}
+                    </span>
+                    <Trophy className={cn("h-3.5 w-3.5", ach.bestLevel === 'allisland' ? "text-amber-400" : "text-slate-500")} />
+                  </div>
+                </div>
+                <div className="divide-y divide-slate-100 bg-white">
+                  {ach.allResults.map((r: any, rIdx: number) => (
+                    <div key={rIdx} className="px-3 py-1.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                      <Badge variant="outline" className={cn(
+                        "px-1 h-4 text-[9px] font-bold uppercase tracking-tight truncate max-w-[80px]",
+                        r.level === 'allisland' && "border-amber-200 text-amber-700 bg-amber-50",
+                        r.level === 'district' && "border-slate-200 text-slate-600 bg-slate-50"
+                      )}>
+                        {r.level === 'allisland' ? 'National' : r.level}
+                      </Badge>
+                      <span className="text-[10px] text-slate-400 font-mono ml-auto">{r.year}</span>
+                      <span className="text-[11px] font-bold text-slate-900 ml-3 shrink-0">
+                        {r.place > 0 ? `${r.place}${r.place === 1 ? 'st' : r.place === 2 ? 'nd' : r.place === 3 ? 'rd' : 'th'}` : 'P'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </TooltipProvider>
+    </div>
   );
 }
 

@@ -94,50 +94,60 @@ export default function UniversalStudentListPage() {
         title="Universal Student View"
         subtitle="Search and manage all students across the school."
         icon={Users}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-9 text-sm gap-2 px-3">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-            <BulkImportModal />
-            <Button 
-              size="sm" 
-              className="h-9 text-sm gap-2 px-4"
-              onClick={() => router.push("/students/add")}
-            >
-              <Plus className="h-4 w-4" />
-              Add Student
-            </Button>
-            <Sheet open={isCreateModalOpen} onOpenChange={onOpenChange}>
-              <SheetContent className="w-full sm:w-[540px] overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>Edit Student</SheetTitle>
-                  <SheetDescription>Update the student&apos;s details.</SheetDescription>
-                </SheetHeader>
-                <div className="mt-6">
-                  <StudentForm
-                    grades={grades.map((g) => ({
-                      id: g.id,
-                      name: g.nameSi || g.nameEn,
-                    }))}
-                    sections={sections.map((s) => ({
-                      id: s.id,
-                      name: s.nameSi || s.nameEn,
-                    }))}
-                    onSubmit={handleSaveStudent}
-                    isLoading={updateStudentMutation.isPending}
-                    initialData={editingStudent || {}}
-                  />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        }
+        actions={[
+          {
+            type: "button",
+            props: {
+              variant: "outline",
+              icon: Download,
+              children: "Export",
+              onClick: () => {}, // Define logic if needed
+            },
+          },
+          {
+            type: "custom",
+            render: <BulkImportModal />,
+          },
+          {
+            type: "button",
+            props: {
+              variant: "default",
+              icon: Plus,
+              children: "Add Student",
+              onClick: () => router.push("/students/add"),
+            },
+          },
+        ]}
       />
 
+
       <div className="p-4 sm:p-6 space-y-6">
+        <Sheet open={isCreateModalOpen} onOpenChange={onOpenChange}>
+          <SheetContent className="w-full sm:w-[540px] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Edit Student</SheetTitle>
+              <SheetDescription>Update the student&apos;s details.</SheetDescription>
+            </SheetHeader>
+            <div className="mt-6">
+              <StudentForm
+                grades={grades.map((g) => ({
+                  id: g.id,
+                  name: g.nameSi || g.nameEn,
+                }))}
+                sections={sections.map((s) => ({
+                  id: s.id,
+                  name: s.nameSi || s.nameEn,
+                }))}
+                onSubmit={handleSaveStudent}
+                isLoading={updateStudentMutation.isPending}
+                initialData={editingStudent || {}}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+
         <StudentListView
+
           students={students.map(s => ({
             id: s.id,
             gradeId: s.gradeId && typeof s.gradeId === 'object' ? (s.gradeId as any)._id || (s.gradeId as any).id : s.gradeId,

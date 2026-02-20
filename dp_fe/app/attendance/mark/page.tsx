@@ -142,51 +142,40 @@ export default function MarkAttendancePage() {
         title="Mark Attendance"
         subtitle="Record daily attendance for students."
         icon={CalendarCheck}
+        actions={[
+          {
+            type: "select",
+            props: {
+              label: "Grade",
+              value: selectedGradeId,
+              onValueChange: setSelectedGradeId,
+              options: grades.map((g) => ({ label: g.nameEn, value: g.id })),
+              placeholder: "Select Grade",
+            },
+          },
+          {
+            type: "date",
+            props: {
+              label: "Date",
+              date: date,
+              setDate: (d) => d && setDate(d),
+              disabled: (d) => !isSunday(d),
+            },
+          },
+          {
+            type: "search",
+            props: {
+              value: searchQuery,
+              onChange: setSearchQuery,
+              placeholder: "Search students...",
+            },
+          },
+        ]}
       />
 
+
       <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-        {/* Controls Section */}
-        <Card className="border-none shadow-sm bg-slate-50/50">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="w-full md:w-64">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">Grade</label>
-                <Select value={selectedGradeId} onValueChange={setSelectedGradeId}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Select Grade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {grades.map(g => (
-                      <SelectItem key={g.id} value={g.id}>{g.nameEn}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full md:w-64">
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">Date (Sundays Only)</label>
-                <DatePicker 
-                  date={date} 
-                  setDate={(d) => d && setDate(d)} 
-                  disabled={(d) => !isSunday(d)}
-                />
-              </div>
-              {selectedGradeId && (
-                <div className="w-full md:w-auto md:ml-auto">
-                  <label className="text-sm font-medium text-muted-foreground mb-1 block">Search</label>
-                  <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="Search student..." 
-                      className="pl-8 bg-white w-full md:w-64" 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
 
         {selectedGradeId && (
           <div className="space-y-4">

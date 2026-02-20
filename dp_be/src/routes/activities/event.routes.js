@@ -46,4 +46,10 @@ router.get(
   ctrl.listEventRegistrations
 )
 
+router.post(
+  '/:id/registrations/bulk',
+  // permit([P.EVENT.REGISTER]),
+  ctrl.bulkRegisterStudents
+)
+
 module.exports = router

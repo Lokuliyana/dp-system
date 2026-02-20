@@ -5,9 +5,10 @@ import { StudentBasicInfo } from "@/components/students/student-tabs/basic-info"
 import { StudentTalents } from "@/components/students/student-tabs/talents"
 import { StudentNotes } from "@/components/students/student-tabs/notes"
 import { StudentAttendanceTab } from "@/components/students/student-tabs/attendance"
+import { StudentExamsTab } from "@/components/students/student-tabs/exams"
 import type { Student } from "@/lib/school-data"
 import { StudentAvatar } from "@/components/students/student-avatar"
-import { User, Star, FileText, Crown, Activity } from "lucide-react"
+import { User, Star, FileText, Crown, Activity, Trophy } from "lucide-react"
 
 interface StudentDetailsPageProps {
   student: Student
@@ -102,6 +103,12 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
       component: () => <StudentAttendanceTab student={editingStudent} />,
     },
     {
+      id: "exams",
+      label: "Exams",
+      icon: <Trophy className="h-4 w-4" />,
+      component: () => <StudentExamsTab student={editingStudent} />,
+    },
+    {
       id: "notes",
       label: "Notes & Remarks",
       icon: <FileText className="h-4 w-4" />,
@@ -114,13 +121,13 @@ export function StudentDetailsPage({ student, onUpdate, onClose, onBack }: Stude
 
   return (
     <LayoutController
-      title={`${editingStudent.firstName} ${editingStudent.lastName}`}
+      title={editingStudent.nameWithInitialsSi || `${editingStudent.firstName} ${editingStudent.lastName}`}
       subtitle={`Roll No: ${editingStudent.admissionNumber} | Grade: ${editingStudent.gradeId && typeof editingStudent.gradeId === 'object' ? editingStudent.gradeId.nameEn : editingStudent.gradeId || "N/A"}`}
       icon={
         <StudentAvatar 
           studentId={editingStudent.id}
           photoUrl={editingStudent.photoUrl}
-          firstName={editingStudent.firstName}
+          firstName={editingStudent.nameWithInitialsSi || editingStudent.firstName}
           lastName={editingStudent.lastName}
           onUpdate={handlePhotoUpdate}
         />

@@ -1,53 +1,34 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
+import { Card, CardContent, CardHeader, CardTitle, Badge } from "@/components/ui"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui"
 import { Calendar, TrendingUp, AlertCircle, CheckCircle, XCircle } from "lucide-react"
+import { useAttendanceByStudent } from "@/hooks/useAttendance"
 import type { Student } from "@/lib/school-data"
 
 interface AttendanceRecord {
   date: string
-  status: "present" | "absent" | "leave"
+  status: "present" | "absent" | "late"
   remarks?: string
 }
 
 export function StudentAttendanceTab({ student }: { student: Student }) {
-  const [attendanceRecords] = useState<AttendanceRecord[]>(() => {
-    const records: AttendanceRecord[] = []
-    const today = new Date()
-    // Generate 3 months of attendance data
-    for (let i = 90; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
-      const dayOfWeek = date.getDay()
-      // Skip weekends
-      if (dayOfWeek === 0 || dayOfWeek === 6) continue
+  const { data: attendanceRecords = [], isLoading } = useAttendanceByStudent(student.id || (student as any)._id)
 
-      const random = Math.random()
-      const status = random > 0.92 ? "leave" : random > 0.85 ? "absent" : "present"
-      records.push({
-        date: date.toISOString().split("T")[0],
-        status,
-        remarks: status === "leave" ? "Medical Leave" : undefined,
-      })
-    }
-    return records
-  })
-
-  const [filterStatus, setFilterStatus] = useState<"all" | "present" | "absent">("all")
+  const [filterStatus, setFilterStatus] = useState<"all" | "present" | "absent" | "late">("all")
   const [monthFilter, setMonthFilter] = useState<string>("")
 
   const statistics = useMemo(() => {
     const filtered =
       filterStatus === "all" ? attendanceRecords : attendanceRecords.filter((r) => r.status === filterStatus)
 
-    const total = filtered.length
-    const present = filtered.filter((r) => r.status === "present").length
-    const absent = filtered.filter((r) => r.status === "absent").length
-    const leave = filtered.filter((r) => r.status === "leave").length
+    const total = attendanceRecords.length
+    const present = attendanceRecords.filter((r) => r.status === "present").length
+    const absent = attendanceRecords.filter((r) => r.status === "absent").length
+    const late = attendanceRecords.filter((r) => r.status === "late").length
 
-    const attendancePercentage = total > 0 ? Math.round((present / (present + absent)) * 100) : 0
+    const attendancePercentage = total > 0 ? Math.round((present / total) * 100) : 0
     const lastAbsentDate = attendanceRecords.filter((r) => r.status === "absent").slice(-1)[0]?.date
     const consecutivePresent = attendanceRecords
       .slice()
@@ -58,7 +39,7 @@ export function StudentAttendanceTab({ student }: { student: Student }) {
       total,
       present,
       absent,
-      leave,
+      late,
       attendancePercentage,
       lastAbsentDate,
       consecutivePresent: consecutivePresent === -1 ? attendanceRecords.length : consecutivePresent,
@@ -66,13 +47,13 @@ export function StudentAttendanceTab({ student }: { student: Student }) {
   }, [attendanceRecords, filterStatus])
 
   const groupedByMonth = useMemo(() => {
-    const grouped: Record<string, AttendanceRecord[]> = {}
-    attendanceRecords.forEach((record) => {
+    const groups: Record<string, AttendanceRecord[]> = {}
+    attendanceRecords.forEach((record: AttendanceRecord) => {
       const month = record.date.substring(0, 7)
-      if (!grouped[month]) grouped[month] = []
-      grouped[month].push(record)
+      if (!groups[month]) groups[month] = []
+      groups[month].push(record)
     })
-    return Object.entries(grouped)
+    return Object.entries(groups)
       .sort((a, b) => b[0].localeCompare(a[0]))
       .map(([month, records]) => ({
         month,
@@ -86,7 +67,7 @@ export function StudentAttendanceTab({ student }: { student: Student }) {
         return "bg-green-50 border-green-200 text-green-700"
       case "absent":
         return "bg-red-50 border-red-200 text-red-700"
-      case "leave":
+      case "late":
         return "bg-blue-50 border-blue-200 text-blue-700"
       default:
         return "bg-slate-50 border-slate-200"
@@ -99,7 +80,7 @@ export function StudentAttendanceTab({ student }: { student: Student }) {
         return <CheckCircle className="h-4 w-4 text-green-600" />
       case "absent":
         return <XCircle className="h-4 w-4 text-red-600" />
-      case "leave":
+      case "late":
         return <AlertCircle className="h-4 w-4 text-blue-600" />
     }
   }
@@ -152,9 +133,9 @@ export function StudentAttendanceTab({ student }: { student: Student }) {
             <div className="space-y-2">
               <p className="text-sm text-slate-600 flex items-center gap-1">
                 <AlertCircle className="h-4 w-4 text-blue-600" />
-                Leave
+                Late
               </p>
-              <p className="text-3xl font-bold text-blue-600">{statistics.leave}</p>
+              <p className="text-3xl font-bold text-blue-600">{statistics.late}</p>
               <p className="text-xs text-slate-500">Total days</p>
             </div>
           </CardContent>
@@ -209,7 +190,7 @@ export function StudentAttendanceTab({ student }: { student: Student }) {
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="present">Present</SelectItem>
                   <SelectItem value="absent">Absent</SelectItem>
-                  <SelectItem value="leave">Leave</SelectItem>
+                  <SelectItem value="late">Late</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -262,18 +243,18 @@ export function StudentAttendanceTab({ student }: { student: Student }) {
                   <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Month</th>
                   <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Present</th>
                   <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Absent</th>
-                  <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Leave</th>
+                  <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Late</th>
                   <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Total</th>
                   <th className="px-4 py-3 text-center font-semibold whitespace-nowrap">Rate %</th>
                 </tr>
               </thead>
               <tbody>
                 {groupedByMonth.map(({ month, records }) => {
-                  const present = records.filter((r) => r.status === "present").length
+                    const present = records.filter((r) => r.status === "present").length
                   const absent = records.filter((r) => r.status === "absent").length
-                  const leave = records.filter((r) => r.status === "leave").length
-                  const total = present + absent + leave
-                  const rate = total > 0 ? Math.round((present / (present + absent)) * 100) : 0
+                  const late = records.filter((r) => r.status === "late").length
+                  const total = present + absent + late
+                  const rate = total > 0 ? Math.round((present / total) * 100) : 0
 
                   return (
                     <tr key={month} className="border-b hover:bg-slate-50">
@@ -282,7 +263,7 @@ export function StudentAttendanceTab({ student }: { student: Student }) {
                       </td>
                       <td className="px-4 py-3 text-center text-green-600 font-medium">{present}</td>
                       <td className="px-4 py-3 text-center text-red-600 font-medium">{absent}</td>
-                      <td className="px-4 py-3 text-center text-blue-600 font-medium">{leave}</td>
+                      <td className="px-4 py-3 text-center text-blue-600 font-medium">{late}</td>
                       <td className="px-4 py-3 text-center font-medium">{total}</td>
                       <td
                         className={`px-4 py-3 text-center font-bold ${rate >= 80 ? "text-green-600" : "text-orange-600"}`}
