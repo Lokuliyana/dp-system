@@ -24,7 +24,7 @@ interface ExamsTabProps {
 }
 
 export function ExamsTab({ data }: ExamsTabProps) {
-  const examMarks = data.examMarks || [];
+  const examMarks = useMemo(() => data.examMarks || [], [data.examMarks]);
 
   const analytics = useMemo(() => {
     if (examMarks.length === 0) return null;

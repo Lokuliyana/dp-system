@@ -189,7 +189,7 @@ export function NotesTab({ notes, onAddNote, onDeleteNote }: NotesTabProps) {
                           </div>
                           
                           <p className="text-sm font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">
-                            "{note.content}"
+                            &quot;{note.content}&quot;
                           </p>
                           
                           <div className="pt-3 border-t border-slate-50 flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">

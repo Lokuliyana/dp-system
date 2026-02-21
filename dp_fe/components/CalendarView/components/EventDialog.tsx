@@ -72,7 +72,7 @@ export function EventDialog({
         isMultiDay: false,
       });
     }
-  }, [editEvent, selectedDate, isOpen]);
+  }, [editEvent, selectedDate, isOpen, entityName]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,7 +289,7 @@ export function EventDialog({
               </div>
             </div>
             <p className="text-[15px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              Are you sure you want to delete <span className="font-bold text-slate-900 dark:text-slate-100">"{editEvent?.title}"</span>?
+              Are you sure you want to delete <span className="font-bold text-slate-900 dark:text-slate-100">&quot;{editEvent?.title}&quot;</span>?
             </p>
           </div>
           <DialogFooter className="p-4 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-800 flex gap-3">

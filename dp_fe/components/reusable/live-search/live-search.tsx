@@ -11,14 +11,14 @@ import { CommandLoading } from "cmdk";
 import SearchBar from "./search-bar";
 
 interface LiveSearchProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line
   data: any[];
   isLoading?: boolean;
   placeholder?: string;
   onSearch: (search: string) => void;
   selected: (
     value: { label: string | null; value: string | null; item?: any },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     data: any
   ) => void;
   disabled?: boolean;

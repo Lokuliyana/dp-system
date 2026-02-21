@@ -33,7 +33,7 @@ interface TalentsSectionProps {
 }
 
 export function TalentsSection({ data, onAddTalent, onRemoveTalent }: TalentsSectionProps) {
-  const talents = data.talents || [];
+  const talents = useMemo(() => data.talents || [], [data.talents]);
   
   const [formData, setFormData] = useState({
     areaEn: "",
@@ -213,7 +213,7 @@ export function TalentsSection({ data, onAddTalent, onRemoveTalent }: TalentsSec
                   </div>
 
                   {talent.notes && (
-                     <p className="text-[10px] text-slate-500 mt-3 line-clamp-2 leading-relaxed italic font-medium">"{talent.notes}"</p>
+                     <p className="text-[10px] text-slate-500 mt-3 line-clamp-2 leading-relaxed italic font-medium">&quot;{talent.notes}&quot;</p>
                   )}
 
                   <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">

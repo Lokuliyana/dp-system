@@ -313,7 +313,7 @@ export function StudentTalents({ talents, onAddTalent, onRemoveTalent }: Talents
                       </div>
 
                       {talent.description && (
-                         <p className="text-[11px] text-slate-500 mt-3 line-clamp-2 leading-relaxed italic font-medium">"{talent.description}"</p>
+                         <p className="text-[11px] text-slate-500 mt-3 line-clamp-2 leading-relaxed italic font-medium">&quot;{talent.description}&quot;</p>
                       )}
 
                       <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">

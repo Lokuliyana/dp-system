@@ -660,7 +660,7 @@ export function ClubsAndSocieties() {
                           </div>
                           <h3 className="text-sm font-bold text-slate-900 mb-1 tracking-tight">No Members Enrolled</h3>
                           <p className="text-xs text-slate-500 max-w-[240px] leading-relaxed">
-                            This club currently has no students assigned. Use the 'Add Student' tool above to begin.
+                            This club currently has no students assigned. Use the &apos;Add Student&apos; tool above to begin.
                           </p>
                           <Button 
                             variant="outline" 

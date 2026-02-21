@@ -21,7 +21,7 @@ interface AttendanceTabProps {
 }
 
 export function AttendanceTab({ data }: AttendanceTabProps) {
-  const attendanceRecords = data.attendance || [];
+  const attendanceRecords = useMemo(() => data.attendance || [], [data.attendance]);
 
   const statistics = useMemo(() => {
     const total = attendanceRecords.length;
