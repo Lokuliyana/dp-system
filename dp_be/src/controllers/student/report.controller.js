@@ -42,7 +42,7 @@ exports.reportStudent = asyncHandler(async (req, res) => {
     })
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename=student_${req.params.id}.pdf`)
-    return res.send(pdf)
+    return res.end(pdf, 'binary')
   }
 
   res.json(ApiResponse.ok(data))
@@ -121,7 +121,7 @@ exports.reportGrade = asyncHandler(async (req, res) => {
       })
       res.setHeader('Content-Type', 'application/pdf')
       res.setHeader('Content-Disposition', `attachment; filename=grade_${req.params.id}.pdf`)
-      return res.send(pdf)
+      return res.end(pdf, 'binary')
     }
 
     if (req.query.format === 'xlsx') {
@@ -139,7 +139,7 @@ exports.reportGrade = asyncHandler(async (req, res) => {
       
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
       res.setHeader('Content-Disposition', `attachment; filename=grade_${req.params.id}.xlsx`)
-      return res.send(buffer)
+      return res.end(buffer, 'binary')
     }
   }
 
@@ -175,7 +175,7 @@ exports.reportTeacher = asyncHandler(async (req, res) => {
     })
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename=teacher_${req.params.id}.pdf`)
-    return res.send(pdf)
+    return res.end(pdf, 'binary')
   }
 
   res.json(ApiResponse.ok(data))
@@ -207,7 +207,7 @@ exports.reportHouse = asyncHandler(async (req, res) => {
     })
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename=house_${req.params.id}.pdf`)
-    return res.send(pdf)
+    return res.end(pdf, 'binary')
   }
 
   res.json(ApiResponse.ok(data))
@@ -241,7 +241,7 @@ exports.reportTeams = asyncHandler(async (req, res) => {
     })
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename=teams.pdf`)
-    return res.send(pdf)
+    return res.end(pdf, 'binary')
   }
 
   res.json(ApiResponse.ok(data))
