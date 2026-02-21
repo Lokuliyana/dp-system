@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer-core');
 const ejs = require('ejs');
 const path = require('path');
 const fs = require('fs');
+const chromium = require('@sparticuz/chromium');
 
 /**
  * Service to handle high-precision PDF generation
@@ -10,7 +11,6 @@ const fs = require('fs');
 class PdfService {
   constructor() {
     this.browser = null;
-    this.chromePath = this.getExecutablePath();
   }
 
   getExecutablePath() {
@@ -42,13 +42,29 @@ class PdfService {
   async init() {
     if (!this.browser) {
       try {
-        this.browser = await puppeteer.launch({
-          executablePath: this.chromePath,
-          args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
+        let options = {};
+        
+        // Vercel Serverless / AWS environment
+        if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+          options = {
+            args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath(),
+            headless: chromium.headless,
+            ignoreHTTPSErrors: true,
+          };
+        } else {
+          // Local / Traditional VM environment
+          options = {
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            executablePath: this.getExecutablePath(),
+          };
+        }
+
+        this.browser = await puppeteer.launch(options);
       } catch (err) {
         console.error('Failed to launch Puppeteer:', err);
-        throw new Error('PDF Generation Engine Error: Could not launch local browser. Please ensure Google Chrome is installed.');
+        throw new Error('PDF Generation Engine Error: Could not launch local or serverless browser. Details: ' + err.message);
       }
     }
   }
