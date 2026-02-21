@@ -12,7 +12,6 @@ const prefectPositionSchema = new mongoose.Schema(
     descriptionSi: { type: String, trim: true },
     descriptionEn: { type: String, trim: true },
 
-    rankLevel: { type: Number },
 
     schoolId: {
       type: mongoose.Schema.Types.ObjectId,

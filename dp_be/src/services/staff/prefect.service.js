@@ -38,8 +38,8 @@ exports.addPrefectStudent = async ({ schoolId, id, payload, userId }) => {
 
   prefect.students.push({
     studentId: payload.studentId,
-    studentNameSi: student.nameWithInitialsSi || student.fullNameSi || payload.studentNameSi,
-    studentNameEn: student.fullNameEn || student.nameWithInitialsEn || payload.studentNameEn,
+    studentNameSi: `${student.nameWithInitialsSi || student.fullNameSi || ''} (${student.admissionNumber || ''})`,
+    studentNameEn: `${student.fullNameEn || student.nameWithInitialsEn || ''} (${student.admissionNumber || ''})`,
     rank: payload.rank,
     positionIds: payload.positionIds || [],
   })
@@ -72,8 +72,8 @@ exports.updatePrefectStudent = async ({ schoolId, id, studentId, payload, userId
     ...current.toObject(),
     ...payload,
     studentId: current.studentId,
-    studentNameSi: student.nameWithInitialsSi || student.fullNameSi || current.studentNameSi,
-    studentNameEn: student.fullNameEn || student.nameWithInitialsEn || current.studentNameEn,
+    studentNameSi: `${student.nameWithInitialsSi || student.fullNameSi || ''} (${student.admissionNumber || ''})`,
+    studentNameEn: `${student.fullNameEn || student.nameWithInitialsEn || ''} (${student.admissionNumber || ''})`,
   }
 
   prefect.updatedById = userId

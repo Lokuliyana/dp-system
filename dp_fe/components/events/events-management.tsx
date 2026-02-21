@@ -48,7 +48,7 @@ import { useGrades } from "@/hooks/useGrades";
 import { useTeachers } from "@/hooks/useTeachers";
 import { useClubs } from "@/hooks/useClubs";
 import { useSquads } from "@/hooks/useSquads";
-import { LiveUserSearch, type SearchableUser } from "@/components/shared";
+import { LiveSearch } from "@/components/reusable";
 import { useToast } from "@/hooks/use-toast";
 import type { Event, EventCategory } from "@/types/models";
 import { cn } from "@/lib/utils";
@@ -76,6 +76,11 @@ export function EventsManagement() {
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [studentSearchTerm, setStudentSearchTerm] = useState("");
+  const [teacherSearchTerm, setTeacherSearchTerm] = useState("");
+  const [clubSearchTerm, setClubSearchTerm] = useState("");
+  const [squadSearchTerm, setSquadSearchTerm] = useState("");
+  const [gradeSearchTerm, setGradeSearchTerm] = useState("");
 
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
@@ -90,7 +95,7 @@ export function EventsManagement() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-  const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<SearchableUser[]>([]);
+  const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<any[]>([]);
   const [registrationNote, setRegistrationNote] = useState("");
   const { toast } = useToast();
 
@@ -128,12 +133,73 @@ export function EventsManagement() {
     [events, selectedEventId],
   );
 
-  const searchableUsers: SearchableUser[] = useMemo(
+  const searchableTeachers = useMemo(() => {
+    return teachers.map((t: any) => ({
+      ...t,
+      displayName: t.fullNameEn ?? `${t.firstNameEn} ${t.lastNameEn}`,
+    }));
+  }, [teachers]);
+
+  const filteredTeachers = useMemo(() => {
+    const q = teacherSearchTerm.trim().toLowerCase();
+    if (!q) return searchableTeachers;
+    return searchableTeachers.filter((t: any) =>
+      t.displayName.toLowerCase().includes(q)
+    );
+  }, [searchableTeachers, teacherSearchTerm]);
+
+  const searchableClubs = useMemo(() => {
+    return clubs.map((c: any) => ({
+      ...c,
+      displayName: c.nameEn,
+    }));
+  }, [clubs]);
+
+  const filteredClubs = useMemo(() => {
+    const q = clubSearchTerm.trim().toLowerCase();
+    if (!q) return searchableClubs;
+    return searchableClubs.filter((c: any) =>
+      c.displayName.toLowerCase().includes(q)
+    );
+  }, [searchableClubs, clubSearchTerm]);
+
+  const searchableSquads = useMemo(() => {
+    return squads.map((s: any) => ({
+      ...s,
+      displayName: s.nameEn,
+    }));
+  }, [squads]);
+
+  const filteredSquads = useMemo(() => {
+    const q = squadSearchTerm.trim().toLowerCase();
+    if (!q) return searchableSquads;
+    return searchableSquads.filter((s: any) =>
+      s.displayName.toLowerCase().includes(q)
+    );
+  }, [searchableSquads, squadSearchTerm]);
+
+  const searchableGrades = useMemo(() => {
+    return grades.map((g: any) => ({
+      ...g,
+      displayName: `${g.nameSi} (${g.nameEn})`,
+    }));
+  }, [grades]);
+
+  const filteredGrades = useMemo(() => {
+    const q = gradeSearchTerm.trim().toLowerCase();
+    if (!q) return searchableGrades;
+    return searchableGrades.filter((g: any) =>
+      g.displayName.toLowerCase().includes(q)
+    );
+  }, [searchableGrades, gradeSearchTerm]);
+
+  const searchableUsers = useMemo(
     () =>
       studentsByGrade.map((s: any) => ({
-        id: s.id || s._id,
+        _id: s._id || s.id,
         firstName: s.firstNameEn || s.firstNameSi,
         lastName: s.lastNameEn || s.lastNameSi,
+        displayName: `${s.nameWithInitialsSi || s.fullNameSi || ''} (${s.admissionNumber || ''})`,
         email: s.email,
         admissionNumber: s.admissionNumber,
         gradeId: typeof s.gradeId === "string" ? s.gradeId : s.gradeId?._id,
@@ -142,6 +208,16 @@ export function EventsManagement() {
       })),
     [studentsByGrade],
   );
+
+  const filteredSearchableUsers = useMemo(() => {
+    const q = studentSearchTerm.trim().toLowerCase();
+    if (!q) return searchableUsers;
+    return searchableUsers.filter((u: any) => 
+      u.displayName.toLowerCase().includes(q) ||
+      (u.admissionNumber || "").toLowerCase().includes(q) ||
+      (u.fullNameSi || "").toLowerCase().includes(q)
+    );
+  }, [searchableUsers, studentSearchTerm]);
 
   const handleInputChange = (
     e:
@@ -439,16 +515,17 @@ export function EventsManagement() {
                         <Users className="h-4 w-4 text-primary" /> Student Registrations
                       </CardTitle>
                       <div className="flex items-center gap-2">
-                        <select
-                          className="h-8 rounded-md border border-slate-200 bg-white px-3 py-0 text-[11px] font-bold uppercase tracking-wider text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          value={selectedGradeId || ""}
-                          onChange={(e) => setSelectedGradeId(e.target.value || null)}
-                        >
-                          <option value="">Grade Selection</option>
-                          {grades.map((g) => (
-                            <option key={g.id || (g as any)._id} value={g.id || (g as any)._id}>{g.nameEn}</option>
-                          ))}
-                        </select>
+                        <LiveSearch
+                          data={filteredGrades}
+                          labelKey="displayName"
+                          valueKey="id"
+                          onSearch={setGradeSearchTerm}
+                          selected={(val) => setSelectedGradeId(val.item?.id || null)}
+                          defaultSelected={selectedGradeId || undefined}
+                          mode="filter"
+                          placeholder="Grade Selection"
+                          popoverTriggerClases="h-8 text-[11px] font-bold uppercase tracking-wider w-[180px]"
+                        />
                       </div>
                     </div>
                   </CardHeader>
@@ -457,11 +534,17 @@ export function EventsManagement() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Register Student</label>
-                          <LiveUserSearch
-                            users={searchableUsers}
-                            selectedUsers={selectedUsersToAdd}
-                            onSelect={(u) => setSelectedUsersToAdd(prev => [...prev, u])}
-                            onRemove={(id) => setSelectedUsersToAdd(prev => prev.filter(u => u.id !== id))}
+                          <LiveSearch
+                            data={filteredSearchableUsers}
+                            labelKey="displayName"
+                            valueKey="_id"
+                            onSearch={setStudentSearchTerm}
+                            selected={(_, ids) => {
+                              const selected = searchableUsers.filter((u: any) => ids.includes(u._id));
+                              setSelectedUsersToAdd(selected);
+                            }}
+                            multiple={true}
+                            defaultSelected={selectedUsersToAdd.map(u => u._id)}
                             placeholder="Type student name..."
                           />
                         </div>
@@ -512,19 +595,12 @@ export function EventsManagement() {
                                   </TableCell>
                                   <TableCell className="py-3">
                                     <div className="text-xs font-semibold text-slate-900">
-                                      {student ? `${student.firstNameEn || ''} ${student.lastNameEn || ''}` : `Student ${regStudentId?.slice(-6)}`}
+                                      {student?.nameWithInitialsSi || (student ? `${student.firstNameEn || ''} ${student.lastNameEn || ''}` : `Student ${regStudentId?.slice(-6)}`)} ({student?.admissionNumber || 'N/A'})
                                     </div>
                                     <div className="flex flex-col gap-0.5 mt-0.5">
-                                      {student?.fullNameSi && (
-                                        <div className="text-[10px] font-medium text-slate-500">
-                                          {student.fullNameSi}
-                                        </div>
-                                      )}
-                                      {student?.admissionNumber && (
-                                        <div className="text-[9px] font-bold text-primary/70 uppercase tracking-tighter">
-                                          ID: {student.admissionNumber}
-                                        </div>
-                                      )}
+                                      <div className="text-[10px] text-slate-500">
+                                        {student ? `${student.firstNameEn || ''} ${student.lastNameEn || ''}` : 'Unknown Student'}
+                                      </div>
                                     </div>
                                   </TableCell>
                                   <TableCell className="py-3">
@@ -701,52 +777,44 @@ export function EventsManagement() {
 
           <div className="space-y-1.5 font-sans">
             <label className="text-sm font-semibold text-slate-700">Chair Head / MIC</label>
-            <select
-              name="teacherInChargeId"
-              value={formData.teacherInChargeId}
-              onChange={handleInputChange}
-              className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="">Select Lead Teacher</option>
-              {teachers.map((t) => (
-                <option key={t.id || (t as any)._id} value={t.id || (t as any)._id}>
-                  {t.firstNameEn} {t.lastNameEn}
-                </option>
-              ))}
-            </select>
+            <LiveSearch
+              data={filteredTeachers}
+              labelKey="displayName"
+              valueKey="id"
+              onSearch={setTeacherSearchTerm}
+              selected={(val) => setFormData(prev => ({ ...prev, teacherInChargeId: val.item?.id || "" }))}
+              defaultSelected={formData.teacherInChargeId}
+              placeholder="Select Lead Teacher"
+            />
           </div>
 
           {formData.eventType === 'club' && (
             <div className="space-y-1.5 font-sans">
               <label className="text-sm font-semibold text-slate-700">Select Club</label>
-              <select
-                name="clubId"
-                value={formData.clubId}
-                onChange={handleInputChange}
-                className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="">Select Club</option>
-                {clubs.map((c) => (
-                  <option key={c.id || (c as any)._id} value={c.id || (c as any)._id}>{c.nameEn}</option>
-                ))}
-              </select>
+              <LiveSearch
+                data={filteredClubs}
+                labelKey="displayName"
+                valueKey="id"
+                onSearch={setClubSearchTerm}
+                selected={(val) => setFormData(prev => ({ ...prev, clubId: val.item?.id || "" }))}
+                defaultSelected={formData.clubId}
+                placeholder="Select Club"
+              />
             </div>
           )}
 
           {formData.eventType === 'squad' && (
             <div className="space-y-1.5 font-sans">
               <label className="text-sm font-semibold text-slate-700">Select Squad</label>
-              <select
-                name="squadId"
-                value={formData.squadId}
-                onChange={handleInputChange}
-                className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="">Select Squad</option>
-                {squads.map((s) => (
-                  <option key={s.id || (s as any)._id} value={s.id || (s as any)._id}>{s.nameEn}</option>
-                ))}
-              </select>
+              <LiveSearch
+                data={filteredSquads}
+                labelKey="displayName"
+                valueKey="id"
+                onSearch={setSquadSearchTerm}
+                selected={(val) => setFormData(prev => ({ ...prev, squadId: val.item?.id || "" }))}
+                defaultSelected={formData.squadId}
+                placeholder="Select Squad"
+              />
             </div>
           )}
         </div>

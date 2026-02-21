@@ -25,6 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { LiveSearch } from "@/components/reusable";
+import { useState, useMemo } from "react";
 
 const teacherSchema = z.object({
   firstNameSi: z.string().optional(),
@@ -59,6 +61,7 @@ interface TeacherFormProps {
 export function TeacherForm({ defaultValues, onSubmit, isLoading, onCancel }: TeacherFormProps) {
   const { data: roles = [] } = useStaffRoles();
   const { data: grades = [] } = useGrades();
+  const [gradeSearchTerm, setGradeSearchTerm] = useState("");
 
   const form = useForm<TeacherFormValues>({
     resolver: zodResolver(teacherSchema),
@@ -78,6 +81,21 @@ export function TeacherForm({ defaultValues, onSubmit, isLoading, onCancel }: Te
       ...defaultValues,
     },
   });
+
+  const searchableGrades = useMemo(() => {
+    return grades.map((g: any) => ({
+      ...g,
+      displayName: `${g.nameSi} (${g.nameEn})`,
+    }));
+  }, [grades]);
+
+  const filteredGrades = useMemo(() => {
+    const q = gradeSearchTerm.trim().toLowerCase();
+    if (!q) return searchableGrades;
+    return searchableGrades.filter((g: any) =>
+      g.displayName.toLowerCase().includes(q)
+    );
+  }, [searchableGrades, gradeSearchTerm]);
 
   const selectedRoleIds = form.watch("roleIds") || [];
   const showGradeAssignment = roles.some(r => selectedRoleIds.includes(r.id) && r.gradeBased);
@@ -309,25 +327,17 @@ export function TeacherForm({ defaultValues, onSubmit, isLoading, onCancel }: Te
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Assigned Grade (Grade Head)</FormLabel>
-                <Select
-                  onValueChange={(val) => field.onChange(val === "unassigned" ? null : val)}
-                  defaultValue={field.value as string || undefined}
-                  value={field.value as string || undefined}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a grade" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {grades.map((grade) => (
-                      <SelectItem key={grade.id} value={grade.id}>
-                        {grade.nameSi} ({grade.nameEn})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <LiveSearch
+                    data={filteredGrades}
+                    labelKey="displayName"
+                    valueKey="id"
+                    onSearch={setGradeSearchTerm}
+                    selected={(val) => field.onChange(val.item?.id || null)}
+                    defaultSelected={field.value as string || undefined}
+                    placeholder="Search grade..."
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

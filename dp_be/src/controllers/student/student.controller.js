@@ -47,6 +47,7 @@ exports.listStudentsByGrade = asyncHandler(async (req, res) => {
     gradeId: req.query.gradeId,
     academicYear: req.query.academicYear,
     sex: req.query.sex,
+    status: req.query.status,
     restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))
@@ -58,6 +59,7 @@ exports.listStudentsWithResultsByGrade = asyncHandler(async (req, res) => {
     gradeId: req.query.gradeId,
     academicYear: req.query.academicYear,
     sex: req.query.sex,
+    status: req.query.status,
     restrictedGradeIds: req.user.restrictedGradeIds,
   })
   res.json(ApiResponse.ok(items))

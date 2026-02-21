@@ -1,7 +1,13 @@
 const { z } = require('zod')
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/)
-const rankEnum = z.enum(['prefect', 'vice-prefect', 'head-prefect'])
+const rankEnum = z.enum([
+  'head-prefect',
+  'deputy-head-prefect',
+  'senior-prefect',
+  'junior-prefect',
+  'primary-prefect',
+])
 
 exports.createPrefectYearSchema = z.object({
   body: z.object({

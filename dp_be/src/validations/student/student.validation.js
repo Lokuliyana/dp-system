@@ -68,6 +68,7 @@ exports.listStudentsSchema = z.object({
     sex: z.enum(['male', 'female']).optional(),
     birthYear: z.string().regex(/^\d{4}$/).optional(),
     admittedYear: z.string().regex(/^\d{4}$/).optional(),
+    status: z.enum(['active', 'inactive', 'all']).optional(),
   }),
 })
 
@@ -76,6 +77,7 @@ exports.listStudentsByGradeSchema = z.object({
     gradeId: objectId,
     academicYear: z.string().optional(),
     sex: z.enum(['male', 'female']).optional(),
+    status: z.enum(['active', 'inactive', 'all']).optional(),
   }),
 })
 
@@ -84,6 +86,7 @@ exports.listStudentsWithResultsByGradeSchema = z.object({
     gradeId: objectId,
     academicYear: z.string().optional(),
     sex: z.enum(['male', 'female']).optional(),
+    status: z.enum(['active', 'inactive', 'all']).optional(),
   }),
 })
 
@@ -112,9 +115,10 @@ exports.updateStudentBasicInfoSchema = z.object({
     admittedGrade: z.string().optional(),
     medium: z.enum(['sinhala', 'english', 'tamil']).optional(),
     academicYear: z.number().int().min(2000).optional(),
+    admissionYear: z.number().int().min(2000).optional(),
 
     // --- Contact ---
-    email: z.string().email().optional(),
+    email: z.string().email().or(z.literal('')).optional().transform(v => v === '' ? undefined : v),
     phoneNum: z.string().optional(),
     whatsappNumber: z.string().optional(),
     emergencyNumber: z.string().optional(),
@@ -128,6 +132,13 @@ exports.updateStudentBasicInfoSchema = z.object({
     fatherNameEn: z.string().optional(),
     fatherNumber: z.string().optional(),
     fatherOccupation: z.string().optional(),
+
+    // --- Status & Others ---
+    status: z.enum(['active', 'inactive']).optional(),
+    activeNote: z.string().optional(),
+    inactiveNote: z.string().optional(),
+    present: z.boolean().optional(),
+    birthYear: z.number().int().optional(),
 
     emergencyContacts: z.array(emergencyContactZ).optional(),
   }),

@@ -3,7 +3,6 @@ const ExamMark = require('../../models/student/examMark.model')
 const Student = require('../../models/student/student.model')
 const catchAsync = require('../../utils/catchAsync')
 const ApiError = require('../../utils/apiError')
-const httpStatus = require('http-status')
 
 const createExam = catchAsync(async (req, res) => {
     console.log('[DEBUG] createExam body:', JSON.stringify(req.body));
@@ -15,7 +14,7 @@ const createExam = catchAsync(async (req, res) => {
         createdById: req.user.id
     })
     console.log('[DEBUG] Exam created:', exam._id);
-    res.status(httpStatus.CREATED).send({ status: 'success', data: exam })
+    res.status(201).send({ status: 'success', data: exam })
 })
 
 const getExams = catchAsync(async (req, res) => {
@@ -35,12 +34,12 @@ const getExamMarksOrStudents = catchAsync(async (req, res) => {
     const { gradeId } = req.query
 
     if (!gradeId) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Grade ID is required')
+        throw new ApiError(400, 'Grade ID is required')
     }
 
     const exam = await Exam.findOne({ _id: examId, schoolId: req.user.schoolId })
     if (!exam) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'Exam not found')
+        throw new ApiError(404, 'Exam not found')
     }
 
     // 1. Get all students in this grade
@@ -80,7 +79,7 @@ const updateMarks = catchAsync(async (req, res) => {
 
     const exam = await Exam.findOne({ _id: examId, schoolId: req.user.schoolId })
     if (!exam) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'Exam not found')
+        throw new ApiError(404, 'Exam not found')
     }
 
     const ops = marks.map(entry => ({

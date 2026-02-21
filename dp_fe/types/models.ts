@@ -445,11 +445,15 @@ export type PrefectPosition = BaseDoc & {
   responsibilityEn?: string;
   descriptionSi?: string;
   descriptionEn?: string;
-  rankLevel?: number;
 };
 
 /* -------------------- PREFECT YEAR (F32–F33) -------------------- */
-export type PrefectRank = "prefect" | "vice-prefect" | "head-prefect";
+export type PrefectRank =
+  | "head-prefect"
+  | "deputy-head-prefect"
+  | "senior-prefect"
+  | "junior-prefect"
+  | "primary-prefect";
 
 export type PrefectStudent = {
   studentId: Id;

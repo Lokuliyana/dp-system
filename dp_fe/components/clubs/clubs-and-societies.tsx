@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LiveUserSearch, type SearchableUser } from "@/components/shared";
+import { LiveSearch } from "@/components/reusable";
 import {
   StatCard,
   CrudModal,
@@ -60,7 +60,7 @@ export function ClubsAndSocieties() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-  const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<SearchableUser[]>([]);
+  const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<any[]>([]);
   const [showMemberSearch, setShowMemberSearch] = useState(false);
   const [selectedPositionId, setSelectedPositionId] = useState<string>("member");
   const [selectedGradeId, setSelectedGradeId] = useState<string>("");
@@ -77,6 +77,10 @@ export function ClubsAndSocieties() {
     year: new Date().getFullYear(),
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [studentSearchTerm, setStudentSearchTerm] = useState("");
+  const [teacherSearchTerm, setTeacherSearchTerm] = useState("");
+  const [gradeSearchTerm, setGradeSearchTerm] = useState("");
+  const [positionSearchTerm, setPositionSearchTerm] = useState("");
   const [isPositionModalOpen, setIsPositionModalOpen] = useState(false);
   const [editingPositionId, setEditingPositionId] = useState<string | null>(null);
   const [positionFormData, setPositionFormData] = useState({
@@ -101,13 +105,14 @@ export function ClubsAndSocieties() {
   const bulkAssignMutation = useBulkAssignClubMember(selectedClubId);
   const removeMemberMutation = useRemoveClubMember(selectedClubId);
 
-  const searchableUsers: SearchableUser[] = useMemo(
+  const searchableUsers = useMemo(
     () => {
       const items = Array.isArray(studentsData) ? studentsData : (studentsData as any)?.items || [];
       return items.map((s: any) => ({
-        id: s.id || s._id,
+        _id: s._id || s.id,
         firstName: s.firstNameEn || s.firstNameSi,
         lastName: s.lastNameEn || s.lastNameSi,
+        displayName: `${s.nameWithInitialsSi || s.fullNameSi || ''} (${s.admissionNumber || ''})`,
         email: s.email,
         admissionNumber: s.admissionNumber,
         gradeId: typeof s.gradeId === "string" ? s.gradeId : s.gradeId?._id,
@@ -117,6 +122,16 @@ export function ClubsAndSocieties() {
     },
     [studentsData],
   );
+
+  const filteredSearchableUsers = useMemo(() => {
+    const q = studentSearchTerm.trim().toLowerCase();
+    if (!q) return searchableUsers;
+    return searchableUsers.filter((u: any) => 
+      u.displayName.toLowerCase().includes(q) ||
+      (u.admissionNumber || "").toLowerCase().includes(q) ||
+      (u.fullNameSi || "").toLowerCase().includes(q)
+    );
+  }, [searchableUsers, studentSearchTerm]);
 
   const filteredClubs = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -131,6 +146,54 @@ export function ClubsAndSocieties() {
       );
     });
   }, [clubs, searchTerm, teachers]);
+
+  const searchableTeachers = useMemo(() => {
+    return teachers.map((t: any) => ({
+      ...t,
+      displayName: t.fullNameEn ?? `${t.firstNameEn} ${t.lastNameEn}`,
+    }));
+  }, [teachers]);
+
+  const filteredTeachers = useMemo(() => {
+    const q = teacherSearchTerm.trim().toLowerCase();
+    if (!q) return searchableTeachers;
+    return searchableTeachers.filter((t: any) =>
+      t.displayName.toLowerCase().includes(q)
+    );
+  }, [searchableTeachers, teacherSearchTerm]);
+
+  const searchableGrades = useMemo(() => {
+    return grades.map((g: any) => ({
+      ...g,
+      displayName: `${g.nameSi} (${g.nameEn})`,
+    }));
+  }, [grades]);
+
+  const filteredGrades = useMemo(() => {
+    const q = gradeSearchTerm.trim().toLowerCase();
+    if (!q) return searchableGrades;
+    return searchableGrades.filter((g: any) =>
+      g.displayName.toLowerCase().includes(q)
+    );
+  }, [searchableGrades, gradeSearchTerm]);
+
+  const searchablePositions = useMemo(() => {
+    return [
+      { id: "member", displayName: "General Member" },
+      ...positions.map((p: any) => ({
+        ...p,
+        displayName: `${p.nameEn} / ${p.nameSi}`,
+      })),
+    ];
+  }, [positions]);
+
+  const filteredPositions = useMemo(() => {
+    const q = positionSearchTerm.trim().toLowerCase();
+    if (!q) return searchablePositions;
+    return searchablePositions.filter((p: any) =>
+      p.displayName.toLowerCase().includes(q)
+    );
+  }, [searchablePositions, positionSearchTerm]);
 
   const handleInputChange = (
     e:
@@ -464,48 +527,45 @@ export function ClubsAndSocieties() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                           <div className="space-y-2">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Stage 1: Filter Grade</label>
-                            <Select value={selectedGradeId} onValueChange={setSelectedGradeId}>
-                              <SelectTrigger className="bg-white h-11 border-slate-200 shadow-sm focus:ring-primary/20">
-                                <SelectValue placeholder="Select Grade" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {grades.map((g) => (
-                                  <SelectItem key={g.id || (g as any)._id} value={g.id || (g as any)._id}>
-                                    {g.nameEn}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <LiveSearch
+                              data={filteredGrades}
+                              labelKey="displayName"
+                              valueKey="id"
+                              onSearch={setGradeSearchTerm}
+                              selected={(val) => setSelectedGradeId(val.item?.id || "")}
+                              defaultSelected={selectedGradeId}
+                              placeholder="Select Grade"
+                            />
                           </div>
                           
                           <div className="space-y-2">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Stage 2: Search Student</label>
-                            <LiveUserSearch
-                              users={searchableUsers}
-                              selectedUsers={selectedMembersToAdd}
-                              onSelect={(u) => setSelectedMembersToAdd(prev => [...prev, u])}
-                              onRemove={(id) => setSelectedMembersToAdd(prev => prev.filter(u => u.id !== id))}
+                            <LiveSearch
+                              data={filteredSearchableUsers}
+                              labelKey="displayName"
+                              valueKey="_id"
+                              onSearch={setStudentSearchTerm}
+                              selected={(_, ids) => {
+                                const selected = searchableUsers.filter((u: any) => ids.includes(u._id));
+                                setSelectedMembersToAdd(selected);
+                              }}
+                              multiple={true}
+                              defaultSelected={selectedMembersToAdd.map(u => u._id)}
                               placeholder={selectedGradeId ? "Search name or ID..." : "← Select grade first"}
                             />
                           </div>
                           
                           <div className="space-y-2">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Stage 3: Assign Role</label>
-                            <Select value={selectedPositionId} onValueChange={setSelectedPositionId}>
-                              <SelectTrigger className="bg-white h-11 border-slate-200 shadow-sm focus:ring-primary/20">
-                                <SelectValue placeholder="Select role" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="member">General Member</SelectItem>
-                                {positions.map((p) => (
-                                  <SelectItem key={p.id || (p as any)._id} value={p.id || (p as any)._id}>
-                                    <span className="flex items-center gap-2">
-                                      {p.nameEn} <span className="text-[10px] text-slate-400 italic">/ {p.nameSi}</span>
-                                    </span>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <LiveSearch
+                              data={filteredPositions}
+                              labelKey="displayName"
+                              valueKey="id"
+                              onSearch={setPositionSearchTerm}
+                              selected={(val) => setSelectedPositionId(val.item?.id || "member")}
+                              defaultSelected={selectedPositionId}
+                              placeholder="Select role"
+                            />
                           </div>
                         </div>
                         
@@ -558,8 +618,8 @@ export function ClubsAndSocieties() {
                                         </AvatarFallback>
                                       </Avatar>
                                       <div>
-                                        <div className="text-sm font-semibold text-slate-900">{studentNameEn}</div>
-                                        <div className="text-[10px] text-slate-500">{studentNameSi}</div>
+                                        <div className="text-sm font-semibold text-slate-900">{student?.nameWithInitialsSi || studentNameEn} ({admissionNo})</div>
+                                        <div className="text-[10px] text-slate-500">{studentNameEn}</div>
                                       </div>
                                     </div>
                                   </TableCell>
@@ -735,20 +795,15 @@ export function ClubsAndSocieties() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5 font-sans">
               <label className="text-sm font-semibold text-slate-700">Master In Charge</label>
-              <select
-                name="teacherInChargeId"
-                value={formData.teacherInChargeId}
-                onChange={handleInputChange}
-                className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                required
-              >
-                <option value="">Select teacher</option>
-                {teachers.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.firstNameEn} {t.lastNameEn}
-                  </option>
-                ))}
-              </select>
+              <LiveSearch
+                data={filteredTeachers}
+                labelKey="displayName"
+                valueKey="id"
+                onSearch={setTeacherSearchTerm}
+                selected={(val) => setFormData(prev => ({ ...prev, teacherInChargeId: val.item?.id || "" }))}
+                defaultSelected={formData.teacherInChargeId}
+                placeholder="Search teacher..."
+              />
             </div>
             <div className="space-y-1.5 font-sans">
               <label className="text-sm font-semibold text-slate-700">Active Year</label>

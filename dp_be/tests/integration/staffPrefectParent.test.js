@@ -217,7 +217,6 @@ describe('Prefect positions and appointments', () => {
         nameEn: 'Head Prefect',
         responsibilitySi: 'Leadership',
         responsibilityEn: 'Leadership',
-        rankLevel: 1,
       })
     expect(positionRes.statusCode).toBe(201)
     positionId = positionRes.body.data.id
@@ -241,24 +240,24 @@ describe('Prefect positions and appointments', () => {
         studentId,
         studentNameEn: 'Sam Prefect',
         studentNameSi: 'Saam',
-        rank: 'prefect',
+        rank: 'head-prefect',
         positionIds: [positionId],
       })
 
     expect(addRes.statusCode).toBe(200)
     expect(addRes.body.data.students).toHaveLength(1)
-    expect(addRes.body.data.students[0].rank).toBe('prefect')
+    expect(addRes.body.data.students[0].rank).toBe('head-prefect')
 
     const updateRes = await request(app)
       .patch(`${env.apiPrefix}/prefects/${prefectYearId}/students/${studentId}`)
       .set('Authorization', authHeader)
       .send({
-        rank: 'vice-prefect',
+        rank: 'deputy-head-prefect',
         positionIds: [positionId],
       })
 
     expect(updateRes.statusCode).toBe(200)
-    expect(updateRes.body.data.students[0].rank).toBe('vice-prefect')
+    expect(updateRes.body.data.students[0].rank).toBe('deputy-head-prefect')
 
     const listRes = await request(app)
       .get(`${env.apiPrefix}/prefects`)

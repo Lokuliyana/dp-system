@@ -29,7 +29,10 @@ router.use('/promotion', require('./student/promotion.routes'))
 router.use('/parents', require('./student/parent.routes'))
 router.use('/parent-student-links', require('./student/parentStudentLink.routes'))
 router.use('/reports', require('./student/report.routes'))
+router.use('/analytics', require('./student/analytics.routes'))
 router.use('/permissions', require('./system/permission.routes'))
+router.use('/organization-calendar', require('./system/organization-calendar.routes'))
+
 router.use('/app-users', require('./system/appUser.routes'))
 router.use('/roles', require('./system/role.routes'))
 

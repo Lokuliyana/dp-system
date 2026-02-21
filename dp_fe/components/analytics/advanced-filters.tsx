@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui"
 import { Input } from "@/components/ui"
 import { Card, CardContent } from "@/components/ui"
 import { X, Filter } from "lucide-react"
+import { LiveSearch } from "@/components/reusable"
 
 interface FilterConfig {
   gradeId?: string
@@ -29,6 +30,20 @@ export function AdvancedFilters({
 }: AdvancedFiltersProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [filters, setFilters] = useState<FilterConfig>({})
+  const [gradeSearchTerm, setGradeSearchTerm] = useState("")
+
+  const searchableGrades = useMemo(() => {
+    return grades.map((g) => ({
+      ...g,
+      displayName: g.name,
+    }))
+  }, [grades])
+
+  const filteredGrades = useMemo(() => {
+    const q = gradeSearchTerm.trim().toLowerCase()
+    if (!q) return searchableGrades
+    return searchableGrades.filter((g) => g.displayName.toLowerCase().includes(q))
+  }, [searchableGrades, gradeSearchTerm])
 
   const handleFilterChange = (key: keyof FilterConfig, value: any) => {
     const newFilters = { ...filters, [key]: value }
@@ -66,18 +81,16 @@ export function AdvancedFilters({
           <CardContent className="pt-6 space-y-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Grade</label>
-              <select
-                value={filters.gradeId || ""}
-                onChange={(e) => handleFilterChange("gradeId", e.target.value || undefined)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-              >
-                <option value="">All Grades</option>
-                {grades.map((grade) => (
-                  <option key={grade.id} value={grade.id}>
-                    {grade.name}
-                  </option>
-                ))}
-              </select>
+              <LiveSearch
+                data={filteredGrades}
+                labelKey="displayName"
+                valueKey="id"
+                onSearch={setGradeSearchTerm}
+                selected={(val) => handleFilterChange("gradeId", val.item?.id || undefined)}
+                defaultSelected={filters.gradeId}
+                placeholder="All Grades"
+                mode="filter"
+              />
             </div>
 
             <div>

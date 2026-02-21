@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,15 +14,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { CreateGradePayload } from "@/services/masterdata/grades.service";
 import { useTeachers } from "@/hooks/useTeachers";
+import { LiveSearch } from "@/components/reusable";
 
 const gradeSchema = z.object({
   nameSi: z.string().min(1, "Sinhala name is required"),
@@ -39,6 +34,7 @@ interface GradeFormProps {
 
 export function GradeForm({ defaultValues, onSubmit, isLoading, onCancel }: GradeFormProps) {
   const { data: teachers = [] } = useTeachers();
+  const [teacherSearchTerm, setTeacherSearchTerm] = useState("");
 
   const form = useForm<CreateGradePayload>({
     resolver: zodResolver(gradeSchema),
@@ -50,6 +46,21 @@ export function GradeForm({ defaultValues, onSubmit, isLoading, onCancel }: Grad
       ...defaultValues,
     },
   });
+
+  const searchableTeachers = useMemo(() => {
+    return teachers.map((t: any) => ({
+      ...t,
+      displayName: `${t.firstNameEn} ${t.lastNameEn}`,
+    }));
+  }, [teachers]);
+
+  const filteredTeachers = useMemo(() => {
+    const q = teacherSearchTerm.trim().toLowerCase();
+    if (!q) return searchableTeachers;
+    return searchableTeachers.filter((t: any) =>
+      t.displayName.toLowerCase().includes(q)
+    );
+  }, [searchableTeachers, teacherSearchTerm]);
 
   return (
     <Form {...form}>
@@ -110,25 +121,17 @@ export function GradeForm({ defaultValues, onSubmit, isLoading, onCancel }: Grad
           render={({ field }) => (
             <FormItem>
               <FormLabel>Grade Head / Teacher in Charge</FormLabel>
-              <Select
-                onValueChange={(val) => field.onChange(val === "unassigned" ? null : val)}
-                defaultValue={field.value || undefined}
-                value={field.value || undefined}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a teacher" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {teachers.map((teacher) => (
-                    <SelectItem key={teacher.id} value={teacher.id}>
-                      {teacher.firstNameEn} {teacher.lastNameEn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <LiveSearch
+                  data={filteredTeachers}
+                  labelKey="displayName"
+                  valueKey="id"
+                  onSearch={setTeacherSearchTerm}
+                  selected={(val) => field.onChange(val.item?.id || null)}
+                  defaultSelected={field.value || undefined}
+                  placeholder="Search teacher..."
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

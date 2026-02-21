@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/sheet";
 import { StudentForm } from "@/components/students/student-form";
 import type { Student } from "@/types/models";
-import { ExportButton } from "@/components/reusable";
+import { StudentExportDialog } from "@/components/students/student-export-dialog";
 
 interface GradePageProps {
   params: {
@@ -131,7 +131,7 @@ export default function GradePage({ params }: GradePageProps) {
         icon={Users}
         actions={
           <div className="flex gap-2">
-            <ExportButton 
+            <StudentExportDialog 
               endpoint={`/reports/grade/${gradeId}`} 
               filename={`student_list_${grade.nameEn.replace(/\s+/g, '_')}`}
               size="sm"

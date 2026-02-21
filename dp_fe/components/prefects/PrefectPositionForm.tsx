@@ -23,7 +23,6 @@ const positionSchema = z.object({
   responsibilityEn: z.string().optional(),
   descriptionSi: z.string().optional(),
   descriptionEn: z.string().optional(),
-  rankLevel: z.number().int().optional(),
 });
 
 interface PrefectPositionFormProps {
@@ -43,7 +42,6 @@ export function PrefectPositionForm({ defaultValues, onSubmit, isLoading, onCanc
       responsibilityEn: "",
       descriptionSi: "",
       descriptionEn: "",
-      rankLevel: 1,
       ...defaultValues,
     },
   });
@@ -138,23 +136,6 @@ export function PrefectPositionForm({ defaultValues, onSubmit, isLoading, onCanc
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="rankLevel"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Rank Level</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  {...field} 
-                  onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>

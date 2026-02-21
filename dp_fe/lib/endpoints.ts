@@ -51,5 +51,11 @@ export const endpoints = {
   examResults: "/exam-results", 
 
   promotion: "/promotion/trigger",
+  analytics: {
+    student: "/analytics/student",
+    grade: "/analytics/grade",
+    organization: "/analytics/organization",
+  },
   permissions: "/permissions",
+
 } as const;

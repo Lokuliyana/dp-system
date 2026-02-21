@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,11 +19,18 @@ import { AddPrefectStudentPayload } from "@/services/masterdata/prefects.service
 import { useGrades } from "@/hooks/useGrades";
 import { useStudentsByGrade } from "@/hooks/useStudents";
 import { usePrefectPositions } from "@/hooks/usePrefectPositions";
+import { LiveSearch } from "@/components/reusable";
 
 const addStudentSchema = z.object({
   gradeId: z.string().optional(),
   studentId: z.string().optional(),
-  rank: z.enum(["prefect", "vice-prefect", "head-prefect"]),
+  rank: z.enum([
+    "head-prefect",
+    "deputy-head-prefect",
+    "senior-prefect",
+    "junior-prefect",
+    "primary-prefect",
+  ]),
   positionIds: z.array(z.string()).optional(),
 });
 
@@ -50,7 +57,26 @@ export function PrefectStudentForm({ onSubmit, isLoading, onCancel, defaultValue
   });
 
   const selectedGradeId = form.watch("gradeId");
-  const { data: students = [] } = useStudentsByGrade(selectedGradeId);
+  const { data: students = [] } = useStudentsByGrade(selectedGradeId || "");
+  const [studentSearchTerm, setStudentSearchTerm] = useState("");
+
+  const searchableStudents = useMemo(() => {
+    return students.map((s: any) => ({
+      ...s,
+      _id: s._id || s.id,
+      displayName: `${s.nameWithInitialsSi || s.fullNameSi || ''} (${s.admissionNumber || ''})`,
+    }));
+  }, [students]);
+
+  const filteredStudents = useMemo(() => {
+    const q = studentSearchTerm.trim().toLowerCase();
+    if (!q) return searchableStudents;
+    return searchableStudents.filter((s: any) => 
+      s.displayName.toLowerCase().includes(q) ||
+      (s.firstNameSi || "").toLowerCase().includes(q) ||
+      (s.lastNameSi || "").toLowerCase().includes(q)
+    );
+  }, [searchableStudents, studentSearchTerm]);
 
   const handleSubmit = (values: z.infer<typeof addStudentSchema>) => {
     if (mode === "add" && !values.gradeId) {
@@ -64,8 +90,8 @@ export function PrefectStudentForm({ onSubmit, isLoading, onCancel, defaultValue
       studentId: values.studentId || (defaultValues?.studentId as string),
       rank: values.rank,
       positionIds: values.positionIds,
-      studentNameSi: student ? `${student.firstNameSi} ${student.lastNameSi}` : undefined,
-      studentNameEn: student ? `${student.firstNameEn} ${student.lastNameEn}` : undefined,
+      studentNameSi: student ? `${student.nameWithInitialsSi || student.fullNameSi || ''} (${student.admissionNumber || ''})` : undefined,
+      studentNameEn: student ? `${student.firstNameEn} ${student.lastNameEn} (${student.admissionNumber || ''})` : undefined,
     });
   };
 
@@ -105,20 +131,18 @@ export function PrefectStudentForm({ onSubmit, isLoading, onCancel, defaultValue
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Select Student</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedGradeId}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Student" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {students.map((student) => (
-                        <SelectItem key={student.id} value={student.id}>
-                          {student.firstNameEn} {student.lastNameEn} ({student.admissionNumber})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <LiveSearch
+                      data={filteredStudents}
+                      labelKey="displayName"
+                      valueKey="_id"
+                      onSearch={setStudentSearchTerm}
+                      selected={(val) => field.onChange(val.item?._id || val.item?.id)}
+                      defaultSelected={field.value}
+                      disabled={!selectedGradeId}
+                      placeholder={selectedGradeId ? "Select Student" : "Select grade first"}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -139,9 +163,11 @@ export function PrefectStudentForm({ onSubmit, isLoading, onCancel, defaultValue
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="prefect">Prefect</SelectItem>
-                  <SelectItem value="vice-prefect">Vice Prefect</SelectItem>
-                  <SelectItem value="head-prefect">Head Prefect</SelectItem>
+                  <SelectItem value="head-prefect">Head Prefect (ප්‍රධාන ශිෂ්‍ය නායක)</SelectItem>
+                  <SelectItem value="deputy-head-prefect">Deputy Head Prefect (උප ප්‍රධාන ශිෂ්‍ය නායක)</SelectItem>
+                  <SelectItem value="senior-prefect">Senior Prefect (ජ්‍යෙෂ්ඨ ශිෂ්‍ය නායක)</SelectItem>
+                  <SelectItem value="junior-prefect">Junior Prefect (කනිෂ්ඨ ශිෂ්‍ය නායක)</SelectItem>
+                  <SelectItem value="primary-prefect">Primary Prefect (ප්‍රාථමික ශිෂ්‍ය නායක)</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

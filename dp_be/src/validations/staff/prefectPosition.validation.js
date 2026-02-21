@@ -10,7 +10,6 @@ exports.createPrefectPositionSchema = z.object({
     responsibilityEn: z.string().optional(),
     descriptionSi: z.string().optional(),
     descriptionEn: z.string().optional(),
-    rankLevel: z.number().optional(),
   }),
 })
 
@@ -23,10 +22,10 @@ exports.updatePrefectPositionSchema = z.object({
     responsibilityEn: z.string().optional(),
     descriptionSi: z.string().optional(),
     descriptionEn: z.string().optional(),
-    rankLevel: z.number().optional(),
   }),
 })
 
 exports.deletePrefectPositionSchema = z.object({
   params: z.object({ id: objectId }),
 })
+

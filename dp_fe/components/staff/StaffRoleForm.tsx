@@ -19,6 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useGrades } from "@/hooks/useGrades";
 import { useTeachers } from "@/hooks/useTeachers";
 import { useFieldArray, useWatch } from "react-hook-form";
+import { LiveSearch } from "@/components/reusable";
+import { useState, useMemo } from "react";
 
 const roleSchema = z.object({
   nameSi: z.string().min(1, "Sinhala name is required"),
@@ -59,6 +61,7 @@ interface StaffRoleFormProps {
 export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: StaffRoleFormProps) {
   const { data: grades = [] } = useGrades();
   const { data: teachers = [] } = useTeachers();
+  const [teacherSearchTerm, setTeacherSearchTerm] = useState("");
 
   const form = useForm<CreateStaffRolePayload>({
     resolver: zodResolver(roleSchema),
@@ -76,6 +79,21 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
       ...defaultValues,
     },
   });
+
+  const searchableTeachers = useMemo(() => {
+    return teachers.map((t: any) => ({
+      ...t,
+      displayName: t.fullNameEn ?? `${t.firstNameEn} ${t.lastNameEn}`,
+    }));
+  }, [teachers]);
+
+  const filteredTeachers = useMemo(() => {
+    const q = teacherSearchTerm.trim().toLowerCase();
+    if (!q) return searchableTeachers;
+    return searchableTeachers.filter((t: any) =>
+      t.displayName.toLowerCase().includes(q)
+    );
+  }, [searchableTeachers, teacherSearchTerm]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -293,21 +311,20 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assign teachers</FormLabel>
-              <div className="grid grid-cols-2 gap-2 border rounded-md p-3 max-h-40 overflow-y-auto">
-                {teachers.map((teacher) => (
-                  <label key={teacher.id} className="flex items-center gap-2 text-sm text-slate-700">
-                    <Checkbox
-                      checked={field.value?.includes(teacher.id)}
-                      onCheckedChange={(checked) =>
-                        checked
-                          ? field.onChange([...(field.value || []), teacher.id])
-                          : field.onChange(field.value?.filter((id) => id !== teacher.id))
-                      }
-                    />
-                    <span>{teacher.fullNameEn ?? `${teacher.firstNameEn} ${teacher.lastNameEn}`}</span>
-                  </label>
-                ))}
-              </div>
+              <FormControl>
+                <LiveSearch
+                  data={filteredTeachers}
+                  labelKey="displayName"
+                  valueKey="id"
+                  multiple
+                  onSearch={setTeacherSearchTerm}
+                  selected={(_, ids) => {
+                    field.onChange(ids);
+                  }}
+                  defaultSelected={field.value}
+                  placeholder="Search and add teachers..."
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

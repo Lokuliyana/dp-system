@@ -380,10 +380,9 @@ exports.listStudents = async ({
   // Default: active only. Unless search is present OR status is explicitly requested.
   if (status && status !== 'all') {
     q.status = status
-  } else if (!search && !status) {
-    // Should we default to 'active' if absolutely no filters?
+  } else if (!status) {
     // User said: "in all students get apis by default send only active users"
-    // And: "when searching should give the inactive active both"
+    // If search is present, we still follow the "active by default" rule unless status is 'all'
     q.status = 'active'
   }
 
@@ -439,8 +438,14 @@ exports.listStudents = async ({
   }
 }
 
-exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear, restrictedGradeIds, sex }) => {
+exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear, restrictedGradeIds, sex, status }) => {
   const q = { schoolId }
+  
+  if (status && status !== 'all') {
+    q.status = status
+  } else if (!status) {
+    q.status = 'active'
+  }
 
   if (sex) q.sex = sex
 
@@ -454,8 +459,14 @@ exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear, restrict
   return items.map((item) => ({ ...item, id: item._id }))
 }
 
-exports.listStudentsWithResultsByGrade = async ({ schoolId, gradeId, academicYear, restrictedGradeIds, sex }) => {
+exports.listStudentsWithResultsByGrade = async ({ schoolId, gradeId, academicYear, restrictedGradeIds, sex, status }) => {
   const q = { schoolId }
+
+  if (status && status !== 'all') {
+    q.status = status
+  } else if (!status) {
+    q.status = 'active'
+  }
   if (sex) q.sex = sex
 
   await applyCohortFilter(q, schoolId, gradeId, academicYear, restrictedGradeIds)

@@ -11,7 +11,7 @@ export type AddPrefectStudentPayload = {
   studentId: string
   studentNameSi?: string
   studentNameEn?: string
-  rank: "prefect" | "vice-prefect" | "head-prefect"
+  rank: "head-prefect" | "deputy-head-prefect" | "senior-prefect" | "junior-prefect" | "primary-prefect"
   positionIds?: string[]
 }
 

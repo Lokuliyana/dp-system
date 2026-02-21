@@ -1,7 +1,13 @@
 const mongoose = require('mongoose')
 const { baseSchemaOptions } = require('../system/_base')
 
-const ranks = ['prefect', 'vice-prefect', 'head-prefect']
+const ranks = [
+  'head-prefect',
+  'deputy-head-prefect',
+  'senior-prefect',
+  'junior-prefect',
+  'primary-prefect',
+]
 
 const prefectStudentSchema = new mongoose.Schema(
   {

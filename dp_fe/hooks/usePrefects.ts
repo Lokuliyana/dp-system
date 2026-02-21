@@ -48,7 +48,7 @@ export function useUpdatePrefectStudent() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: ({ yearId, studentId, payload }: { yearId: string; studentId: string; payload: { positionId: string } }) =>
+    mutationFn: ({ yearId, studentId, payload }: { yearId: string; studentId: string; payload: AddPrefectStudentPayload }) =>
       prefectsService.updateStudent(yearId, studentId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[0] === "prefects" });

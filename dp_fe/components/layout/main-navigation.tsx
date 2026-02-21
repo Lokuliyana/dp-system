@@ -43,6 +43,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: Home, group: "overview" },
+  { id: "calendar", label: "Calendar", href: "/calendar", icon: Calendar, group: "overview" },
   { id: "students", label: "Students", href: "/students", icon: Users, group: "academics" },
   { id: "attendance", label: "Attendance", href: "/attendance", icon: Calendar, group: "academics" },
   { id: "exams", label: "Exam Results", href: "/exams", icon: FileText, group: "academics" },
