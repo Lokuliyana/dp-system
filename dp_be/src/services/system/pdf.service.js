@@ -10,8 +10,30 @@ const fs = require('fs');
 class PdfService {
   constructor() {
     this.browser = null;
-    // Common Mac Chrome path
-    this.chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    this.chromePath = this.getExecutablePath();
+  }
+
+  getExecutablePath() {
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
+    if (process.env.CHROME_BIN) return process.env.CHROME_BIN;
+
+    if (process.platform === 'darwin') {
+      return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    } else if (process.platform === 'win32') {
+      return 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'; // fallback for windows
+    } else {
+      // Common paths for Linux
+      const paths = [
+        '/usr/bin/google-chrome',
+        '/usr/bin/google-chrome-stable',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/chromium'
+      ];
+      for (const p of paths) {
+        if (fs.existsSync(p)) return p;
+      }
+      return '/usr/bin/google-chrome'; // Default fallback
+    }
   }
 
   /**
