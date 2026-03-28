@@ -11,7 +11,7 @@ const organizationCalendarSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['Normal', 'Sunday', 'PublicHoliday', 'OrganizationalHoliday', 'SpecialEvent'],
+      enum: ['Normal', 'Sunday', 'PublicHoliday', 'OrganizationalHoliday', 'SpecialDay', 'SpecialEvent'],
       default: 'Normal',
       required: true
     },
@@ -20,18 +20,8 @@ const organizationCalendarSchema = new mongoose.Schema(
       default: '',
       trim: true
     },
-    isWorking: {
-      type: Boolean,
-      default: true
-    },
-    startTime: {
-      type: String,
-      default: '08:00'
-    },
-    endTime: {
-      type: String,
-      default: '17:00'
-    },
+    startTime: { type: String },
+    endTime: { type: String },
     schoolId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'School',

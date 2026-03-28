@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 import { useMemo, useState } from "react";
 import { Users, Loader, X, ChevronsRight } from "lucide-react";
 import { 
@@ -15,8 +17,11 @@ import { useHouses } from "@/hooks/useHouses";
 import { useTeacherHouseAssignments, useAssignTeacherHouse } from "@/hooks/useTeacherHouseAssignments";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { PermissionGuard } from "@/components/auth/permission-guard";
+import { usePermission } from "@/hooks/usePermission";
 
 export function TeacherHouseAssignments() {
+  const { can } = usePermission();
   const { data: teachers = [], isLoading: loadingTeachers } = useTeachers();
   const { data: houses = [], isLoading: loadingHouses } = useHouses();
   const { data: assignments = [], isLoading: loadingAssignments } = useTeacherHouseAssignments();
@@ -126,9 +131,13 @@ export function TeacherHouseAssignments() {
                           <button
                             key={house.id}
                             onClick={() => handleAssign(t.id, house.id)}
-                            className="h-7 px-3 rounded-md text-[10px] font-bold text-white shadow-sm hover:shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center tracking-wide"
+                            className={cn(
+                              "h-7 px-3 rounded-md text-[10px] font-bold text-white shadow-sm hover:shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center tracking-wide",
+                              !can("housemeets.teacher_house_assignment.create") && "opacity-50 cursor-not-allowed"
+                            )}
                             style={{ backgroundColor: house.color }}
                             title={`Assign to ${house.nameEn}`}
+                            disabled={!can("housemeets.teacher_house_assignment.create")}
                           >
                             {house.nameEn.substring(0, 3).toUpperCase()}
                           </button>
@@ -154,6 +163,7 @@ function StaffHouseBox({
   staff: any[];
   onUnassign: (id: string) => void;
 }) {
+  const { can } = usePermission();
   const [isExpanded, setIsExpanded] = useState(false);
   const defaultCount = 5; 
   
@@ -201,12 +211,14 @@ function StaffHouseBox({
                       {t.firstNameEn} {t.lastNameEn}
                     </span>
                   </div>
-                  <button
-                    onClick={() => onUnassign(t.id)}
-                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all p-0.5 hover:bg-red-50 rounded"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                  <PermissionGuard permission="housemeets.teacher_house_assignment.delete">
+                    <button
+                      onClick={() => onUnassign(t.id)}
+                      className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all p-0.5 hover:bg-red-50 rounded"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </PermissionGuard>
                 </motion.div>
               ))}
             </AnimatePresence>

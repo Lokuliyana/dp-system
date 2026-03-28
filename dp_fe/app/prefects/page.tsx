@@ -9,6 +9,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent
 import { usePrefects, useCreatePrefectYear } from "@/hooks/usePrefects";
 import { PrefectYearForm } from "@/components/prefects/PrefectYearForm";
 import { CreatePrefectYearPayload } from "@/services/masterdata/prefects.service";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 
 export default function PrefectsPage() {
   const { data: prefectYears = [], isLoading } = usePrefects(); // This fetches the list of years/groups
@@ -41,13 +42,19 @@ export default function PrefectsPage() {
             )
           },
           {
-            type: "button",
-            props: {
-              variant: "default",
-              icon: Plus,
-              children: "New Prefect Year",
-              onClick: () => setIsCreateModalOpen(true),
-            },
+            type: "custom",
+            render: (
+              <PermissionGuard permission="staff.prefect.create">
+                <Button 
+                  variant="default"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  New Prefect Year
+                </Button>
+              </PermissionGuard>
+            )
           },
         ]}
       />

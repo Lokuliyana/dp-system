@@ -52,6 +52,9 @@ exports.createCompetitionSchema = z.object({
       active: z.boolean().optional(),
       year: z.number().int().optional(),
       participationType: z.enum(['individual', 'team']).optional(),
+      date: z.string().optional(),
+      startTime: z.string().optional(),
+      endTime: z.string().optional(),
       teamConfig: z
         .object({
           minSize: z.number().int().min(1).optional(),
@@ -86,6 +89,9 @@ exports.updateCompetitionSchema = z.object({
 
       isMainCompetition: z.boolean().optional(),
       year: z.number().int().min(2000).optional(),
+      date: z.string().optional(),
+      startTime: z.string().optional(),
+      endTime: z.string().optional(),
     })
     .superRefine((data, ctx) => {
       // only enforce scope rules if scope is provided in update
@@ -103,5 +109,6 @@ exports.listCompetitionsSchema = z.object({
     year: z.string().optional(),
     scope: scopeEnum.optional(),
     isMainCompetition: z.string().optional(), // "true"/"false"
+    gradeId: objectId.optional(),
   }),
 })

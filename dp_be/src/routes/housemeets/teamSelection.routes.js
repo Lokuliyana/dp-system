@@ -2,11 +2,13 @@ const router = require('express').Router()
 const ctrl = require('../../controllers/housemeets/teamSelection.controller')
 const validate = require('../../middlewares/validate.middleware')
 const V = require('../../validations/housemeets/teamSelection.validation')
+const permit = require('../../middlewares/permit.middleware')
+const P = require('../../constants/permissions')
 
 // Team selection suggestions (any level)
 router.get(
   '/suggestions',
-  // permit([P.TEAM_SELECTION.READ]),
+  permit([P.TEAM_SELECTION.READ]),
   validate(V.getSuggestionsSchema),
 
   ctrl.getTeamSelectionSuggestions
@@ -16,7 +18,7 @@ router.get(
 // Save selection for any level (F21/F22)
 router.post(
   '/',
-  // permit([P.TEAM_SELECTION.SAVE]),
+  permit([P.TEAM_SELECTION.SAVE]),
   validate(V.saveSelectionSchema),
   ctrl.saveTeamSelection
 )
@@ -24,7 +26,7 @@ router.post(
 // Get selection
 router.get(
   '/',
-  // permit([P.TEAM_SELECTION.READ]),
+  permit([P.TEAM_SELECTION.READ]),
   validate(V.getSelectionSchema),
   ctrl.getSelection
 )
@@ -32,7 +34,7 @@ router.get(
 // F22 recompute totals if needed
 router.post(
   '/compute-total',
-  // permit([P.TEAM_SELECTION.SAVE]),
+  permit([P.TEAM_SELECTION.SAVE]),
   validate(V.saveSelectionSchema.pick({ body: true })),
   ctrl.computeTeamTotalMarks
 )
@@ -40,7 +42,7 @@ router.post(
 // F23/F24 auto generate next level
 router.post(
   '/auto-generate',
-  // permit([P.TEAM_SELECTION.SAVE]),
+  permit([P.TEAM_SELECTION.SAVE]),
   validate(V.autoGenerateSchema),
   ctrl.autoGenerateNextLevel
 )

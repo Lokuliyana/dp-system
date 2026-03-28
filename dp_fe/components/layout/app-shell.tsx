@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import Image from "next/image"
 import { UserNav } from "@/components/layout/user-nav"
+import { LoginModal } from "@/components/auth/login-modal"
+
 
 interface AppShellProps {
   children: ReactNode;
@@ -30,8 +32,10 @@ export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  const { data: user, isLoading: isUserLoading, isError } = useCurrentUser();
+  const { data: user, isLoading: isUserLoading, isError, refetch } = useCurrentUser();
+
 
   useEffect(() => {
     const isLoginPage = pathname === "/login";
@@ -39,18 +43,22 @@ export function AppShell({ children }: AppShellProps) {
 
     if (!isLoginPage) {
       if (!token) {
-        router.replace("/login");
+        setShowLoginModal(true);
+        setIsCheckingAuth(false);
       } else if (isError) {
-        // If query fails (e.g. 401 after refresh failed)
         localStorage.clear();
-        router.replace("/login");
+        setShowLoginModal(true);
+        setIsCheckingAuth(false);
       } else if (!isUserLoading && user) {
         setIsCheckingAuth(false);
+        setShowLoginModal(false);
       }
     } else {
       setIsCheckingAuth(false);
+      setShowLoginModal(false);
     }
-  }, [pathname, user, isUserLoading, isError, router]);
+  }, [pathname, user, isUserLoading, isError]);
+
 
   // If we're on a protected page and still loading user or checking token
   if (pathname !== "/login" && (isUserLoading || isCheckingAuth)) {
@@ -117,6 +125,14 @@ export function AppShell({ children }: AppShellProps) {
         {/* Mobile Bottom Navigation */}
         {isMobile && <MobileBottomNav />}
       </SidebarInset>
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onSuccess={() => {
+          setShowLoginModal(false);
+          refetch();
+        }} 
+      />
     </SidebarProvider>
+
   );
 }

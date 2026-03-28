@@ -1,9 +1,8 @@
 const router = require('express').Router()
 const controller = require('../../controllers/system/permission.controller')
-const auth = require('../../middlewares/auth.middleware')
+const authGuard = require('../../middlewares/authGuard')
+const P = require('../../constants/permissions')
 
-router.use(auth)
-
-router.get('/', controller.listPermissions)
+router.get('/', authGuard(P.PERMISSION.READ), controller.listPermissions)
 
 module.exports = router

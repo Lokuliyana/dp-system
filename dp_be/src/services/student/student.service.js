@@ -293,12 +293,11 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         return v
       }
 
-      // Map Register 1 -> true, 0 -> false. Default to true if missing? 
-      // User said "Register - present 1 = true 0 = false"
-      let isPresent = true
+      // Map Register 1 -> true. If anything else or missing -> false
+      let isPresent = false
       if (registerStatus !== undefined && registerStatus !== null && registerStatus !== '') {
         const r = String(registerStatus).trim()
-        if (r === '0' || r.toLowerCase() === 'false') isPresent = false
+        if (r === '1' || r.toLowerCase() === 'true') isPresent = true
       }
 
       const admissionYear = yearRaw ? parseInt(String(yearRaw).trim(), 10) : undefined
@@ -335,6 +334,10 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         academicYear: currentYear,
         present: isPresent,
         status: isPresent ? 'active' : 'inactive',
+      }
+
+      if (!isPresent) {
+        payload.inactiveNote = 'Inactive since upload'
       }
 
       // Helper to handle duplicates or updates

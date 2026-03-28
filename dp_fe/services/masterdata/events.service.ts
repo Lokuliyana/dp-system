@@ -10,6 +10,8 @@ export type CreateEventPayload = {
   eventType: EventCategory
   date: string
   endDate?: string
+  startTime?: string
+  endTime?: string
   gradeIds?: string[]
   teacherInChargeId?: string
   clubId?: string

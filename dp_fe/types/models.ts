@@ -243,6 +243,10 @@ export type Competition = BaseDoc & {
   year?: number;
 
   participationType?: "individual" | "team";
+  
+  date?: string;
+  endTime?: string;
+
   teamConfig?: {
     minSize: number;
     maxSize: number;
@@ -348,6 +352,7 @@ export type TeamLevel = "zonal" | "district" | "allisland";
 export type TeamSelectionEntry = {
   competitionId: Id;
   studentId: Id;
+  gradeId?: Id;
   place?: number;
 };
 
@@ -720,6 +725,7 @@ export type HigherTeamEntry = {
       nameEn: string;
     };
     studentId: Id;
+    gradeId?: Id;
     place: number;
   }[];
   totalMarks?: number;

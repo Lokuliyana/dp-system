@@ -5,6 +5,8 @@ import { Loader, Trophy, Users, Search, AlertCircle, X, ChevronDown } from "luci
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { HouseMeetsMenu } from "@/components/house-meets/house-meets-menu";
 import { CompetitionSidebar } from "@/components/house-meets/competition-sidebar";
+import { PermissionGuard } from "@/components/auth/permission-guard";
+import { usePermission } from "@/hooks/usePermission";
 import {
   Button,
   Card,
@@ -41,6 +43,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function HouseRegistrationsPage() {
+  const { can } = usePermission();
   const { toast } = useToast();
   const currentYear = new Date().getFullYear();
   const [year] = useState(currentYear);
@@ -57,7 +60,7 @@ export default function HouseRegistrationsPage() {
   const getId = (doc: any) => doc.id || doc._id;
 
   // 1. Fetch Competitions
-  const { data: competitions = [] } = useCompetitions(year);
+  const { data: competitions = [] } = useCompetitions(year, selectedGrade || undefined);
 
   // Auto-select first competition
   useEffect(() => {
@@ -221,12 +224,14 @@ export default function HouseRegistrationsPage() {
             },
           },
           {
-            type: "button",
-            props: {
-              variant: "default",
-              children: "Save & Finish",
-              onClick: handleSaveAll,
-            },
+            type: "custom",
+            render: (
+              <PermissionGuard permission="housemeets.competition_registration.create">
+                <Button variant="default" onClick={handleSaveAll}>
+                  Save & Finish
+                </Button>
+              </PermissionGuard>
+            )
           },
         ]}
       />
@@ -334,10 +339,11 @@ export default function HouseRegistrationsPage() {
                                         size="sm"
                                         variant={isHouseFull ? "outline" : "default"}
                                         onClick={() => handleRegister(student.id, isHouseFull)}
-                                        disabled={registerMutation.isPending}
+                                        disabled={registerMutation.isPending || !can("housemeets.competition_registration.create")}
                                         className={cn(
                                         "h-7 px-3 text-xs",
-                                        isHouseFull && "text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                                        isHouseFull && "text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700",
+                                        !can("housemeets.competition_registration.create") && "opacity-50 cursor-not-allowed"
                                         )}
                                     >
                                         {isHouseFull ? "Add Independent" : "Add to House"}
@@ -394,8 +400,8 @@ export default function HouseRegistrationsPage() {
                                         size="sm"
                                         variant="outline"
                                         onClick={() => handleRegister(student.id, true)}
-                                        disabled={registerMutation.isPending}
-                                        className="h-7 px-3 text-xs"
+                                        disabled={registerMutation.isPending || !can("housemeets.competition_registration.create")}
+                                        className={cn("h-7 px-3 text-xs", !can("housemeets.competition_registration.create") && "opacity-50 cursor-not-allowed")}
                                     >
                                         Add Independent
                                     </Button>
@@ -481,12 +487,14 @@ export default function HouseRegistrationsPage() {
                                             ? ((student as any).nameWithInitialsSi || student.nameWithInitialsSi || "Unknown")
                                             : "Loading..."}
                                         </span>
-                                        <button
-                                        onClick={() => deleteMutation.mutate(getId(reg))}
-                                        className="text-slate-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                                        >
-                                        <X className="h-3.5 w-3.5" />
-                                        </button>
+                                        <PermissionGuard permission="housemeets.competition_registration.delete">
+                                          <button
+                                          onClick={() => deleteMutation.mutate(getId(reg))}
+                                          className="text-slate-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                                          >
+                                          <X className="h-3.5 w-3.5" />
+                                          </button>
+                                        </PermissionGuard>
                                     </div>
                                     );
                                 })
@@ -536,12 +544,14 @@ export default function HouseRegistrationsPage() {
                                         ? ((student as any).nameWithInitialsSi || student.nameWithInitialsSi || "Unknown")
                                         : "Loading..."}
                                     </span>
-                                    <button
-                                      onClick={() => deleteMutation.mutate(getId(reg))}
-                                      className="text-slate-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                                    >
-                                      <X className="h-3.5 w-3.5" />
-                                    </button>
+                                    <PermissionGuard permission="housemeets.competition_registration.delete">
+                                      <button
+                                        onClick={() => deleteMutation.mutate(getId(reg))}
+                                        className="text-slate-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                                      >
+                                        <X className="h-3.5 w-3.5" />
+                                      </button>
+                                    </PermissionGuard>
                                   </div>
                                 );
                               })

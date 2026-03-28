@@ -8,6 +8,7 @@ export type SaveTeamSelectionPayload = {
   entries?: Array<{
     competitionId: string
     studentId: string
+    gradeId?: string
     place?: number
   }>
   teamPosition?: number
@@ -44,6 +45,7 @@ export const teamSelectionsService = {
       .then((r) => r.data.data as Array<{ 
         competitionId: string; 
         studentId: any; 
+        gradeId?: string;
         place?: number 
       }>)
   },

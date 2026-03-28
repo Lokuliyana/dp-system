@@ -31,7 +31,7 @@ const competitionResultSchema = new mongoose.Schema(
 )
 
 competitionResultSchema.index(
-  { schoolId: 1, competitionId: 1, year: 1, place: 1 },
+  { schoolId: 1, competitionId: 1, year: 1, gradeId: 1, place: 1 },
   { unique: true }
 )
 

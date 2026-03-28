@@ -9,6 +9,7 @@ import { PageHeader, PageContainer, LiveSearch } from "@/components/reusable"
 import { Award, Users, GraduationCap, Building2, TrendingUp, Loader2 } from "lucide-react"
 import { studentsService } from "@/services/students.service"
 import { useGrades } from "@/hooks/useGrades"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export function AnalyticsDashboard() {
   const { data: gradesData } = useGrades()
@@ -78,7 +79,8 @@ export function AnalyticsDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard permission="student.report.read">
+      <div className="space-y-6">
       <PageHeader
         title="Institutional Analytics"
         description="Comprehensive performance and attendance overview across the organization"
@@ -230,6 +232,7 @@ export function AnalyticsDashboard() {
         </Tabs>
       </PageContainer>
     </div>
+  </PermissionGuard>
   )
 }
 

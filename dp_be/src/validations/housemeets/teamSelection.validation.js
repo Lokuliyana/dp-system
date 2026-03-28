@@ -6,6 +6,7 @@ const levelEnum = z.enum(['zonal', 'district', 'allisland'])
 const entrySchema = z.object({
   competitionId: objectId,
   studentId: objectId,
+  gradeId: objectId.optional(),
   place: z.number().int().min(1).max(5).optional(),
 })
 

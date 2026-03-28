@@ -41,6 +41,8 @@ import { useTeachers } from "@/hooks/useTeachers";
 import { useStudents, useStudentsByGrade } from "@/hooks/useStudents";
 import { useGrades } from "@/hooks/useGrades";
 import { useToast } from "@/hooks/use-toast";
+import { PermissionGuard } from "@/components/auth/permission-guard";
+import { usePermission } from "@/hooks/usePermission";
 import type { Club } from "@/types/models";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +55,7 @@ export function ClubsAndSocieties() {
   const createClub = useCreateClub();
   const updateClub = useUpdateClub();
   const deleteClub = useDeleteClub();
+  const { can } = usePermission();
 
   const { toast } = useToast();
   const [selectedClubId, setSelectedClubId] = useState<string>("");
@@ -404,22 +407,26 @@ export function ClubsAndSocieties() {
         </div>
 
         <div className="mt-auto flex flex-col gap-2">
-          <Button 
-            onClick={() => setIsPositionModalOpen(true)}
-            variant="outline"
-            className="w-full gap-2 border-primary/20 text-primary hover:bg-primary/5"
-          >
-            <Shield className="h-4 w-4" /> Manage Positions
-          </Button>
-          <Button 
-            onClick={() => {
-              setEditingId(null);
-              setIsFormOpen(true);
-            }}
-            className="w-full gap-2"
-          >
-            <Plus className="h-4 w-4" /> New Club
-          </Button>
+          <PermissionGuard permission="activities.club_position.read">
+            <Button 
+                onClick={() => setIsPositionModalOpen(true)}
+                variant="outline"
+                className="w-full gap-2 border-primary/20 text-primary hover:bg-primary/5"
+            >
+                <Shield className="h-4 w-4" /> Manage Positions
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard permission="activities.club.create">
+            <Button 
+                onClick={() => {
+                setEditingId(null);
+                setIsFormOpen(true);
+                }}
+                className="w-full gap-2"
+            >
+                <Plus className="h-4 w-4" /> New Club
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -445,22 +452,26 @@ export function ClubsAndSocieties() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleEdit(selectedClub)}
-                        className="h-9 px-4"
-                      >
-                        <Edit className="mr-2 h-4 w-4" /> Edit Details
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDelete(selectedClub.id)}
-                        className="h-9 px-3"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <PermissionGuard permission="activities.club.update">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleEdit(selectedClub)}
+                          className="h-9 px-4"
+                        >
+                          <Edit className="mr-2 h-4 w-4" /> Edit Details
+                        </Button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="activities.club.delete">
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDelete(selectedClub.id)}
+                          className="h-9 px-3"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   </div>
 
@@ -506,14 +517,16 @@ export function ClubsAndSocieties() {
                       <CardTitle className="text-sm font-bold flex items-center gap-2">
                         <Users className="h-4 w-4 text-primary" /> Members & Roles
                       </CardTitle>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => setShowMemberSearch(!showMemberSearch)}
-                        className={cn("h-8 gap-2", showMemberSearch && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary")}
-                      >
-                        {showMemberSearch ? "Cancel Addition" : <><Plus className="h-4 w-4" /> Add Student</>}
-                      </Button>
+                      <PermissionGuard permission="activities.club.update">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => setShowMemberSearch(!showMemberSearch)}
+                          className={cn("h-8 gap-2", showMemberSearch && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary")}
+                        >
+                          {showMemberSearch ? "Cancel Addition" : <><Plus className="h-4 w-4" /> Add Student</>}
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -638,15 +651,17 @@ export function ClubsAndSocieties() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-right pr-6">
-                                    <Button 
-                                      size="icon" 
-                                      variant="ghost" 
-                                      className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
-                                      onClick={() => removeMemberMutation.mutate(typeof student === 'string' ? student : (student.id || student._id))}
-                                      disabled={removeMemberMutation.isPending}
-                                    >
-                                      {removeMemberMutation.isPending ? <Loader className="animate-spin h-3 w-3" /> : <Trash2 className="h-4 w-4" />}
-                                    </Button>
+                                    <PermissionGuard permission="activities.club.update">
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                        onClick={() => removeMemberMutation.mutate(typeof student === 'string' ? student : (student.id || student._id))}
+                                        disabled={removeMemberMutation.isPending}
+                                      >
+                                        {removeMemberMutation.isPending ? <Loader className="animate-spin h-3 w-3" /> : <Trash2 className="h-4 w-4" />}
+                                      </Button>
+                                    </PermissionGuard>
                                   </TableCell>
                                 </TableRow>
                               );
@@ -908,12 +923,16 @@ export function ClubsAndSocieties() {
                       <p className="text-sm font-medium">{pos.nameEn} <span className="text-xs text-slate-400">({pos.nameSi})</span></p>
                     </div>
                     <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handlePositionEdit(pos)}>
-                        <Edit className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500" onClick={() => deletePosition.mutate(pos.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <PermissionGuard permission="activities.club_position.update">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handlePositionEdit(pos)}>
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="activities.club_position.delete">
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500" onClick={() => deletePosition.mutate(pos.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   </div>
                 ))}

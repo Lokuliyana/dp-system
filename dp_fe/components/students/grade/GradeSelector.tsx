@@ -5,6 +5,8 @@ import { Button } from "@/components/ui"
 import { Users, BookOpen, Pencil, Trash2 } from "lucide-react"
 import type { Grade } from "@/types/models"
 
+import { PermissionGuard } from "@/components/auth/permission-guard"
+
 interface GradeSelectorProps {
   grades: Grade[]
   onSelectGrade: (gradeId: string) => void
@@ -57,29 +59,33 @@ export function GradeSelector({ grades, onSelectGrade, onEdit, onDelete, student
               </div>
 
               <div className="flex gap-2 pt-2 border-t mt-4">
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(grade);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 h-8 text-xs gap-1 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  Edit
-                </Button>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(grade.id);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <PermissionGuard permission="system.grade.update">
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(grade);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 h-8 text-xs gap-1 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Edit
+                  </Button>
+                </PermissionGuard>
+                <PermissionGuard permission="system.grade.delete">
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(grade.id);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </PermissionGuard>
               </div>
             </CardContent>
           </Card>

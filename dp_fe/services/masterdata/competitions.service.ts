@@ -13,6 +13,9 @@ export type CreateCompetitionPayload = {
   active?: boolean
   year?: number
   participationType?: "individual" | "team"
+  date?: string
+  startTime?: string
+  endTime?: string
   teamConfig?: {
     minSize: number
     maxSize: number
@@ -31,25 +34,36 @@ export type UpdateCompetitionPayload = Partial<CreateCompetitionPayload>
 export const competitionsService = {
   create(payload: CreateCompetitionPayload) {
     return axiosInstance
-      .post(endpoints.competitions, payload)
+      .post(endpoints.competitions.base, payload)
       .then((r) => r.data.data as Competition)
   },
 
-  list(year?: number) {
+  list(year?: number, gradeId?: string) {
     return axiosInstance
-      .get(endpoints.competitions, { params: { year } })
+      .get(endpoints.competitions.base, { params: { year, gradeId } })
       .then((r) => r.data.data as Competition[])
   },
 
   update(id: string, payload: UpdateCompetitionPayload) {
     return axiosInstance
-      .patch(`${endpoints.competitions}/${id}`, payload)
+      .patch(`${endpoints.competitions.base}/${id}`, payload)
       .then((r) => r.data.data as Competition)
+  },
+
+  getDashboardStats(year?: number) {
+    return axiosInstance
+      .get(endpoints.competitions.dashboardStats, { params: { year } })
+      .then((r) => r.data.data as {
+        housePoints: any[]
+        gradePoints: any[]
+        mvpList: any[]
+        summary: any
+      })
   },
 
   remove(id: string) {
     return axiosInstance
-      .delete(`${endpoints.competitions}/${id}`)
+      .delete(`${endpoints.competitions.base}/${id}`)
       .then((r) => r.data.data as { deleted: true })
   },
 }

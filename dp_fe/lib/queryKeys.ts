@@ -129,8 +129,8 @@ export const qk = {
   },
 
   competitionResults: {
-    byCompetition: (competitionId: string, year?: number) =>
-      ["competitionResults", competitionId, year] as const,
+    byCompetition: (competitionId: string, year?: number, gradeId?: string) =>
+      ["competitionResults", competitionId, year, gradeId] as const,
   },
 
   teamSelections: {
@@ -189,5 +189,10 @@ export const qk = {
   /* -------------------- PROMOTION -------------------- */
   promotion: {
     status: ["promotion", "status"] as const,
+  },
+  
+  /* -------------------- DASHBOARD -------------------- */
+  dashboard: {
+    all: ["dashboard", "all"] as const,
   },
 } as const;

@@ -10,7 +10,7 @@ function permit(requiredPermissions = []) {
     }
 
     // Super Admin bypass
-    if (req.user.role === 'superadmin') return next()
+    if (req.user.role === 'superadmin' || req.user.role === 'super_admin' || (req.user.permissions && req.user.permissions.includes('*'))) return next()
 
     const userPermissions = req.user.permissions || []
     

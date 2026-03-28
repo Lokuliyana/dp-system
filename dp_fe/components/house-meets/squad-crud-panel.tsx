@@ -11,6 +11,9 @@ import {
 } from "@/hooks/useSquads"
 import { useGrades } from "@/hooks/useGrades"
 import { useSections } from "@/hooks/useSections"
+import { PermissionGuard } from "@/components/auth/permission-guard"
+import { usePermission } from "@/hooks/usePermission"
+import { cn } from "@/lib/utils"
 import { Shield, Sword, Star, Zap, Trophy, Target, Flag, Crown, Medal, Flame, Gavel, Scale, Book, Heart, Music, Smile, Sun, Moon, Cloud, Umbrella, Anchor, Key, Lock, Unlock, Bell, Search, User, Users, Settings, Home, Briefcase, Calendar, Clock, Map, MapPin, Navigation, Compass, Globe, Smartphone, Monitor, Cpu, Database, Server, Wifi, Bluetooth, Battery, BatteryCharging, BatteryFull, BatteryLow, BatteryMedium, BatteryWarning } from "lucide-react"
 import * as LucideIcons from "lucide-react"
 
@@ -48,6 +51,7 @@ export function SquadCrudPanel({ title = "Squads", description }: Props) {
   const createSquad = useCreateSquad()
   const updateSquad = useUpdateSquad()
   const deleteSquad = useDeleteSquad()
+  const { can } = usePermission()
 
   const [form, setForm] = useState<FormState>(emptyForm)
   const [editing, setEditing] = useState<Squad | null>(null)
@@ -92,63 +96,67 @@ export function SquadCrudPanel({ title = "Squads", description }: Props) {
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Name (English)</Label>
-            <Input
-              value={form.nameEn}
-              onChange={(e) => setForm((f) => ({ ...f, nameEn: e.target.value }))}
-              placeholder="e.g., Track Squad"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Name (Sinhala)</Label>
-            <Input
-              value={form.nameSi}
-              onChange={(e) => setForm((f) => ({ ...f, nameSi: e.target.value }))}
-              placeholder="Localized name"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-            <Label>Icon</Label>
-            <div className="flex gap-2">
-                <Input
-                    value={form.icon}
-                    onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
-                    placeholder="Icon name (e.g. Shield)"
-                    className="flex-1"
-                />
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-10 px-0 shrink-0" title="Pick an icon">
-                            {renderIcon(form.icon, "h-4 w-4")}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-2" align="end">
-                        <div className="grid grid-cols-6 gap-2">
-                            {AVAILABLE_ICONS.map((iconName) => (
-                                <button
-                                    key={iconName}
-                                    onClick={() => setForm(f => ({ ...f, icon: iconName }))}
-                                    className={`p-2 rounded hover:bg-slate-100 flex items-center justify-center transition-colors ${form.icon === iconName ? 'bg-slate-100 ring-2 ring-slate-400' : ''}`}
-                                    title={iconName}
-                                >
-                                    {renderIcon(iconName, "h-5 w-5 text-slate-700")}
-                                </button>
-                            ))}
-                        </div>
-                    </PopoverContent>
-                </Popover>
+              <Input
+                value={form.nameEn}
+                onChange={(e) => setForm((f) => ({ ...f, nameEn: e.target.value }))}
+                placeholder="e.g., Track Squad"
+                disabled={!can(editing ? "activities.squad.update" : "activities.squad.create")}
+              />
             </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <p className="text-sm font-semibold text-slate-800 mb-2">Eligible Grades</p>
-            <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
-              {grades.map((g) => (
-                <label key={g.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={form.assignedGradeIds.includes(g.id)}
+            <div className="space-y-2">
+              <Label>Name (Sinhala)</Label>
+              <Input
+                value={form.nameSi}
+                onChange={(e) => setForm((f) => ({ ...f, nameSi: e.target.value }))}
+                placeholder="Localized name"
+                disabled={!can(editing ? "activities.squad.update" : "activities.squad.create")}
+              />
+            </div>
+          </div>
+  
+          <div className="space-y-2">
+              <Label>Icon</Label>
+              <div className="flex gap-2">
+                  <Input
+                      value={form.icon}
+                      onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
+                      placeholder="Icon name (e.g. Shield)"
+                      className="flex-1"
+                      disabled={!can(editing ? "activities.squad.update" : "activities.squad.create")}
+                  />
+                  <Popover>
+                      <PopoverTrigger asChild disabled={!can(editing ? "activities.squad.update" : "activities.squad.create")}>
+                          <Button variant="outline" className="w-10 px-0 shrink-0" title="Pick an icon" disabled={!can(editing ? "activities.squad.update" : "activities.squad.create")}>
+                              {renderIcon(form.icon, "h-4 w-4")}
+                          </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-2" align="end">
+                          <div className="grid grid-cols-6 gap-2">
+                              {AVAILABLE_ICONS.map((iconName) => (
+                                  <button
+                                      key={iconName}
+                                      onClick={() => setForm(f => ({ ...f, icon: iconName }))}
+                                      className={`p-2 rounded hover:bg-slate-100 flex items-center justify-center transition-colors ${form.icon === iconName ? 'bg-slate-100 ring-2 ring-slate-400' : ''}`}
+                                      title={iconName}
+                                  >
+                                      {renderIcon(iconName, "h-5 w-5 text-slate-700")}
+                                  </button>
+                              ))}
+                          </div>
+                      </PopoverContent>
+                  </Popover>
+              </div>
+          </div>
+  
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <p className="text-sm font-semibold text-slate-800 mb-2">Eligible Grades</p>
+              <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
+                {grades.map((g) => (
+                  <label key={g.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={form.assignedGradeIds.includes(g.id)}
+                      disabled={!can(editing ? "activities.squad.update" : "activities.squad.create")}
                     onCheckedChange={(checked) =>
                       setForm((f) => ({
                         ...f,
@@ -171,6 +179,7 @@ export function SquadCrudPanel({ title = "Squads", description }: Props) {
                 <label key={s.id} className="flex items-center gap-2 text-sm">
                   <Checkbox
                     checked={form.assignedSectionIds.includes(s.id)}
+                    disabled={!can(editing ? "housemeets.squad.update" : "housemeets.squad.create")}
                     onCheckedChange={(checked) =>
                       setForm((f) => ({
                         ...f,
@@ -188,7 +197,10 @@ export function SquadCrudPanel({ title = "Squads", description }: Props) {
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={handleSubmit} disabled={createSquad.isPending || updateSquad.isPending}>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={createSquad.isPending || updateSquad.isPending || !can(editing ? "activities.squad.update" : "activities.squad.create")}
+          >
             {editing ? "Update Squad" : "Create Squad"}
           </Button>
           {editing && (
@@ -222,17 +234,21 @@ export function SquadCrudPanel({ title = "Squads", description }: Props) {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setEditing(squad)}>
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => deleteSquad.mutate(squad.id)}
-                    disabled={deleteSquad.isPending}
-                  >
-                    Delete
-                  </Button>
+                  <PermissionGuard permission="activities.squad.update">
+                    <Button size="sm" variant="outline" onClick={() => setEditing(squad)}>
+                      Edit
+                    </Button>
+                  </PermissionGuard>
+                  <PermissionGuard permission="activities.squad.delete">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deleteSquad.mutate(squad.id)}
+                      disabled={deleteSquad.isPending}
+                    >
+                      Delete
+                    </Button>
+                  </PermissionGuard>
                 </div>
               </div>
             ))

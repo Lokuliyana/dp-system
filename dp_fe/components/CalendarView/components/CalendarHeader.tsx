@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, CalendarHeart, Clock, Pencil, Pin } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarHeart, Pin } from "lucide-react";
 import { format } from "date-fns";
 
 import { CalendarViewMode } from "../types";
@@ -59,8 +59,6 @@ interface CalendarHeaderProps {
   onYearChange: (year: number) => void;
   onShowHolidayPanel?: () => void;
   enableHolidayPanel?: boolean;
-  businessHours?: string;
-  onEditBusinessHours?: () => void;
 }
 
 const viewLabels: Record<CalendarViewMode, string> = {
@@ -78,8 +76,6 @@ export function CalendarHeader({
   onYearChange,
   onShowHolidayPanel,
   enableHolidayPanel = true,
-  businessHours = "08:00 AM to 17:00 PM",
-  onEditBusinessHours,
 }: CalendarHeaderProps) {
   const currentYear = currentDate.getFullYear();
   const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
@@ -141,20 +137,6 @@ export function CalendarHeader({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {/* Business Hours */}
-        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 ml-2">
-          <Clock className="h-3.5 w-3.5 text-slate-400" />
-          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Business Hours: <span className="text-slate-900 dark:text-slate-100">{businessHours}</span>
-          </span>
-          <button 
-            onClick={onEditBusinessHours}
-            className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-          >
-            <Pencil className="h-3 w-3 text-primary" />
-          </button>
-        </div>
       </div>
 
       {/* Right section - Today & View switcher */}
@@ -163,7 +145,7 @@ export function CalendarHeader({
           <IconButtonWithToolTip
             icon={<CalendarHeart className="h-4 w-4" />}
             onClick={onShowHolidayPanel}
-            tooltip="View Holidays"
+            tooltip="View Calendar"
             className="h-9 w-9 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
           />
         )}

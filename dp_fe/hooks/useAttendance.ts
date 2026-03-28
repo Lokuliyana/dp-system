@@ -64,3 +64,10 @@ export function useAttendanceByRange(startDate: string, endDate: string, gradeId
     enabled: !!startDate && !!endDate && !!gradeId,
   })
 }
+export function useAttendanceDashboard(startDate: string, endDate: string) {
+  return useQuery({
+    queryKey: ["attendance", "dashboard", startDate, endDate],
+    queryFn: () => attendanceService.getDashboardStats(startDate, endDate),
+    enabled: !!startDate && !!endDate,
+  })
+}

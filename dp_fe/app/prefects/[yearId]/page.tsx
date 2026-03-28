@@ -11,6 +11,7 @@ import { usePrefectPositions } from "@/hooks/usePrefectPositions";
 import { PrefectStudentForm } from "@/components/prefects/PrefectStudentForm";
 import { AddPrefectStudentPayload } from "@/services/masterdata/prefects.service";
 import { DeleteConfirmationModal } from "@/components/reusable";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 import { LevelHierarchyView, Level, LevelItem } from "@/components/soluna-components/level-hierarchy-view";
 
 export default function PrefectYearDetailPage() {
@@ -137,10 +138,12 @@ export default function PrefectYearDetailPage() {
         subtitle={`Manage and view prefect hierarchy for the year ${yearData.year}.`}
         icon={Shield}
         actions={
-          <Button className="gap-2" onClick={() => setIsModalOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Add Prefect
-          </Button>
+          <PermissionGuard permission="staff.prefect.create">
+            <Button className="gap-2" onClick={() => setIsModalOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Add Prefect
+            </Button>
+          </PermissionGuard>
         }
       />
 
@@ -201,25 +204,29 @@ export default function PrefectYearDetailPage() {
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-slate-500 hover:text-blue-600"
-                                onClick={() => {
-                                  setEditingStudent(student);
-                                  setIsModalOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-slate-500 hover:text-red-600"
-                                onClick={() => setStudentToRemove(student.studentId)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <PermissionGuard permission="staff.prefect.update">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-500 hover:text-blue-600"
+                                  onClick={() => {
+                                    setEditingStudent(student);
+                                    setIsModalOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </PermissionGuard>
+                              <PermissionGuard permission="staff.prefect.delete">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-500 hover:text-red-600"
+                                  onClick={() => setStudentToRemove(student.studentId)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </PermissionGuard>
                             </div>
                           </div>
                         ))}

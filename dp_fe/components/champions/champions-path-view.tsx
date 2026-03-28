@@ -51,6 +51,8 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { CompetitionSidebar } from "@/components/house-meets/competition-sidebar";
 import { DynamicPageHeader } from "@/components/layout/dynamic";
+import { PermissionGuard } from "@/components/auth/permission-guard";
+import { usePermission } from "@/hooks/usePermission";
 
 interface ChampionsPathViewProps {
   level: "zonal" | "district" | "allisland";
@@ -65,6 +67,7 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
   const [competitionId, setCompetitionId] = useState<string | null>(null);
   
   const { toast } = useToast();
+  const { can } = usePermission();
 
   // 1. Fetch Data
   const { data: competitions = [], isLoading: compsLoading } = useCompetitions(year);
@@ -251,24 +254,28 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
         actions={
           <div className="flex gap-2">
             {level === "zonal" && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handleAutoGenerate("zonal", "district")}
-                disabled={autoGenerate.isPending}
-              >
-                <RotateCcw className="mr-2 h-4 w-4" /> Promote to District
-              </Button>
+              <PermissionGuard permission="housemeets.team_selection.update">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAutoGenerate("zonal", "district")}
+                  disabled={autoGenerate.isPending}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" /> Promote to District
+                </Button>
+              </PermissionGuard>
             )}
             {level === "district" && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handleAutoGenerate("district", "allisland")}
-                disabled={autoGenerate.isPending}
-              >
-                <RotateCcw className="mr-2 h-4 w-4" /> Promote to All Island
-              </Button>
+              <PermissionGuard permission="housemeets.team_selection.update">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAutoGenerate("district", "allisland")}
+                  disabled={autoGenerate.isPending}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" /> Promote to All Island
+                </Button>
+              </PermissionGuard>
             )}
             <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
               {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
@@ -362,37 +369,39 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
                               <div className="flex flex-col items-center gap-2 text-slate-400">
                                 <Users className="h-8 w-8 opacity-20" />
                                 <p className="text-sm">No students assigned to this competition</p>
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button variant="outline" size="sm" className="mt-2 text-blue-600 border-blue-100 hover:bg-blue-50">
-                                      <Plus className="h-3 w-3 mr-1" /> Add First Student
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="sm:max-w-[425px]">
-                                    <DialogHeader>
-                                      <DialogTitle>Add Student to {selectedCompetition.nameEn}</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto">
-                                      {regsLoading ? (
-                                        <div className="text-center py-4"><Loader className="h-4 w-4 animate-spin mx-auto" /></div>
-                                      ) : registrations.length === 0 ? (
-                                        <p className="text-center py-4 text-xs text-slate-500">No registered students found</p>
-                                      ) : registrations.map((reg: any) => (
-                                        <button
-                                          key={reg.id}
-                                          onClick={() => handleAddEntry(getStudentId(reg.studentId))}
-                                          className="w-full p-3 rounded-lg border text-left hover:bg-slate-50 flex items-center justify-between group/btn"
-                                        >
-                                          <div className="flex flex-col">
-                                            <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || (reg.studentId as any).fullNameEn || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
-                                            <span className="text-xs text-slate-500">{(reg.studentId as any).admissionNumber}</span>
-                                          </div>
-                                          <Plus className="h-4 w-4 text-slate-300 group-hover/btn:text-blue-500" />
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
+                                <PermissionGuard permission="housemeets.team_selection.update">
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button variant="outline" size="sm" className="mt-2 text-blue-600 border-blue-100 hover:bg-blue-50">
+                                        <Plus className="h-3 w-3 mr-1" /> Add First Student
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                      <DialogHeader>
+                                        <DialogTitle>Add Student to {selectedCompetition.nameEn}</DialogTitle>
+                                      </DialogHeader>
+                                      <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto">
+                                        {regsLoading ? (
+                                          <div className="text-center py-4"><Loader className="h-4 w-4 animate-spin mx-auto" /></div>
+                                        ) : registrations.length === 0 ? (
+                                          <p className="text-center py-4 text-xs text-slate-500">No registered students found</p>
+                                        ) : registrations.map((reg: any) => (
+                                          <button
+                                            key={reg.id}
+                                            onClick={() => handleAddEntry(getStudentId(reg.studentId))}
+                                            className="w-full p-3 rounded-lg border text-left hover:bg-slate-50 flex items-center justify-between group/btn"
+                                          >
+                                            <div className="flex flex-col">
+                                              <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || (reg.studentId as any).fullNameEn || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
+                                              <span className="text-xs text-slate-500">{(reg.studentId as any).admissionNumber}</span>
+                                            </div>
+                                            <Plus className="h-4 w-4 text-slate-300 group-hover/btn:text-blue-500" />
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                </PermissionGuard>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -405,48 +414,52 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
                                     <span className="font-medium text-slate-900">{renderStudentName(entry.studentId)}</span>
                                   </div>
                                   <div className="flex gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                                    <Dialog>
-                                      <DialogTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-blue-50 text-slate-400 hover:text-blue-600">
-                                          <Search className="h-4 w-4" />
-                                        </Button>
-                                      </DialogTrigger>
-                                      <DialogContent className="sm:max-w-[425px]">
-                                        <DialogHeader>
-                                          <DialogTitle>Change Student</DialogTitle>
-                                        </DialogHeader>
-                                        <div className="mt-4 space-y-1 max-h-[300px] overflow-y-auto">
-                                          {registrations.map((reg: any) => {
-                                            const sid = getStudentId(reg.studentId);
-                                            const isSelected = sid === getStudentId(entry.studentId);
-                                            return (
-                                              <button
-                                                key={reg.id}
-                                                onClick={() => handleUpdateEntry(getStudentId(entry.studentId), sid, entry.place)}
-                                                className={cn(
-                                                  "w-full p-3 rounded-lg border text-left flex items-center justify-between",
-                                                  isSelected ? "border-blue-500 bg-blue-50" : "hover:bg-slate-50 border-transparent"
-                                                )}
-                                              >
-                                                <div className="flex flex-col">
-                                                  <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || (reg.studentId as any).fullNameEn || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
-                                                  <span className="text-xs text-slate-500">{(reg.studentId as any).admissionNumber}</span>
-                                                </div>
-                                                {isSelected && <Check className="h-4 w-4 text-blue-500" />}
-                                              </button>
-                                            );
-                                          })}
-                                        </div>
-                                      </DialogContent>
-                                    </Dialog>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                                      onClick={() => handleRemoveEntry(getStudentId(entry.studentId))}
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
+                                    <PermissionGuard permission="housemeets.team_selection.update">
+                                      <Dialog>
+                                        <DialogTrigger asChild>
+                                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-blue-50 text-slate-400 hover:text-blue-600">
+                                            <Search className="h-4 w-4" />
+                                          </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[425px]">
+                                          <DialogHeader>
+                                            <DialogTitle>Change Student</DialogTitle>
+                                          </DialogHeader>
+                                          <div className="mt-4 space-y-1 max-h-[300px] overflow-y-auto">
+                                            {registrations.map((reg: any) => {
+                                              const sid = getStudentId(reg.studentId);
+                                              const isSelected = sid === getStudentId(entry.studentId);
+                                              return (
+                                                <button
+                                                  key={reg.id}
+                                                  onClick={() => handleUpdateEntry(getStudentId(entry.studentId), sid, entry.place)}
+                                                  className={cn(
+                                                    "w-full p-3 rounded-lg border text-left flex items-center justify-between",
+                                                    isSelected ? "border-blue-500 bg-blue-50" : "hover:bg-slate-50 border-transparent"
+                                                  )}
+                                                >
+                                                  <div className="flex flex-col">
+                                                    <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || (reg.studentId as any).fullNameEn || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
+                                                    <span className="text-xs text-slate-500">{(reg.studentId as any).admissionNumber}</span>
+                                                  </div>
+                                                  {isSelected && <Check className="h-4 w-4 text-blue-500" />}
+                                                </button>
+                                              );
+                                            })}
+                                          </div>
+                                        </DialogContent>
+                                      </Dialog>
+                                    </PermissionGuard>
+                                    <PermissionGuard permission="housemeets.team_selection.update">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                                        onClick={() => handleRemoveEntry(getStudentId(entry.studentId))}
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </PermissionGuard>
                                   </div>
                                 </div>
                               </TableCell>
@@ -455,6 +468,7 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
                                   <Select 
                                     value={entry.place?.toString() || "0"} 
                                     onValueChange={(val) => handleUpdateEntry(getStudentId(entry.studentId), getStudentId(entry.studentId), val === "0" ? undefined : parseInt(val))}
+                                    disabled={!can("housemeets.competition_result.create")}
                                   >
                                     <SelectTrigger className="w-32 bg-white">
                                       <SelectValue placeholder="No Place" />
@@ -469,33 +483,35 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
                                     </SelectContent>
                                   </Select>
                                   {idx === compEntries.length - 1 && (
-                                    <Dialog>
-                                      <DialogTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50">
-                                          <Plus className="h-4 w-4" />
-                                        </Button>
-                                      </DialogTrigger>
-                                      <DialogContent className="sm:max-w-[425px]">
-                                        <DialogHeader>
-                                          <DialogTitle>Add Another Student</DialogTitle>
-                                        </DialogHeader>
-                                        <div className="mt-4 space-y-1 max-h-[300px] overflow-y-auto">
-                                          {registrations.map((reg: any) => (
-                                            <button
-                                              key={reg.id}
-                                              onClick={() => handleAddEntry(getStudentId(reg.studentId))}
-                                              className="w-full p-3 rounded-lg border border-transparent text-left hover:bg-slate-50 flex items-center justify-between group/add"
-                                            >
-                                              <div className="flex flex-col">
-                                                <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || (reg.studentId as any).fullNameEn || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
-                                                <span className="text-xs text-slate-500">{(reg.studentId as any).admissionNumber}</span>
-                                              </div>
-                                              <Plus className="h-4 w-4 text-slate-300 group-hover/add:text-blue-500" />
-                                            </button>
-                                          ))}
-                                        </div>
-                                      </DialogContent>
-                                    </Dialog>
+                                    <PermissionGuard permission="housemeets.team_selection.update">
+                                      <Dialog>
+                                        <DialogTrigger asChild>
+                                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50">
+                                            <Plus className="h-4 w-4" />
+                                          </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[425px]">
+                                          <DialogHeader>
+                                            <DialogTitle>Add Another Student</DialogTitle>
+                                          </DialogHeader>
+                                          <div className="mt-4 space-y-1 max-h-[300px] overflow-y-auto">
+                                            {registrations.map((reg: any) => (
+                                              <button
+                                                key={reg.id}
+                                                onClick={() => handleAddEntry(getStudentId(reg.studentId))}
+                                                className="w-full p-3 rounded-lg border border-transparent text-left hover:bg-slate-50 flex items-center justify-between group/add"
+                                              >
+                                                <div className="flex flex-col">
+                                                  <span className="font-bold text-sm">{(reg.studentId as any).nameWithInitialsSi || (reg.studentId as any).fullNameEn || `${(reg.studentId as any).firstNameEn} ${(reg.studentId as any).lastNameEn}`}</span>
+                                                  <span className="text-xs text-slate-500">{(reg.studentId as any).admissionNumber}</span>
+                                                </div>
+                                                <Plus className="h-4 w-4 text-slate-300 group-hover/add:text-blue-500" />
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </DialogContent>
+                                      </Dialog>
+                                    </PermissionGuard>
                                   )}
                                 </div>
                               </TableCell>
@@ -557,15 +573,17 @@ export function ChampionsPathView({ level, title, description, icon: Icon }: Cha
                     )}
                   </div>
 
-                  <Button 
-                    variant="outline" 
-                    className="w-full bg-slate-800 border-slate-700 hover:bg-slate-700 text-white mt-2 h-9"
-                    onClick={handleApplySuggestions}
-                    disabled={compSuggestions.length === 0 || saveSelection.isPending}
-                  >
-                    Apply All Suggestions
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                  <PermissionGuard permission="housemeets.team_selection.update">
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-slate-800 border-slate-700 hover:bg-slate-700 text-white mt-2 h-9"
+                      onClick={handleApplySuggestions}
+                      disabled={compSuggestions.length === 0 || saveSelection.isPending}
+                    >
+                      Apply All Suggestions
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </PermissionGuard>
                 </CardContent>
               </Card>
 

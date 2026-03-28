@@ -1,20 +1,14 @@
 "use client";
 
-import { ChampionsPathView } from "@/components/champions/champions-path-view";
+import { ChampionsUnifiedView } from "@/components/champions/champions-unified-view";
 import { LayoutController } from "@/components/layout/dynamic";
 import { ChampionsMenu } from "@/components/champions/champions-menu";
-import { Globe } from "lucide-react";
 
 export default function AllIslandPage() {
   return (
-    <LayoutController showMainMenu showHorizontalToolbar showSidebar>
+    <LayoutController showMainMenu showHorizontalToolbar>
       <ChampionsMenu />
-      <ChampionsPathView 
-        level="allisland"
-        title="All Island Level"
-        description="Manage national level competitions and final rankings."
-        icon={Globe}
-      />
+      <ChampionsUnifiedView level="allisland" />
     </LayoutController>
   );
 }

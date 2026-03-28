@@ -30,6 +30,10 @@ const competitionSchema = new mongoose.Schema(
       default: 'individual',
       required: true,
     },
+    
+    date: { type: Date, index: true },
+    startTime: { type: String },
+    endTime: { type: String },
 
     teamConfig: {
       minSize: { type: Number, default: 1 },

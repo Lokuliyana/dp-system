@@ -2,31 +2,33 @@ const router = require('express').Router()
 const ctrl = require('../../controllers/system/grade.controller')
 const validate = require('../../middlewares/validate.middleware')
 const V = require('../../validations/system/grade.validation')
+const permit = require('../../middlewares/permit.middleware')
+const P = require('../../constants/permissions')
 
 router.post(
   '/',
-  // permit([P.GRADE.CREATE]),
+  permit([P.GRADE.CREATE]),
   validate(V.createGradeSchema),
   ctrl.createGrade
 )
 
 router.get(
   '/',
-  // permit([P.GRADE.READ]),
+  permit([P.GRADE.READ]),
   validate(V.listGradesSchema),
   ctrl.listGradesWithStats
 )
 
 router.patch(
   '/:id',
-  // permit([P.GRADE.UPDATE]),
+  permit([P.GRADE.UPDATE]),
   validate(V.updateGradeSchema),
   ctrl.updateGrade
 )
 
 router.delete(
   '/:id',
-  // permit([P.GRADE.DELETE]),
+  permit([P.GRADE.DELETE]),
   validate(V.deleteGradeSchema),
   ctrl.deleteGrade
 )

@@ -15,6 +15,8 @@ exports.createEventSchema = z.object({
     year: z.number().int().min(2000),
     clubId: objectId.optional(),
     squadId: objectId.optional(),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
   }),
 })
 
@@ -32,6 +34,8 @@ exports.updateEventSchema = z.object({
     year: z.number().int().min(2000).optional(),
     clubId: objectId.optional(),
     squadId: objectId.optional(),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
   }),
 })
 

@@ -2,30 +2,32 @@ const router = require('express').Router()
 const ctrl = require('../../controllers/housemeets/house.controller')
 const validate = require('../../middlewares/validate.middleware')
 const V = require('../../validations/housemeets/house.validation')
+const permit = require('../../middlewares/permit.middleware')
+const P = require('../../constants/permissions')
 
 router.post(
   '/',
-  // permit([P.HOUSE.CREATE]),
+  permit([P.HOUSE.CREATE]),
   validate(V.createHouseSchema),
   ctrl.createHouse
 )
 
 router.get(
   '/',
-  // permit([P.HOUSE.READ]),
+  permit([P.HOUSE.READ]),
   ctrl.listHouses
 )
 
 router.patch(
   '/:id',
-  // permit([P.HOUSE.UPDATE]),
+  permit([P.HOUSE.UPDATE]),
   validate(V.updateHouseSchema),
   ctrl.updateHouse
 )
 
 router.delete(
   '/:id',
-  // permit([P.HOUSE.DELETE]),
+  permit([P.HOUSE.DELETE]),
   validate(V.deleteHouseSchema),
   ctrl.deleteHouse
 )

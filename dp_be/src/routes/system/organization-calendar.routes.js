@@ -1,11 +1,10 @@
 const router = require('express').Router()
 const calendarController = require('../../controllers/system/organization-calendar.controller')
-const auth = require('../../middlewares/auth.middleware')
+const authGuard = require('../../middlewares/authGuard')
+const P = require('../../constants/permissions')
 
-router.use(auth)
-
-router.get('/', calendarController.getCalendarRange)
-router.post('/', calendarController.upsertDayConfig)
-router.delete('/', calendarController.deleteDayConfig)
+router.get('/', authGuard(P.ORGANIZATION_CALENDAR.READ), calendarController.getCalendarRange)
+router.post('/', authGuard(P.ORGANIZATION_CALENDAR.UPDATE), calendarController.upsertDayConfig)
+router.delete('/', authGuard(P.ORGANIZATION_CALENDAR.UPDATE), calendarController.deleteDayConfig)
 
 module.exports = router

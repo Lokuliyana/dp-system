@@ -1,4 +1,6 @@
 const Attendance = require('../../models/student/attendance.model')
+const School = require('../../models/system/school.model')
+const OrganizationCalendar = require('../../models/system/organization-calendar.model')
 const ApiError = require('../../utils/apiError')
 
 function dup(err) {
@@ -11,29 +13,48 @@ function dup(err) {
 exports.markAttendance = async ({ schoolId, payload, userId }) => {
   try {
     const attendanceDate = new Date(payload.date)
+    attendanceDate.setUTCHours(0, 0, 0, 0)
     const dayOfWeek = attendanceDate.getUTCDay()
 
-    // Restriction 1: Must be Sunday (0)
-    if (dayOfWeek !== 0) {
-      throw new ApiError(400, 'Attendance can only be marked for Sundays')
+    // 1. Get School Configuration
+    const school = await School.findById(schoolId).select('attendanceConfig').lean()
+    const config = school?.attendanceConfig || { allowedDayOfWeek: 0, startTime: '07:30', endTime: '13:00' }
+
+    // 2. Get Organization Calendar Override
+    const calendarEntry = await OrganizationCalendar.findOne({ schoolId, date: attendanceDate }).lean()
+    
+    const allowedDay = config.allowedDayOfWeek
+    const startTimeStr = calendarEntry?.startTime || config.startTime
+    const endTimeStr = calendarEntry?.endTime || config.endTime
+
+    // Restriction 1: Must be the allowed day (unless overridden by calendar or config says any day)
+    // If there's a calendar entry of type 'Sunday', 'SpecialDay', etc., we might allow it.
+    // For now, let's stick to the specific day requirement unless it's a SpecialDay in calendar.
+    const isSpecialDay = calendarEntry && ['Sunday', 'SpecialDay', 'SpecialEvent'].includes(calendarEntry.type)
+    
+    if (dayOfWeek !== allowedDay && !isSpecialDay) {
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+      throw new ApiError(400, `Attendance can only be marked for ${days[allowedDay]}s`)
     }
 
-    // Restriction 2: Time window (07:30 - 13:00) on the actual day
-    // This applies if the user is trying to mark attendance for "today"
+    // Restriction 2: Time window
     const now = new Date()
     const isToday = attendanceDate.getUTCFullYear() === now.getUTCFullYear() &&
                     attendanceDate.getUTCMonth() === now.getUTCMonth() &&
                     attendanceDate.getUTCDate() === now.getUTCDate()
 
     if (isToday) {
+      const [startH, startM] = startTimeStr.split(':').map(Number)
+      const [endH, endM] = endTimeStr.split(':').map(Number)
+      
       const hours = now.getHours()
       const minutes = now.getMinutes()
       const currentTimeInMinutes = hours * 60 + minutes
-      const startLimit = 7 * 60 + 30 // 07:30
-      const endLimit = 13 * 60 // 13:00
+      const startLimit = startH * 60 + startM
+      const endLimit = endH * 60 + endM
 
       if (currentTimeInMinutes < startLimit || currentTimeInMinutes > endLimit) {
-        throw new ApiError(400, 'Attendance can only be marked between 07:30 AM and 01:00 PM on Sundays')
+        throw new ApiError(400, `Attendance can only be marked between ${startTimeStr} and ${endTimeStr}`)
       }
     }
 
@@ -56,6 +77,7 @@ exports.updateAttendance = async ({ schoolId, id, payload, userId }) => {
 
   const now = new Date()
   const attendanceDate = new Date(existing.date)
+  attendanceDate.setUTCHours(0, 0, 0, 0)
   
   // Apply same time restrictions for updates if it's "today"
   const isToday = attendanceDate.getUTCFullYear() === now.getUTCFullYear() &&
@@ -63,21 +85,27 @@ exports.updateAttendance = async ({ schoolId, id, payload, userId }) => {
                   attendanceDate.getUTCDate() === now.getUTCDate()
 
   if (isToday) {
+    const school = await School.findById(schoolId).select('attendanceConfig').lean()
+    const config = school?.attendanceConfig || { allowedDayOfWeek: 0, startTime: '07:30', endTime: '13:00' }
+    const calendarEntry = await OrganizationCalendar.findOne({ schoolId, date: attendanceDate }).lean()
+    
+    const startTimeStr = calendarEntry?.startTime || config.startTime
+    const endTimeStr = calendarEntry?.endTime || config.endTime
+
+    const [startH, startM] = startTimeStr.split(':').map(Number)
+    const [endH, endM] = endTimeStr.split(':').map(Number)
+
     const hours = now.getHours()
     const minutes = now.getMinutes()
     const currentTimeInMinutes = hours * 60 + minutes
-    const startLimit = 7 * 60 + 30 // 07:30
-    const endLimit = 13 * 60 // 13:00
+    const startLimit = startH * 60 + startM
+    const endLimit = endH * 60 + endM
 
     if (currentTimeInMinutes < startLimit || currentTimeInMinutes > endLimit) {
-      throw new ApiError(400, 'Attendance cannot be changed after 01:00 PM on Sundays')
+      throw new ApiError(400, `Attendance cannot be changed after ${endTimeStr}`)
     }
   } else {
-    // If it's not today's attendance, we should probably still restrict updates
-    // based on the requirement "Attandence related everything should needs to be restrict only for sundays"
-    // and "cant change the attendence after 1 pm on that sunday"
-    // This implies you can't edit past attendance.
-    throw new ApiError(400, 'Attendance can only be modified on the respective Sunday before 1:00 PM')
+    throw new ApiError(400, 'Attendance can only be modified on the respective allowed day within the time window')
   }
 
   const updated = await Attendance.findOneAndUpdate(

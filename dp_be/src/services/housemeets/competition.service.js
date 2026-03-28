@@ -1,4 +1,5 @@
 const Competition = require('../../models/housemeets/competition.model')
+const Section = require('../../models/system/section.model')
 const ApiError = require('../../utils/apiError')
 
 function handleDuplicate(err) {
@@ -30,6 +31,18 @@ exports.listCompetitions = async ({ schoolId, filters }) => {
   if (filters.scope) q.scope = filters.scope
   if (filters.isMainCompetition !== undefined) {
     q.isMainCompetition = filters.isMainCompetition === 'true'
+  }
+
+  if (filters.gradeId) {
+    // Find sections that contain this grade
+    const sections = await Section.find({ assignedGradeIds: filters.gradeId }).select('_id').lean()
+    const sectionIds = sections.map((s) => s._id)
+
+    q.$or = [
+      { scope: 'open' },
+      { scope: 'grade', gradeIds: filters.gradeId },
+      { scope: 'section', sectionIds: { $in: sectionIds } },
+    ]
   }
 
   const items = await Competition.find(q)

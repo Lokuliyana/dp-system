@@ -26,7 +26,10 @@ export const endpoints = {
   clubs: "/clubs",
   teacherHouseAssignments: "/teacher-house-assignments",
 
-  competitions: "/competitions",
+  competitions: {
+    base: "/competitions",
+    dashboardStats: "/competitions/dashboard-stats",
+  },
   competitionRules: "/competition-house-rules",
   competitionRegistrations: "/competition-registrations",
   competitionTeams: "/competition-teams",
@@ -37,7 +40,10 @@ export const endpoints = {
   prefects: "/prefects",
 
   events: "/events",
-  attendance: "/attendance",
+  attendance: {
+    base: "/attendance",
+    dashboardStats: "/attendance/dashboard-stats",
+  },
   
   reports: {
     student: "/reports/student",
@@ -57,5 +63,8 @@ export const endpoints = {
     organization: "/analytics/organization",
   },
   permissions: "/permissions",
-
+  dashboard: "/dashboard",
+  schools: {
+    config: "/schools/config",
+  },
 } as const;

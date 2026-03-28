@@ -32,6 +32,7 @@ import {
 } from "@/components/layout/dynamic";
 import { StudentsMenu } from "@/components/students/students-menu";
 import { ExportButton } from "@/components/reusable";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 
 export default function StudentsPage() {
   const router = useRouter();
@@ -73,15 +74,19 @@ export default function StudentsPage() {
   const filteredGrades = grades.filter((grade) => 
     grade.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
     grade.nameSi.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ).sort((a, b) => a.level - b.level);
 
-  // Group Grades by Section
+  // Group Grades by Section and sort sections by first class level
   const gradesBySection = sections.map(section => {
     const sectionGrades = filteredGrades.filter(g => section.assignedGradeIds?.includes(g.id));
     return {
       section,
       grades: sectionGrades
     };
+  }).sort((a, b) => {
+    const aMinLevel = a.grades.length > 0 ? Math.min(...a.grades.map(g => g.level)) : Infinity;
+    const bMinLevel = b.grades.length > 0 ? Math.min(...b.grades.map(g => g.level)) : Infinity;
+    return aMinLevel - bMinLevel;
   });
 
   const assignedGradeIds = new Set(sections.flatMap(s => s.assignedGradeIds || []));
@@ -188,29 +193,41 @@ export default function StudentsPage() {
             )
           },
           {
-            type: "button",
-            props: {
-              variant: "outline",
-              icon: Plus, // Use Plus instead of Layers if we want consistency, or I can keep the icons from implementation plan
-              children: "Add Section",
-              onClick: () => {
-                setEditingSection(null);
-                setIsSectionModalOpen(true);
-              },
-            },
+            type: "custom",
+            render: (
+              <PermissionGuard permission="system.section.create">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setEditingSection(null);
+                    setIsSectionModalOpen(true);
+                  }}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Section
+                </Button>
+              </PermissionGuard>
+            ),
           },
           {
-            type: "button",
-            props: {
-              variant: "default",
-              icon: Plus,
-              children: "Add Grade",
-              onClick: () => {
-                setEditingGrade(null);
-                setTargetSectionId(null);
-                setIsGradeModalOpen(true);
-              },
-            },
+            type: "custom",
+            render: (
+              <PermissionGuard permission="system.grade.create">
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    setEditingGrade(null);
+                    setTargetSectionId(null);
+                    setIsGradeModalOpen(true);
+                  }}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Grade
+                </Button>
+              </PermissionGuard>
+            ),
           },
         ]}
       />
@@ -249,20 +266,22 @@ export default function StudentsPage() {
                   </div>
                 </AccordionTrigger>
                 <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-4 justify-end">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="h-8 gap-1.5 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTargetSectionId(section.id);
-                      setEditingGrade(null);
-                      setIsGradeModalOpen(true);
-                    }}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Grade
-                  </Button>
+                  <PermissionGuard permission="system.grade.create">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-8 gap-1.5 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTargetSectionId(section.id);
+                        setEditingGrade(null);
+                        setIsGradeModalOpen(true);
+                      }}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Grade
+                    </Button>
+                  </PermissionGuard>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -270,15 +289,19 @@ export default function StudentsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditSection(section)}>
-                        <Pencil className="mr-2 h-4 w-4" /> Edit Section
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-red-600 focus:text-red-600"
-                        onClick={() => setSectionToDelete(section.id)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete Section
-                      </DropdownMenuItem>
+                      <PermissionGuard permission="system.section.update">
+                        <DropdownMenuItem onClick={() => handleEditSection(section)}>
+                          <Pencil className="mr-2 h-4 w-4" /> Edit Section
+                        </DropdownMenuItem>
+                      </PermissionGuard>
+                      <PermissionGuard permission="system.section.delete">
+                        <DropdownMenuItem 
+                          className="text-red-600 focus:text-red-600"
+                          onClick={() => setSectionToDelete(section.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete Section
+                        </DropdownMenuItem>
+                      </PermissionGuard>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

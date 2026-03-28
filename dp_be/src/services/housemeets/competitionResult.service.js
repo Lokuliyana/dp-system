@@ -22,7 +22,7 @@ exports.recordResults = async ({ schoolId, payload, userId }) => {
   // Upsert each place
   const ops = results.map((r) => ({
     updateOne: {
-      filter: { schoolId, competitionId, year, place: r.place },
+      filter: { schoolId, competitionId, year, gradeId: r.gradeId, place: r.place },
       update: {
         $set: {
           ...r,

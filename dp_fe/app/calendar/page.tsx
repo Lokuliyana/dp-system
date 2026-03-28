@@ -8,10 +8,15 @@ import { PageContainer } from "@/components/layout/page-container";
 import { PageHeader } from "@/components/layout/page-header";
 import { CalendarView } from "@/components/CalendarView/CalendarView";
 import { calendarService, OrganizationCalendarEntry } from "@/services/calendar.service";
+import { eventsService } from "@/services/masterdata/events.service";
+import { competitionsService } from "@/services/masterdata/competitions.service";
 import { CalendarEvent } from "@/components/CalendarView/types";
+import { usePermission } from "@/hooks/usePermission";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 
 export default function CalendarPage() {
-  const [entries, setEntries] = useState<OrganizationCalendarEntry[]>([]);
+  const { can } = usePermission();
+  const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentYear] = useState(new Date().getFullYear());
 
@@ -36,49 +41,82 @@ export default function CalendarPage() {
 
   const handleDayConfigSave = async (config: any) => {
     try {
-      const payload: OrganizationCalendarEntry = {
-        date: config.date,
-        type: config.holidayType === 'None' ? 'Normal' : config.holidayType,
-        label: config.label,
-        isWorking: config.isWorking,
-        startTime: config.startTime,
-        endTime: config.endTime,
-      };
+      if (config.holidayType === 'SpecialEvent') {
+        const payload = {
+          nameEn: config.label,
+          nameSi: config.label,
+          descriptionEn: config.descriptionEn,
+          date: format(config.date, "yyyy-MM-dd"),
+          startTime: config.startTime,
+          endTime: config.endTime,
+          eventType: 'other',
+          year: currentYear,
+          teacherInChargeId: config.teacherInChargeId || undefined,
+        };
+        await eventsService.create(payload as any);
+        toast.success("School event created successfully");
+      } else if (config.holidayType === 'Competition') {
+        const dateStr = format(config.date, "yyyy-MM-dd");
+        const newIds = config.competitionIds || [];
+        
+        // Find existing competitions for this day from current entries
+        const oldIds = entries
+          .filter(e => format(new Date(e.date), "yyyy-MM-dd") === dateStr && (e.source === 'competition' || e.type === 'Competition'))
+          .map(e => e.metadata?.competitionId)
+          .filter(Boolean);
 
-      await calendarService.upsertDayConfig(payload);
-      toast.success("Schedule updated successfully");
+        const toRemove = oldIds.filter(id => !newIds.includes(id));
+        const toUpdate = newIds; // All selected should have this date
+
+        await Promise.all([
+          ...toUpdate.map((id: string) => competitionsService.update(id, { 
+            date: dateStr,
+            startTime: config.startTime,
+            endTime: config.endTime
+          })),
+          ...toRemove.map((id: string) => competitionsService.update(id, { date: null as any }))
+        ]);
+        
+        toast.success("Competition schedule updated");
+      } else {
+        const payload: OrganizationCalendarEntry = {
+          date: config.date,
+          type: config.holidayType === 'None' ? 'Normal' : config.holidayType,
+          label: config.label,
+          startTime: config.startTime,
+          endTime: config.endTime,
+        };
+        await calendarService.upsertDayConfig(payload);
+        toast.success("Schedule updated successfully");
+      }
       fetchCalendarData();
     } catch (error) {
-      console.error("Failed to save day config:", error);
-      toast.error("Failed to update schedule");
+      console.error("Failed to save calendar entry:", error);
+      toast.error("Failed to update calendar");
     }
   };
 
-  const handleBusinessHoursChange = async (hours: { start: string; end: string; effectiveDate: Date }) => {
-    // This could be a bulk update or a school setting. 
-    // For now, let's keep it simple or notify that it needs further implementation if complex.
-    toast.info("Business hours bulk update not implemented yet. Please update individual days.");
-  };
-
-  // Map backend entries to CalendarEvents
+  // Map backend entries (unified) to CalendarEvents
   const events: CalendarEvent[] = entries.map((entry) => ({
-    id: entry._id || String(entry.date),
+    id: entry.id || entry._id || String(entry.date),
     title: entry.label || entry.type,
     startDate: format(new Date(entry.date), "yyyy-MM-dd"),
     type: entry.type === 'PublicHoliday' ? 'public-holiday' : 
           entry.type === 'OrganizationalHoliday' ? 'custom-holiday' : 
           entry.type === 'Sunday' ? 'custom-holiday' : 
-          entry.type === 'SpecialEvent' ? 'event' : 'working-day',
+          entry.type === 'SpecialDay' ? 'special-day' : 
+          entry.type === 'Competition' || entry.source === 'competition' ? 'competition-event' :
+          entry.type === 'SpecialEvent' ? 'school-event' : 'working-day',
     metadata: {
-      isWorking: entry.isWorking,
-      startTime: entry.startTime,
-      endTime: entry.endTime,
-      holidayType: entry.type
+      ...entry.metadata,
+      startTime: entry.metadata?.startTime || (entry as any).startTime,
+      endTime: entry.metadata?.endTime || (entry as any).endTime,
     }
   }));
 
   return (
-    <PageContainer variant="fluid">
+    <PermissionGuard permission="activities.event.read">
+      <PageContainer variant="fluid">
       <PageHeader 
         title="Organization Calendar" 
         description="Manage school holidays, special events and working days"
@@ -98,11 +136,11 @@ export default function CalendarPage() {
         <CalendarView 
           events={events}
           initialView="year"
-          onDayConfigSave={handleDayConfigSave}
-          onBusinessHoursChange={handleBusinessHoursChange}
+          onDayConfigSave={can("activities.event.update") ? handleDayConfigSave : undefined}
           entityName="Organization Event"
         />
       </div>
-    </PageContainer>
+      </PageContainer>
+    </PermissionGuard>
   );
 }

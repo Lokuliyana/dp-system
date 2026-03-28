@@ -2,31 +2,33 @@ const router = require('express').Router()
 const ctrl = require('../../controllers/activities/event.controller')
 const validate = require('../../middlewares/validate.middleware')
 const V = require('../../validations/activities/event.validation')
+const permit = require('../../middlewares/permit.middleware')
+const P = require('../../constants/permissions')
 
 /* Event CRUD */
 router.post(
   '/',
-  // permit([P.EVENT.CREATE]),
+  permit([P.EVENT.CREATE]),
   validate(V.createEventSchema),
   ctrl.createEvent
 )
 
 router.get(
   '/',
-  // permit([P.EVENT.READ]),
+  permit([P.EVENT.READ]),
   ctrl.listEvents
 )
 
 router.patch(
   '/:id',
-  // permit([P.EVENT.UPDATE]),
+  permit([P.EVENT.UPDATE]),
   validate(V.updateEventSchema),
   ctrl.updateEvent
 )
 
 router.delete(
   '/:id',
-  // permit([P.EVENT.DELETE]),
+  permit([P.EVENT.DELETE]),
   validate(V.deleteEventSchema),
   ctrl.deleteEvent
 )
@@ -34,21 +36,21 @@ router.delete(
 /* Event Registration */
 router.post(
   '/register',
-  // permit([P.EVENT.REGISTER]),
+  permit([P.EVENT.REGISTER]),
   validate(V.registerStudentForEventSchema),
   ctrl.registerStudentForEvent
 )
 
 router.get(
   '/registrations',
-  // permit([P.EVENT.READ]),
+  permit([P.EVENT.READ]),
   validate(V.listEventRegistrationsSchema),
   ctrl.listEventRegistrations
 )
 
 router.post(
   '/:id/registrations/bulk',
-  // permit([P.EVENT.REGISTER]),
+  permit([P.EVENT.REGISTER]),
   ctrl.bulkRegisterStudents
 )
 

@@ -11,6 +11,7 @@ import { Save, User, GraduationCap, MapPin, Phone, Mail, Users, FileText, UserCh
 import { StudentAvatar } from "@/components/students/student-avatar"
 import { StudentStatusDialog } from "@/components/students/student-status-dialog"
 import { cn } from "@/lib/utils"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 interface BasicInfoProps {
   student: Student
@@ -85,24 +86,26 @@ export function StudentBasicInfo({ student, onSave }: BasicInfoProps) {
                     </Badge>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsStatusDialogOpen(true)}
-                  className="h-9 px-4 border-slate-200 text-slate-700 hover:bg-slate-50"
-                >
-                  {formData.status === "active" ? (
-                    <>
-                      <UserX className="mr-2 h-4 w-4 text-red-500" />
-                      Deactivate
-                    </>
-                  ) : (
-                    <>
-                      <UserCheck className="mr-2 h-4 w-4 text-emerald-500" />
-                      Activate
-                    </>
-                  )}
-                </Button>
+                <PermissionGuard permission="student.student.update">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsStatusDialogOpen(true)}
+                    className="h-9 px-4 border-slate-200 text-slate-700 hover:bg-slate-50"
+                  >
+                    {formData.status === "active" ? (
+                      <>
+                        <UserX className="mr-2 h-4 w-4 text-red-500" />
+                        Deactivate
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck className="mr-2 h-4 w-4 text-emerald-500" />
+                        Activate
+                      </>
+                    )}
+                  </Button>
+                </PermissionGuard>
               </div>
 
               {(formData.activeNote || formData.inactiveNote) && (
@@ -386,13 +389,15 @@ export function StudentBasicInfo({ student, onSave }: BasicInfoProps) {
         <p className="text-xs text-slate-400 font-medium">
           Make sure to verify information before saving critical records.
         </p>
-        <Button 
-          onClick={handleSave} 
-          className="bg-blue-600 hover:bg-blue-700 shadow-md transform hover:-translate-y-0.5 transition-all duration-200 gap-2 h-10 px-8"
-        >
-          <Save className="h-4 w-4" />
-          Commit Changes
-        </Button>
+        <PermissionGuard permission="student.student.update">
+          <Button 
+            onClick={handleSave} 
+            className="bg-blue-600 hover:bg-blue-700 shadow-md transform hover:-translate-y-0.5 transition-all duration-200 gap-2 h-10 px-8"
+          >
+            <Save className="h-4 w-4" />
+            Commit Changes
+          </Button>
+        </PermissionGuard>
       </div>
 
       <StudentStatusDialog

@@ -5,7 +5,10 @@ import { Trophy, AlertCircle, Save, RotateCcw, Loader, ArrowRight, CheckCircle2 
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { ExportButton } from "@/components/reusable";
 import { HouseMeetsMenu } from "@/components/house-meets/house-meets-menu";
+import { PermissionGuard } from "@/components/auth/permission-guard";
+import { usePermission } from "@/hooks/usePermission";
 import { CompetitionSidebar } from "@/components/house-meets/competition-sidebar";
+import { useGrades } from "@/hooks/useGrades";
 import { 
   Card, 
   CardContent, 
@@ -26,13 +29,21 @@ import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 
 export default function ChampionsPage() {
+  const { can } = usePermission();
   const { toast } = useToast();
   const currentYear = new Date().getFullYear();
   const [year] = useState(currentYear);
+  const { data: grades = [] } = useGrades();
+  const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [competitionId, setCompetitionId] = useState<string | null>(null);
 
+  // Auto-select first grade
+  useEffect(() => {
+    if (!selectedGrade && grades.length > 0) setSelectedGrade(grades[0].id);
+  }, [grades, selectedGrade]);
+
   // 1. Fetch Data
-  const { data: competitions = [], isLoading: compsLoading } = useCompetitions(year);
+  const { data: competitions = [], isLoading: compsLoading } = useCompetitions(year, selectedGrade || undefined);
   const { data: suggestions = [], isLoading: suggLoading } = useTeamSelectionSuggestions(year);
   
   // Fetch selections for all levels
@@ -61,10 +72,12 @@ export default function ChampionsPage() {
     [competitions, competitionId]
   );
 
-  // 2. Conflict Detection (Zonal)
+  // 2. Conflict Detection (Zonal) - Grade specific
   const zonalConflicts = useMemo(() => {
     const studentCounts: Record<string, number> = {};
     zonalSel?.entries?.forEach((e: any) => {
+      // Check if this entry belongs to the same competition and grade (or just check overall conflicts if that's desired)
+      // Usually conflicts are within the same context.
       const sid = typeof e.studentId === 'object' ? (e.studentId._id || e.studentId.id) : e.studentId;
       if (sid) {
         studentCounts[sid] = (studentCounts[sid] || 0) + 1;
@@ -94,6 +107,7 @@ export default function ChampionsPage() {
     const otherEntries = existingEntries.filter((e: any) => e.competitionId !== competitionId).map((e: any) => ({
       competitionId: e.competitionId,
       studentId: typeof e.studentId === 'object' ? (e.studentId._id || e.studentId.id) : e.studentId,
+      gradeId: e.gradeId,
       place: e.place
     }));
 
@@ -102,6 +116,7 @@ export default function ChampionsPage() {
       newEntries.push({
         competitionId,
         studentId,
+        gradeId: selectedGrade,
         place
       });
     }
@@ -124,14 +139,14 @@ export default function ChampionsPage() {
   };
 
   // 4. Derived state
-  const currentZonal = zonalSel?.entries?.find((e: any) => e.competitionId === competitionId);
-  const currentDistrict = districtSel?.entries?.find((e: any) => e.competitionId === competitionId);
-  const currentIsland = islandSel?.entries?.find((e: any) => e.competitionId === competitionId);
+  const currentZonal = zonalSel?.entries?.find((e: any) => e.competitionId === competitionId && e.gradeId === selectedGrade);
+  const currentDistrict = districtSel?.entries?.find((e: any) => e.competitionId === competitionId && e.gradeId === selectedGrade);
+  const currentIsland = islandSel?.entries?.find((e: any) => e.competitionId === competitionId && e.gradeId === selectedGrade);
 
   const compSuggestions = useMemo(() => {
-    if (!competitionId) return [];
-    return suggestions.filter((s: any) => s.competitionId === competitionId);
-  }, [suggestions, competitionId]);
+    if (!competitionId || !selectedGrade) return [];
+    return suggestions.filter((s: any) => s.competitionId === competitionId && s.gradeId === selectedGrade);
+  }, [suggestions, competitionId, selectedGrade]);
 
   const loading = compsLoading || suggLoading || zonalLoading || districtLoading || islandLoading;
 
@@ -159,35 +174,54 @@ export default function ChampionsPage() {
         title="Champions Path"
         subtitle="Manage progression from Zonal to All-Island."
         icon={Trophy}
-        actions={
-          <div className="flex items-center gap-2">
-            <ExportButton 
-              endpoint="/reports/teams" 
-              filename="championship_selections"
-              size="sm"
-            />
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => handleAutoGenerate("zonal", "district")}
-              disabled={autoGenerate.isPending}
-              className="hidden md:flex"
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Promote Zonal to District
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => handleAutoGenerate("district", "allisland")}
-              disabled={autoGenerate.isPending}
-              className="hidden md:flex"
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Promote District to Island
-            </Button>
-          </div>
-        }
+        actions={[
+          {
+            type: "custom",
+            render: (
+              <div className="flex items-center gap-2">
+                <ExportButton 
+                  endpoint="/reports/teams" 
+                  filename="championship_selections"
+                  size="sm"
+                />
+                <PermissionGuard permission="housemeets.team_selection.create">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleAutoGenerate("zonal", "district")}
+                    disabled={autoGenerate.isPending}
+                    className="hidden md:flex"
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Promote Zonal to District
+                  </Button>
+                </PermissionGuard>
+                <PermissionGuard permission="housemeets.team_selection.create">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleAutoGenerate("district", "allisland")}
+                    disabled={autoGenerate.isPending}
+                    className="hidden md:flex"
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Promote District to Island
+                  </Button>
+                </PermissionGuard>
+              </div>
+            )
+          },
+          {
+            type: "select",
+            props: {
+              label: "Grade",
+              value: selectedGrade || "",
+              onValueChange: setSelectedGrade,
+              options: grades.map(g => ({ label: g.nameEn, value: g.id })),
+              placeholder: "Select Grade",
+            },
+          },
+        ]}
       />
 
       <div className="p-6 h-[calc(100vh-140px)] overflow-y-auto">
@@ -212,6 +246,7 @@ export default function ChampionsPage() {
                     <Select 
                       value={getStudentId(currentZonal?.studentId) || "none"} 
                       onValueChange={(v) => handleUpdateSelection("zonal", v, currentZonal?.place)}
+                      disabled={!can("housemeets.team_selection.create")}
                     >
                       <SelectTrigger className={cn(
                         "w-full bg-white",
@@ -243,7 +278,7 @@ export default function ChampionsPage() {
                     <Select 
                       value={currentZonal?.place?.toString() || "0"} 
                       onValueChange={(v) => handleUpdateSelection("zonal", getStudentId(currentZonal?.studentId), parseInt(v))}
-                      disabled={!currentZonal}
+                      disabled={!currentZonal || !can("housemeets.team_selection.create")}
                     >
                       <SelectTrigger className="bg-white">
                         <SelectValue placeholder="-" />
@@ -278,16 +313,20 @@ export default function ChampionsPage() {
                     <label className="text-sm font-medium text-slate-700 mb-1 block">District Representative</label>
                     {currentDistrict ? (
                        <div className="flex items-center justify-between p-2 bg-white border rounded-md">
-                         <span className="font-medium">{getStudentName(currentDistrict.studentId)}</span>
-                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleUpdateSelection("district", "none")}>×</Button>
+                        <span className="font-medium">{getStudentName(currentDistrict.studentId)}</span>
+                         <PermissionGuard permission="housemeets.team_selection.create">
+                           <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleUpdateSelection("district", "none")}>×</Button>
+                         </PermissionGuard>
                        </div>
                     ) : (
-                      <Button variant="outline" className="w-full justify-start bg-white" onClick={() => handleUpdateSelection("district", getStudentId(currentZonal?.studentId))} disabled={!currentZonal}>+ Promote Zonal Winner</Button>
+                      <PermissionGuard permission="housemeets.team_selection.create">
+                        <Button variant="outline" className="w-full justify-start bg-white" onClick={() => handleUpdateSelection("district", getStudentId(currentZonal?.studentId))} disabled={!currentZonal}>+ Promote Zonal Winner</Button>
+                      </PermissionGuard>
                     )}
                   </div>
                   <div className="w-[140px]">
                     <label className="text-sm font-medium text-slate-700 mb-1 block">District Place</label>
-                    <Select value={currentDistrict?.place?.toString() || "0"} onValueChange={(v) => handleUpdateSelection("district", getStudentId(currentDistrict?.studentId), parseInt(v))} disabled={!currentDistrict}>
+                    <Select value={currentDistrict?.place?.toString() || "0"} onValueChange={(v) => handleUpdateSelection("district", getStudentId(currentDistrict?.studentId), parseInt(v))} disabled={!currentDistrict || !can("housemeets.team_selection.create")}>
                       <SelectTrigger className="bg-white"><SelectValue placeholder="-" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="0">Participated</SelectItem>
@@ -320,15 +359,19 @@ export default function ChampionsPage() {
                     {currentIsland ? (
                        <div className="flex items-center justify-between p-2 bg-white border rounded-md">
                          <span className="font-medium">{getStudentName(currentIsland.studentId)}</span>
-                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleUpdateSelection("allisland", "none")}>×</Button>
+                         <PermissionGuard permission="housemeets.team_selection.create">
+                           <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleUpdateSelection("allisland", "none")}>×</Button>
+                         </PermissionGuard>
                        </div>
                     ) : (
-                      <Button variant="outline" className="w-full justify-start bg-white" onClick={() => handleUpdateSelection("allisland", getStudentId(currentDistrict?.studentId))} disabled={!currentDistrict}>+ Promote District Winner</Button>
+                      <PermissionGuard permission="housemeets.team_selection.create">
+                        <Button variant="outline" className="w-full justify-start bg-white" onClick={() => handleUpdateSelection("allisland", getStudentId(currentDistrict?.studentId))} disabled={!currentDistrict}>+ Promote District Winner</Button>
+                      </PermissionGuard>
                     )}
                   </div>
                   <div className="w-[140px]">
                     <label className="text-sm font-medium text-slate-700 mb-1 block">National Place</label>
-                    <Select value={currentIsland?.place?.toString() || "0"} onValueChange={(v) => handleUpdateSelection("allisland", getStudentId(currentIsland?.studentId), parseInt(v))} disabled={!currentIsland}>
+                    <Select value={currentIsland?.place?.toString() || "0"} onValueChange={(v) => handleUpdateSelection("allisland", getStudentId(currentIsland?.studentId), parseInt(v))} disabled={!currentIsland || !can("housemeets.team_selection.create")}>
                       <SelectTrigger className="bg-white"><SelectValue placeholder="-" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="0">Participated</SelectItem>

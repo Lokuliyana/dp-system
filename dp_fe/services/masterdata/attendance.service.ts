@@ -11,34 +11,34 @@ export type MarkAttendancePayload = {
 
 export const attendanceService = {
   mark(payload: MarkAttendancePayload) {
-    return axiosInstance.post(endpoints.attendance, payload)
+    return axiosInstance.post(endpoints.attendance.base, payload)
       .then(r => r.data.data as Attendance)
   },
 
   update(id: string, status: MarkAttendancePayload["status"]) {
-    return axiosInstance.patch(`${endpoints.attendance}/${id}`, { status })
+    return axiosInstance.patch(`${endpoints.attendance.base}/${id}`, { status })
       .then(r => r.data.data as Attendance)
   },
 
   listByDate(date: string, gradeId?: string) {
-    return axiosInstance.get(`${endpoints.attendance}/by-date`, {
+    return axiosInstance.get(`${endpoints.attendance.base}/by-date`, {
       params: { date, gradeId },
     }).then(r => r.data.data as Attendance[])
   },
 
   listByStudent(studentId: string, startDate?: string, endDate?: string) {
-    return axiosInstance.get(`${endpoints.attendance}/by-student/${studentId}`, {
+    return axiosInstance.get(`${endpoints.attendance.base}/by-student/${studentId}`, {
       params: { startDate, endDate },
     }).then(r => r.data.data as Attendance[])
   },
 
   remove(id: string) {
-    return axiosInstance.delete(`${endpoints.attendance}/${id}`)
+    return axiosInstance.delete(`${endpoints.attendance.base}/${id}`)
       .then(r => r.data.data as { deleted: true })
   },
 
   getStats(startDate: string, endDate: string, gradeId?: string) {
-    return axiosInstance.get(`${endpoints.attendance}/stats`, {
+    return axiosInstance.get(`${endpoints.attendance.base}/stats`, {
       params: { startDate, endDate, gradeId },
     }).then(r => r.data.data as {
       date: string
@@ -50,8 +50,19 @@ export const attendanceService = {
     }[])
   },
 
+  getDashboardStats(startDate: string, endDate: string) {
+    return axiosInstance.get(endpoints.attendance.dashboardStats, {
+      params: { startDate, endDate },
+    }).then(r => r.data.data as {
+      dailyTrend: any[]
+      gradeStats: any[]
+      interventionList: any[]
+      summary: any
+    })
+  },
+
   listByRange(startDate: string, endDate: string, gradeId?: string) {
-    return axiosInstance.get(`${endpoints.attendance}/by-range`, {
+    return axiosInstance.get(`${endpoints.attendance.base}/by-range`, {
       params: { startDate, endDate, gradeId },
     }).then(r => r.data.data as Attendance[])
   },

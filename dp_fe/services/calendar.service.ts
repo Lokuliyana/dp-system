@@ -1,13 +1,15 @@
 import { axiosInstance } from '@/lib/axios';
 
 export interface OrganizationCalendarEntry {
+  id?: string;
   _id?: string;
   date: string | Date;
-  type: 'Normal' | 'Sunday' | 'PublicHoliday' | 'OrganizationalHoliday' | 'SpecialEvent';
+  type: 'Normal' | 'Sunday' | 'PublicHoliday' | 'OrganizationalHoliday' | 'SpecialEvent' | 'SpecialDay' | 'Competition';
   label: string;
-  isWorking: boolean;
-  startTime: string;
-  endTime: string;
+  source?: 'organization' | 'event' | 'exam' | 'competition';
+  startTime?: string;
+  endTime?: string;
+  metadata?: any;
 }
 
 export const calendarService = {

@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react"
 import { useAppUsers, useRoles, useDeleteAppUser } from "@/hooks/useAuth"
+import { usePermission } from "@/hooks/usePermission"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 import { 
   Button, 
   Card, 
@@ -30,6 +32,7 @@ export default function UsersPage() {
   const { data: users, isLoading } = useAppUsers()
   const { data: roles } = useRoles()
   const deleteUser = useDeleteAppUser()
+  const { can } = usePermission()
   
   const [searchTerm, setSearchTerm] = useState("")
   const [userIdToDelete, setUserIdToDelete] = useState<string | null>(null)
@@ -58,13 +61,19 @@ export default function UsersPage() {
             },
           },
           {
-            type: "button",
-            props: {
-              variant: "default",
-              icon: Plus,
-              children: "Add User",
-              onClick: () => router.push("/users/create"),
-            },
+            type: "custom",
+            render: (
+              <PermissionGuard permission="system.app_user.create">
+                <Button
+                  variant="default"
+                  onClick={() => router.push("/users/create")}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add User
+                </Button>
+              </PermissionGuard>
+            ),
           },
         ]}
       />
@@ -116,8 +125,11 @@ export default function UsersPage() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         key={user.id}
-                        className="group hover:bg-slate-50/50 cursor-pointer"
-                        onClick={() => router.push(`/users/${user.id}/edit`)}
+                        className={cn(
+                          "group hover:bg-slate-50/50",
+                          can("system.app_user.update") && "cursor-pointer"
+                        )}
+                        onClick={() => can("system.app_user.update") && router.push(`/users/${user.id}/edit`)}
                       >
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -174,17 +186,19 @@ export default function UsersPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setUserIdToDelete(user.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-slate-400 hover:text-red-500" />
-                            </Button>
+                            <PermissionGuard permission="system.app_user.delete">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setUserIdToDelete(user.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-slate-400 hover:text-red-500" />
+                              </Button>
+                            </PermissionGuard>
                             <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-primary transition-colors" />
                           </div>
                         </TableCell>
@@ -208,6 +222,8 @@ export default function UsersPage() {
     </LayoutController>
   )
 }
+
+import { cn } from "@/lib/utils"
 
 function Loader2(props: any) {
   return (

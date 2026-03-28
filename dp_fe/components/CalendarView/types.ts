@@ -41,12 +41,19 @@ export const DEFAULT_EVENT_TYPES: Record<string, EventTypeConfig> = {
     bgColor: 'hsl(var(--primary) / 0.1)',
     icon: 'calendar',
   },
-  'working-day': {
-    id: 'working-day',
-    label: 'Working Day',
-    color: 'hsl(142 71% 45%)', // Emerald 600
-    bgColor: 'hsl(142 71% 95%)', // Emerald 50
-    icon: 'clock',
+  'competition-event': {
+    id: 'competition-event',
+    label: 'Competition',
+    color: 'hsl(262 83% 58%)', // Violet 600
+    bgColor: 'hsl(262 83% 95%)', // Violet 50
+    icon: 'trophy',
+  },
+  'special-day': {
+    id: 'special-day',
+    label: 'Special Day',
+    color: 'hsl(335 84% 57%)', // Rose 600
+    bgColor: 'hsl(335 84% 95%)', // Rose 50
+    icon: 'star',
   },
 };
 
@@ -136,20 +143,22 @@ export interface CalendarViewProps {
   
   // Read-only mode
   readOnly?: boolean;
-
+ 
   // Custom labels
   entityName?: string;
-  businessHours?: { start: string; end: string };
-  onBusinessHoursChange?: (hours: { start: string; end: string; effectiveDate: Date }) => void;
   onDayConfigSave?: (config: {
     date: Date;
     endDate?: Date;
-    isWorking: boolean;
     isHoliday: boolean;
-    holidayType: 'PublicHoliday' | 'OrganizationalHoliday' | 'Weekend' | 'None';
+    holidayType: 'PublicHoliday' | 'OrganizationalHoliday' | 'Weekend' | 'None' | 'SpecialEvent' | 'SpecialDay' | 'Competition';
     label: string;
-    startTime: string;
-    endTime: string;
     isMultiDay: boolean;
+    // For School Events
+    descriptionEn?: string;
+    teacherInChargeId?: string;
+    gradeIds?: string[];
+    competitionIds?: string[];
+    startTime?: string;
+    endTime?: string;
   }) => void;
 }

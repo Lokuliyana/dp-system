@@ -7,9 +7,9 @@ const bcrypt = require('bcryptjs')
 const dayjs = require('dayjs')
 
 async function syncAppUser(teacher, schoolId, userId) {
-  // 1. Get systemRoleIds from teacher's staff roles
+  // 1. Get system roles and their permissions
   const staffRoles = await StaffRole.find({ _id: { $in: teacher.roleIds || [] } })
-  const roleIds = staffRoles.map((r) => r.systemRoleId).filter(Boolean)
+  const systemRoleIds = staffRoles.map((r) => r.systemRoleId).filter(Boolean)
 
   // 2. Find existing AppUser for this teacher
   const appUser = await AppUser.findOne({ teacherId: teacher._id, schoolId })
@@ -18,15 +18,21 @@ async function syncAppUser(teacher, schoolId, userId) {
     name: `${teacher.firstNameEn} ${teacher.lastNameEn}`.trim(),
     email: teacher.email || undefined,
     phone: teacher.phone || undefined,
-    roleIds: roleIds,
+    roleIds: systemRoleIds,
     teacherId: teacher._id,
     schoolId,
     isActive: teacher.status === 'active',
   }
 
+  // Username generation: firstNameEn + initials of all words in lastNameEn
+  const otherNames = (teacher.lastNameEn || '').trim().split(/\s+/)
+  const initials = otherNames.map(n => n[0]).filter(Boolean).join('')
+  const username = `${teacher.firstNameEn}${initials}`
+  userData.username = username
+
   if (appUser) {
     // Update existing user
-    // We don't change password on sync
+    // We don't change password or permissions on sync for existing users (as requested "no linkage")
     await AppUser.findOneAndUpdate(
       { _id: appUser._id },
       { ...userData, updatedById: userId },
@@ -34,17 +40,25 @@ async function syncAppUser(teacher, schoolId, userId) {
     )
   } else {
     // Create new user
-    // Default PW should be dob MMDD + firstname (order - firstnameMMDD)
-    let dobMMDD = ''
+    // PW format: DOB in YYYYMMDD
+    let defaultPassword = ''
     if (teacher.dob) {
-      dobMMDD = dayjs(teacher.dob).format('MMDD')
+      defaultPassword = dayjs(teacher.dob).format('YYYYMMDD')
+    } else {
+      // Fallback if no DOB (e.g. firstname123)
+      defaultPassword = `${teacher.firstNameEn.toLowerCase()}123`
     }
-    const defaultPassword = `${teacher.firstNameEn.toLowerCase()}${dobMMDD}`
+
     const hashedPassword = await bcrypt.hash(defaultPassword, 10)
+
+    // Copy permissions from roles on creation
+    const roles = await Role.find({ _id: { $in: systemRoleIds } })
+    const allPermissions = Array.from(new Set(roles.flatMap(r => r.permissions || [])))
 
     await AppUser.create({
       ...userData,
       password: hashedPassword,
+      permissions: allPermissions,
       isFirstTimeLogin: true,
       createdById: userId,
     })

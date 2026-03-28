@@ -33,29 +33,32 @@ import {
   SidebarSeparator,
 } from "@/components/ui";
 
+import { usePermission } from "@/hooks/usePermission";
+
 type NavItem = {
   id: string;
   label: string;
   href: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   group: "overview" | "academics" | "engagement" | "people" | "insights";
+  permission?: string;
 };
 
 const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: Home, group: "overview" },
-  { id: "calendar", label: "Calendar", href: "/calendar", icon: Calendar, group: "overview" },
-  { id: "students", label: "Students", href: "/students", icon: Users, group: "academics" },
-  { id: "attendance", label: "Attendance", href: "/attendance", icon: Calendar, group: "academics" },
-  { id: "exams", label: "Exam Results", href: "/exams", icon: FileText, group: "academics" },
-  { id: "house-meets", label: "House Meets", href: "/house-meets", icon: Trophy, group: "engagement" },
-  { id: "champions", label: "Champions", href: "/champions", icon: Trophy, group: "engagement" },
-  { id: "activities", label: "Activities", href: "/activities", icon: Award, group: "engagement" },
-  { id: "staff", label: "Staff", href: "/staff", icon: Users, group: "people" },
-  { id: "prefects", label: "Prefects", href: "/prefects", icon: Crown, group: "people" },
-  { id: "parents", label: "Parents", href: "/parents", icon: Users2, group: "people" },
-  { id: "users", label: "Users", href: "/users", icon: ShieldCheck, group: "people" },
-  { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3, group: "insights" },
-  { id: "configuration", label: "Configuration", href: "/configuration", icon: Settings, group: "insights" },
+  { id: "calendar", label: "Calendar", href: "/calendar", icon: Calendar, group: "overview", permission: "activities.event.read" },
+  { id: "students", label: "Students", href: "/students", icon: Users, group: "academics", permission: "student.student.read" },
+  { id: "attendance", label: "Attendance", href: "/attendance", icon: Calendar, group: "academics", permission: "student.attendance.read" },
+  { id: "exams", label: "Exam Results", href: "/exams", icon: FileText, group: "academics", permission: "student.exam_result.read" },
+  { id: "house-meets", label: "House Meets", href: "/house-meets", icon: Trophy, group: "engagement", permission: "housemeets.house.read" },
+  { id: "champions", label: "Champions", href: "/champions", icon: Trophy, group: "engagement", permission: "housemeets.competition_result.read" },
+  { id: "activities", label: "Activities", href: "/activities", icon: Award, group: "engagement", permission: "activities.club.read" },
+  { id: "staff", label: "Staff", href: "/staff", icon: Users, group: "people", permission: "staff.teacher.read" },
+  { id: "prefects", label: "Prefects", href: "/prefects", icon: Crown, group: "people", permission: "staff.prefect.read" },
+  { id: "parents", label: "Parents", href: "/parents", icon: Users2, group: "people", permission: "student.parent.read" },
+  { id: "users", label: "Users", href: "/users", icon: ShieldCheck, group: "people", permission: "system.app_user.read" },
+  { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3, group: "insights", permission: "student.report.read" },
+  { id: "configuration", label: "Configuration", href: "/configuration", icon: Settings, group: "insights", permission: "system.school.read" },
 ];
 
 const GROUP_LABELS: Record<NavItem["group"], string> = {
@@ -68,6 +71,7 @@ const GROUP_LABELS: Record<NavItem["group"], string> = {
 
 export function MainNavigation() {
   const pathname = usePathname();
+  const { can } = usePermission();
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {
@@ -76,7 +80,9 @@ export function MainNavigation() {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  const itemsByGroup = NAV_ITEMS.reduce<Record<NavItem["group"], NavItem[]>>(
+  const filteredNavItems = NAV_ITEMS.filter(item => !item.permission || can(item.permission));
+
+  const itemsByGroup = filteredNavItems.reduce<Record<NavItem["group"], NavItem[]>>(
     (acc, item) => {
       acc[item.group] = acc[item.group] ? [...acc[item.group], item] : [item];
       return acc;
@@ -140,6 +146,7 @@ export function MainNavigation() {
           );
         })}
       </SidebarContent>
+
 
       <SidebarFooter className="border-t border-sidebar-border p-1.5">
         <div className="flex items-center justify-between px-1.5 text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">

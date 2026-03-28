@@ -50,10 +50,13 @@ import { useClubs } from "@/hooks/useClubs";
 import { useSquads } from "@/hooks/useSquads";
 import { LiveSearch } from "@/components/reusable";
 import { useToast } from "@/hooks/use-toast";
+import { PermissionGuard } from "@/components/auth/permission-guard";
+import { usePermission } from "@/hooks/usePermission";
 import type { Event, EventCategory } from "@/types/models";
 import { cn } from "@/lib/utils";
 
 export function EventsManagement() {
+  const { can } = usePermission();
   const { data: events = [], isLoading: isLoadingEvents } = useEvents();
   const { data: grades = [] } = useGrades();
   const { data: teachers = [] } = useTeachers();
@@ -406,15 +409,17 @@ export function EventsManagement() {
           )}
         </div>
 
-        <Button 
-          onClick={() => {
-            setEditingId(null);
-            setIsFormOpen(true);
-          }}
-          className="mt-auto w-full gap-2"
-        >
-          <Plus className="h-4 w-4" /> New Event
-        </Button>
+        <PermissionGuard permission="activities.event.create">
+          <Button 
+            onClick={() => {
+              setEditingId(null);
+              setIsFormOpen(true);
+            }}
+            className="mt-auto w-full gap-2"
+          >
+            <Plus className="h-4 w-4" /> New Event
+          </Button>
+        </PermissionGuard>
       </div>
 
       {/* Main Content - Event Details */}
@@ -443,25 +448,29 @@ export function EventsManagement() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleEdit(currentEvent)}
-                        className="h-9 border-slate-200 text-slate-600 hover:bg-slate-50"
-                      >
-                        <Edit className="mr-2 h-3.5 w-3.5" /> Edit Event
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          setItemToDelete(currentEvent.id);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="h-9 w-9 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <PermissionGuard permission="activities.event.update">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleEdit(currentEvent)}
+                          className="h-9 border-slate-200 text-slate-600 hover:bg-slate-50"
+                        >
+                          <Edit className="mr-2 h-3.5 w-3.5" /> Edit Event
+                        </Button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="activities.event.delete">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setItemToDelete(currentEvent.id);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="h-9 w-9 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   </div>
 
@@ -558,14 +567,16 @@ export function EventsManagement() {
                           />
                         </div>
                       </div>
-                      <Button
-                        className="w-full gap-2"
-                        onClick={handleRegister}
-                        disabled={!selectedUsersToAdd.length || bulkRegisterMutation.isPending}
-                        size="sm"
-                      >
-                        {bulkRegisterMutation.isPending ? <Loader className="animate-spin h-4 w-4" /> : <><Plus className="h-4 w-4" /> Confirm Registration</>}
-                      </Button>
+                      <PermissionGuard permission="activities.event_registration.create">
+                        <Button
+                          className="w-full gap-2"
+                          onClick={handleRegister}
+                          disabled={!selectedUsersToAdd.length || bulkRegisterMutation.isPending}
+                          size="sm"
+                        >
+                          {bulkRegisterMutation.isPending ? <Loader className="animate-spin h-4 w-4" /> : <><Plus className="h-4 w-4" /> Confirm Registration</>}
+                        </Button>
+                      </PermissionGuard>
                     </div>
                     
                     <div className="border-t">
@@ -614,15 +625,17 @@ export function EventsManagement() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="py-3 text-right">
-                                    <Button 
-                                      size="icon" 
-                                      variant="ghost" 
-                                      className="h-7 w-7 text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
-                                      onClick={() => handleRemoveRegistration(reg.id)}
-                                      disabled={removeRegistration.isPending}
-                                    >
-                                      {removeRegistration.isPending ? <Loader className="animate-spin h-3 w-3" /> : <Trash2 className="h-3.5 w-3.5" />}
-                                    </Button>
+                                    <PermissionGuard permission="activities.event_registration.delete">
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-7 w-7 text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                                        onClick={() => handleRemoveRegistration(reg.id)}
+                                        disabled={removeRegistration.isPending}
+                                      >
+                                        {removeRegistration.isPending ? <Loader className="animate-spin h-3 w-3" /> : <Trash2 className="h-3.5 w-3.5" />}
+                                      </Button>
+                                    </PermissionGuard>
                                   </TableCell>
                                 </TableRow>
                               );

@@ -2,17 +2,19 @@ const router = require('express').Router()
 const ctrl = require('../../controllers/student/student.controller')
 const validate = require('../../middlewares/validate.middleware')
 const V = require('../../validations/student/student.validation')
+const permit = require('../../middlewares/permit.middleware')
+const P = require('../../constants/permissions')
 
 router.post(
   '/',
-  // permit([P.STUDENT.CREATE]),
+  permit([P.STUDENT.CREATE]),
   validate(V.createStudentSchema),
   ctrl.createStudent
 )
 
 router.post(
   '/bulk-import',
-  // permit([P.STUDENT.CREATE]),
+  permit([P.STUDENT.CREATE]),
   require('../../middlewares/upload.middleware').single('file'),
   ctrl.bulkImportStudents
 )
@@ -20,7 +22,7 @@ router.post(
 // universal list with pagination and search
 router.get(
   '/',
-  // permit([P.STUDENT.READ]),
+  permit([P.STUDENT.READ]),
   validate(V.listStudentsSchema),
   ctrl.listStudents
 )
@@ -28,49 +30,49 @@ router.get(
 // list by grade via query: /students/by-grade?gradeId=...
 router.get(
   '/by-grade',
-  // permit([P.STUDENT.READ]),
+  permit([P.STUDENT.READ]),
   validate(V.listStudentsByGradeSchema),
   ctrl.listStudentsByGrade
 )
 
 router.get(
   '/with-results-by-grade',
-  // permit([P.STUDENT.READ]),
+  permit([P.STUDENT.READ]),
   validate(V.listStudentsWithResultsByGradeSchema),
   ctrl.listStudentsWithResultsByGrade
 )
 
 router.get(
   '/:id/360',
-  // permit([P.STUDENT.READ]),
+  permit([P.STUDENT.READ]),
   validate(V.getStudent360Schema),
   ctrl.getStudent360
 )
 
 router.patch(
   '/:id',
-  // permit([P.STUDENT.UPDATE]),
+  permit([P.STUDENT.UPDATE]),
   validate(V.updateStudentBasicInfoSchema),
   ctrl.updateStudentBasicInfo
 )
 
 router.delete(
   '/:id',
-  // permit([P.STUDENT.DELETE]),
+  permit([P.STUDENT.DELETE]),
   validate(V.deleteStudentSchema),
   ctrl.deleteStudent
 )
 
 router.post(
   '/:id/notes',
-  // permit([P.STUDENT.UPDATE]),
+  permit([P.STUDENT.UPDATE]),
   validate(V.addStudentNoteSchema),
   ctrl.addStudentNote
 )
 
 router.delete(
   '/:id/notes/:noteId',
-  // permit([P.STUDENT.UPDATE]),
+  permit([P.STUDENT.UPDATE]),
   validate(V.removeStudentNoteSchema),
   ctrl.removeStudentNote
 )

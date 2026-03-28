@@ -13,6 +13,10 @@ const teamEntrySchema = new mongoose.Schema(
       ref: 'Student',
       required: true,
     },
+    gradeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Grade',
+    },
     place: { type: Number, min: 1, max: 5 },
   },
   { _id: false }

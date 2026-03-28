@@ -2,30 +2,32 @@ const router = require('express').Router()
 const ctrl = require('../../controllers/system/gradingSchema.controller')
 const validate = require('../../middlewares/validate.middleware')
 const V = require('../../validations/system/gradingSchema.validation')
+const permit = require('../../middlewares/permit.middleware')
+const P = require('../../constants/permissions')
 
 router.post(
   '/',
-  // permit([P.GRADING_SCHEMA.CREATE]),
+  permit([P.GRADING_SCHEMA.CREATE]),
   validate(V.createGradingSchema),
   ctrl.createGradingSchema
 )
 
 router.get(
   '/',
-  // permit([P.GRADING_SCHEMA.READ]),
+  permit([P.GRADING_SCHEMA.READ]),
   ctrl.listGradingSchemas
 )
 
 router.patch(
   '/:id',
-  // permit([P.GRADING_SCHEMA.UPDATE]),
+  permit([P.GRADING_SCHEMA.UPDATE]),
   validate(V.updateGradingSchema),
   ctrl.updateGradingSchema
 )
 
 router.delete(
   '/:id',
-  // permit([P.GRADING_SCHEMA.DELETE]),
+  permit([P.GRADING_SCHEMA.DELETE]),
   validate(V.deleteGradingSchema),
   ctrl.deleteGradingSchema
 )

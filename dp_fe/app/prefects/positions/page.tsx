@@ -9,6 +9,7 @@ import { usePrefectPositions, useCreatePrefectPosition, useUpdatePrefectPosition
 import { PrefectPositionForm } from "@/components/prefects/PrefectPositionForm";
 import { CreatePrefectPositionPayload } from "@/services/masterdata/prefectPositions.service";
 import { DeleteConfirmationModal } from "@/components/reusable";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 import type { PrefectPosition } from "@/types/models";
 
 export default function PrefectPositionsPage() {
@@ -57,13 +58,15 @@ export default function PrefectPositionsPage() {
         subtitle="Manage master data for prefect positions and responsibilities."
         icon={Shield}
         actions={
-          <Button className="gap-2" onClick={() => {
-            setEditingPosition(null);
-            setIsModalOpen(true);
-          }}>
-            <Plus className="h-4 w-4" />
-            Add Position
-          </Button>
+          <PermissionGuard permission="staff.prefect_position.create">
+            <Button className="gap-2" onClick={() => {
+                setEditingPosition(null);
+                setIsModalOpen(true);
+            }}>
+                <Plus className="h-4 w-4" />
+                Add Position
+            </Button>
+          </PermissionGuard>
         }
       />
 
@@ -91,22 +94,26 @@ export default function PrefectPositionsPage() {
                       <p className="text-sm text-slate-500">{pos.nameSi}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-slate-500 hover:text-blue-600"
-                        onClick={() => handleEdit(pos)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-slate-500 hover:text-red-600"
-                        onClick={() => setItemToDelete(pos.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <PermissionGuard permission="staff.prefect_position.update">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:text-blue-600"
+                          onClick={() => handleEdit(pos)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="staff.prefect_position.delete">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:text-red-600"
+                          onClick={() => setItemToDelete(pos.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   </div>
                 ))

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Users, Plus, Search, Edit, Trash2, Eye, Shield } from "lucide-react";
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { StaffMenu } from "@/components/staff/staff-menu";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Dialog, DialogContent, DialogHeader, DialogTitle, Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, Badge } from "@/components/ui";
 import { useTeachers, useCreateTeacher, useDeleteTeacher, useUpdateTeacher } from "@/hooks/useTeachers";
 import { useClubs } from "@/hooks/useClubs";
@@ -109,13 +110,19 @@ export default function StaffPage() {
             )
           },
           {
-            type: "button",
-            props: {
-              variant: "default",
-              icon: Plus,
-              children: "Add Staff",
-              onClick: () => setIsCreateModalOpen(true),
-            },
+            type: "custom",
+            render: (
+              <PermissionGuard permission="staff.teacher.create">
+                <Button
+                  variant="default"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Staff
+                </Button>
+              </PermissionGuard>
+            ),
           },
         ]}
       />
@@ -150,17 +157,19 @@ export default function StaffPage() {
                     </p>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-slate-500 hover:text-blue-600"
-                        onClick={() => {
-                          setEditingTeacher(teacher);
-                          setIsCreateModalOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <PermissionGuard permission="staff.teacher.update">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:text-blue-600"
+                          onClick={() => {
+                            setEditingTeacher(teacher);
+                            setIsCreateModalOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </PermissionGuard>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -169,14 +178,16 @@ export default function StaffPage() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-slate-500 hover:text-red-600"
-                        onClick={() => setItemToDelete(teacher.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <PermissionGuard permission="staff.teacher.delete">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:text-red-600"
+                          onClick={() => setItemToDelete(teacher.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   </div>
                 ))

@@ -10,6 +10,7 @@ import { useParents, useCreateParent, useUpdateParent, useDeleteParent } from "@
 import { ParentForm } from "./ParentForm";
 import type { Parent } from "@/types/models";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 import { DeleteConfirmationModal } from "@/components/reusable";
 import { LinkParentStudentDialog } from "./LinkParentStudentDialog";
 
@@ -125,10 +126,12 @@ export function ParentsManagement() {
           </div>
         </div>
 
-        <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => { setEditingParent(null); setIsModalOpen(true); }}>
-          <Plus className="h-4 w-4" />
-          Add Parent
-        </Button>
+        <PermissionGuard permission="student.parent.create">
+          <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => { setEditingParent(null); setIsModalOpen(true); }}>
+            <Plus className="h-4 w-4" />
+            Add Parent
+          </Button>
+        </PermissionGuard>
       </div>
 
       {/* Directory table */}
@@ -213,15 +216,21 @@ export function ParentsManagement() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => { setEditingParent(parent); setIsModalOpen(true); }}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => setLinkParent(parent)}>
-                            <Link2 className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => setItemToDelete(parent.id)}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+                          <PermissionGuard permission="student.parent.update">
+                            <Button variant="ghost" size="sm" onClick={() => { setEditingParent(parent); setIsModalOpen(true); }}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
+                          <PermissionGuard permission="student.parent_student_link.create">
+                            <Button variant="ghost" size="sm" onClick={() => setLinkParent(parent)}>
+                              <Link2 className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
+                          <PermissionGuard permission="student.parent.delete">
+                            <Button variant="ghost" size="sm" onClick={() => setItemToDelete(parent.id)}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </PermissionGuard>
                         </div>
                       </td>
                     </tr>

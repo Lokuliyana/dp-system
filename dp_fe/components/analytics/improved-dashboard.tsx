@@ -7,7 +7,6 @@ import {
   Trophy,
   Award,
   TrendingUp,
-  AlertCircle,
   Calendar,
   BarChart3,
 } from "lucide-react";
@@ -18,86 +17,23 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useState, useMemo } from "react";
 
 import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   Header,
 } from "@/components/ui";
-
-type DashboardStat = {
-  title: string;
-  value: string;
-  icon: LucideIcon;
-  colorClass: string;
-  trend: string;
-};
-
-type GradePerformanceRow = {
-  grade: string;
-  excellent: number;
-  good: number;
-  average: number;
-  poor: number;
-};
-
-type RecentActivity = {
-  title: string;
-  time: string;
-  type: "competition" | "clubs" | "event" | "alert";
-};
-
-const dashboardStats: DashboardStat[] = [
-  {
-    title: "Total Students",
-    value: "455",
-    icon: Users,
-    colorClass: "bg-blue-50 text-blue-700 border-blue-200",
-    trend: "+12 this month",
-  },
-  {
-    title: "Competitions",
-    value: "12",
-    icon: Trophy,
-    colorClass: "bg-amber-50 text-amber-700 border-amber-200",
-    trend: "3 ongoing",
-  },
-  {
-    title: "Clubs & Activities",
-    value: "18",
-    icon: Award,
-    colorClass: "bg-purple-50 text-purple-700 border-purple-200",
-    trend: "456 members",
-  },
-  {
-    title: "Overall Attendance",
-    value: "94%",
-    icon: TrendingUp,
-    colorClass: "bg-green-50 text-green-700 border-green-200",
-    trend: "↑2% from last week",
-  },
-];
-
-const gradePerformance: GradePerformanceRow[] = [
-  { grade: "Grade 1", excellent: 15, good: 18, average: 8, poor: 2 },
-  { grade: "Grade 2", excellent: 12, good: 20, average: 10, poor: 3 },
-  { grade: "Grade 3", excellent: 18, good: 16, average: 9, poor: 2 },
-  { grade: "Grade 4", excellent: 14, good: 19, average: 11, poor: 1 },
-  { grade: "Grade 5", excellent: 16, good: 17, average: 10, poor: 2 },
-  { grade: "Grade 6", excellent: 13, good: 21, average: 8, poor: 3 },
-];
-
-const recentActivities: RecentActivity[] = [
-  { title: "Debate Competition Results", time: "2 hours ago", type: "competition" },
-  { title: "New Club Registration", time: "4 hours ago", type: "clubs" },
-  { title: "Class Teacher Conference", time: "1 day ago", type: "event" },
-  { title: "Attendance Alert", time: "1 day ago", type: "alert" },
-];
+import { usePermission } from "@/hooks/usePermission";
+import { useDashboard } from "@/hooks/useDashboard";
+import { useHouses } from "@/hooks/useHouses";
 
 // Motion presets
 const sectionFade = {
@@ -120,239 +56,312 @@ const listItem = {
 };
 
 export function ImprovedDashboard() {
+  const { can } = usePermission();
+  const { data: dashboard, isLoading: isDashboardLoading } = useDashboard();
+  const { data: houses, isLoading: isHousesLoading } = useHouses();
+  const [selectedSectionId, setSelectedSectionId] = useState<string>("all");
+
+  // All hooks must be at the top level
+  const gradePerfData = useMemo(() => {
+    const allGrades = (Array.isArray(dashboard?.gradePerformance) ? dashboard.gradePerformance : []);
+    const filtered = selectedSectionId === "all" 
+      ? allGrades 
+      : allGrades.filter(g => g.sectionId === selectedSectionId);
+
+    return filtered.map((g: any) => ({
+      grade: g.gradeNameSi || g.gradeNameEn,
+      marks: Math.round(g.avgMark || 0),
+      attendance: Math.round(g.avgAttendance || 0),
+    }));
+  }, [dashboard, selectedSectionId]);
+
+  if (isDashboardLoading || isHousesLoading) {
+    return <div className="p-8 text-center text-slate-500 animate-pulse">Loading dashboard records...</div>;
+  }
+
+  const attendanceAvg = Math.round(dashboard?.attendanceAvg || 0);
+
+  const stats = [
+    {
+      title: "Total Students",
+      value: String(dashboard?.studentCount || 0),
+      icon: Users,
+      colorClass: "bg-blue-50 text-blue-700 border-blue-200",
+      trend: "Active learners",
+      permission: "student.student.read",
+    },
+    {
+      title: "Number of Staff",
+      value: String(dashboard?.staffCount || 0),
+      icon: Award,
+      colorClass: "bg-purple-50 text-purple-700 border-purple-200",
+      trend: "Total teaching staff",
+      permission: "staff.teacher.read",
+    },
+    {
+      title: "Attendance",
+      value: `${attendanceAvg}%`,
+      icon: TrendingUp,
+      colorClass: "bg-green-50 text-green-700 border-green-200",
+      trend: "Past 30 days avg",
+      permission: "student.attendance.read",
+    },
+    {
+      title: "Competitions",
+      value: String(dashboard?.competitionCount || 0),
+      icon: Trophy,
+      colorClass: "bg-amber-50 text-amber-700 border-amber-200",
+      trend: "This academic year",
+      permission: "housemeets.competition.read",
+    },
+  ];
+
+  const houseLeaderboard = (dashboard?.housePoints || []).map((h: any) => ({
+    ...h,
+    name: houses?.find((house: any) => house.id === h.houseId)?.nameEn || "Unknown House",
+  }));
+
   return (
-    <div className="space-y-8">
-      {/* School Overview + Key metrics */}
-      <motion.div
-        variants={sectionFade}
-        initial="hidden"
-        animate="visible"
-        transition={{ duration: 0.18 }}
-        className="space-y-6"
-      >
-        <Header
-          icon={BarChart3}
-          title="Sri Ananda Overview"
-          description="High-level view of student numbers, activities, performance, and operational alerts."
-          variant="page"
-          actions={
-            <div className="flex items-center gap-2 text-xs text-slate-600">
-              <span className="rounded-full border border-slate-200 bg-white px-2 py-1">
-                Today&apos;s snapshot
-              </span>
-              <span className="rounded-full border border-slate-200 bg-white px-2 py-1">
-                Updated: 5 mins ago
-              </span>
-            </div>
-          }
-        />
-
-        <motion.div
-          variants={listContainer}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 px-6"
-        >
-          {dashboardStats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div key={stat.title} variants={listItem}>
-                <Card className="h-full">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                          {stat.title}
-                        </p>
-                        <p className="mt-2 text-3xl font-bold text-slate-900">
-                          {stat.value}
-                        </p>
-                        <p className="mt-1 text-xs font-medium text-slate-500">
-                          {stat.trend}
-                        </p>
-                      </div>
-                      <div
-                        className={`${stat.colorClass} border inline-flex h-10 w-10 items-center justify-center rounded-lg`}
-                      >
-                        <Icon className="h-5 w-5" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-      </motion.div>
-
-      {/* Performance + Quick actions */}
-      <motion.div
-        variants={sectionFade}
-        initial="hidden"
-        animate="visible"
-        transition={{ duration: 0.2 }}
-        className="grid grid-cols-1 gap-6 lg:grid-cols-3 px-6"
-      >
-        <div className="lg:col-span-2 space-y-4">
+    <div className="h-full overflow-y-auto custom-scrollbar pb-10">
+      <div className="space-y-8 p-6 lg:p-8">
+        {/* Header & Section Toggle */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <Header
-            title="Performance by grade"
-            description="Distribution of students by performance band across grades."
-            variant="section"
+            icon={BarChart3}
+            title="Sri Ananda Overview"
+            description="Real-time insights across students, staff, and performance."
+            variant="page"
           />
-          <Card>
-            <CardHeader>
-              <CardTitle>Academic performance distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={gradePerformance}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="grade"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "#64748b" }}
-                      dy={10}
-                    />
-                    <YAxis 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "#64748b" }}
-                    />
-                    <Tooltip 
-                      cursor={{ fill: "#f1f5f9" }}
-                      contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-                    />
-                    <Legend />
-                    <Bar dataKey="excellent" fill="#22c55e" name="Excellent" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="good" fill="#3b82f6" name="Good" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="average" fill="#f59e0b" name="Average" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="poor" fill="#ef4444" name="Needs improvement" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-4">
-          <Header
-            title="Quick actions"
-            description="Frequently used operations."
-            variant="section"
-          />
-          <Card>
-            <CardHeader>
-              <CardTitle>Shortcuts</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <QuickActionButton
-                icon={Trophy}
-                label="Register competition"
-                description="Create or update competition records."
-                colorClass="border-blue-200 bg-blue-50 hover:bg-blue-100"
-                iconClass="text-blue-600"
-              />
-              <QuickActionButton
-                icon={Award}
-                label="Manage clubs"
-                description="Update club profiles and member lists."
-                colorClass="border-purple-200 bg-purple-50 hover:bg-purple-100"
-                iconClass="text-purple-600"
-              />
-              <QuickActionButton
-                icon={Users}
-                label="View parents"
-                description="Access parent directory."
-                colorClass="border-amber-200 bg-amber-50 hover:bg-amber-100"
-                iconClass="text-amber-600"
-              />
-              <QuickActionButton
-                icon={Calendar}
-                label="Schedule events"
-                description="Plan school events and key dates."
-                colorClass="border-green-200 bg-green-50 hover:bg-green-100"
-                iconClass="text-green-600"
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </motion.div>
-
-      {/* Recent activity + alerts */}
-      <motion.div
-        variants={sectionFade}
-        initial="hidden"
-        animate="visible"
-        transition={{ duration: 0.2 }}
-        className="grid grid-cols-1 gap-6 lg:grid-cols-2 px-6"
-      >
-        <div className="space-y-4">
-          <Header
-            title="Recent activity"
-            description="Latest updates from competitions, clubs, and academic events."
-            variant="section"
-          />
-          <Card>
-            <CardHeader>
-              <CardTitle>Activity log</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-0">
-              {recentActivities.map((activity, idx) => (
-                <motion.div
-                  key={`${activity.title}-${idx}`}
-                  variants={listItem}
-                  className="flex items-start gap-4 border-b border-slate-100 py-3 last:border-b-0 last:pb-0 first:pt-0"
-                >
-                  <div className="mt-1.5 h-2 w-2 rounded-full bg-blue-600 ring-4 ring-blue-50" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900">
-                      {activity.title}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {activity.time}
-                    </p>
-                  </div>
-                </motion.div>
+          
+          <Tabs value={selectedSectionId} onValueChange={setSelectedSectionId} className="w-full md:w-auto">
+            <TabsList className="bg-slate-100/50 backdrop-blur-sm border border-slate-200 p-1">
+              <TabsTrigger value="all" className="text-xs font-bold uppercase tracking-wider">All Sections</TabsTrigger>
+              {dashboard?.sections?.map((sec: any) => (
+                <TabsTrigger key={sec.id} value={sec.id} className="text-xs font-bold uppercase tracking-wider">
+                  {sec.nameEn}
+                </TabsTrigger>
               ))}
-            </CardContent>
-          </Card>
+            </TabsList>
+          </Tabs>
         </div>
 
-        <div className="space-y-4">
-          <Header
-            title="Operational alerts"
-            description="Key items requiring follow-up from staff."
-            variant="section"
-          />
-          <Card>
-            <CardHeader>
-              <CardTitle>Alerts & notifications</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <AlertBlock
-                title="Attendance below 75%"
-                body="8 students flagged for review."
-                colorClass="bg-red-50 border-red-200"
-                textClass="text-red-900"
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Left: Overview & Stats */}
+          <div className="lg:col-span-3 space-y-8">
+            <motion.div
+              variants={listContainer}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            >
+              {stats.filter(s => !s.permission || can(s.permission)).map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <motion.div key={stat.title} variants={listItem}>
+                    <Card className="h-full border-none shadow-md bg-white/40 backdrop-blur-md hover:shadow-lg transition-all duration-300">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                              {stat.title}
+                            </p>
+                            <p className="mt-2 text-3xl font-black text-slate-800 tracking-tighter">
+                              {stat.value}
+                            </p>
+                            <p className="mt-1 text-[10px] font-medium text-slate-500">
+                              {stat.trend}
+                            </p>
+                          </div>
+                          <div className={`${stat.colorClass} border-none shadow-sm flex h-12 w-12 items-center justify-center rounded-2xl`}>
+                            <Icon className="h-6 w-6" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+
+            {/* Performance Chart */}
+            <motion.div variants={sectionFade} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
+              <Header
+                title="Class Performance Trends"
+                description="Cross-analysis of average marks and attendance percentages."
+                variant="section"
               />
-              <AlertBlock
-                title="Upcoming competition"
-                body="Debate competition starts in 3 days."
-                colorClass="bg-amber-50 border-amber-200"
-                textClass="text-amber-900"
+              <Card className="border-none shadow-xl bg-white/60 backdrop-blur-lg mt-4">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-semibold text-slate-600">Marks vs. Attendance</CardTitle>
+                    <div className="flex gap-4 text-[10px] font-bold uppercase tracking-wider">
+                      <div className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-indigo-500" /> Avg Marks</div>
+                      <div className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-emerald-500" /> Attendance %</div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px] w-full mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={gradePerfData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis
+                          dataKey="grade"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 13, fill: "#334155", fontWeight: 700 }}
+                        />
+                        <YAxis 
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 11, fill: "#64748b" }}
+                          domain={[0, 100]}
+                        />
+                        <Tooltip 
+                          cursor={{ fill: "#f1f5f9", radius: 8 }}
+                          contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
+                        />
+                        <Bar dataKey="marks" fill="#6366f1" name="Avg Mark" radius={[6, 6, 0, 0]} barSize={24} />
+                        <Bar dataKey="attendance" fill="#10b981" name="Avg Attendance" radius={[6, 6, 0, 0]} barSize={24} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* Right: Calendar & Events (Top Corner) */}
+          <div className="lg:col-span-1 space-y-6">
+            <motion.div
+              variants={sectionFade}
+              initial="hidden"
+              animate="visible"
+              className="space-y-4"
+            >
+              <Header
+                title="Schedule"
+                description="Upcoming events & holidays."
+                variant="section"
               />
-              <AlertBlock
-                title="Parent conferences scheduled"
-                body="5 meetings planned for next week."
-                colorClass="bg-blue-50 border-blue-200"
-                textClass="text-blue-900"
-              />
-            </CardContent>
-          </Card>
+              <Card className="border-none shadow-lg bg-white overflow-hidden rounded-3xl">
+                <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+                  <CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-indigo-500" /> Calendar
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="max-h-[600px] overflow-y-auto p-4 space-y-6">
+                    {/* Special Days */}
+                    {(dashboard?.specialDays?.length || 0) > 0 && (
+                      <div className="space-y-3">
+                        <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Holidays</p>
+                        {dashboard?.specialDays?.map((day: any) => (
+                          <div key={day._id} className="flex items-center gap-3 p-2 rounded-xl bg-orange-50 border border-orange-100/50">
+                            <div className="flex flex-col items-center justify-center min-w-[40px] h-10 rounded-lg bg-white shadow-sm font-bold">
+                              <span className="text-[9px] text-orange-400 leading-none">
+                                {new Date(day.date).toLocaleString('default', { month: 'short' })}
+                              </span>
+                              <span className="text-sm text-orange-600">
+                                {new Date(day.date).getDate()}
+                              </span>
+                            </div>
+                            <div className="overflow-hidden">
+                              <p className="text-xs font-bold text-slate-700 truncate">{day.label}</p>
+                              <p className="text-[9px] text-orange-500 font-medium">{day.type}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Events */}
+                    <div className="space-y-3 pt-2">
+                       <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Events</p>
+                       <div className="space-y-4">
+                        {dashboard?.upcomingEvents?.map((event: any) => (
+                          <div key={event._id} className="relative pl-4 border-l-2 border-slate-100 group">
+                            <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-slate-200 group-hover:bg-indigo-400 transition-colors" />
+                            <p className="text-xs font-bold text-slate-800 leading-tight">{event.nameEn}</p>
+                            <p className="text-[10px] text-slate-500 mt-1 font-medium">
+                              {new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {event.eventType}
+                            </p>
+                          </div>
+                        ))}
+                        {(!dashboard?.upcomingEvents || dashboard.upcomingEvents.length === 0) && (
+                          <p className="text-xs text-slate-400 italic py-4">No events scheduled.</p>
+                        )}
+                       </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* House Leaderboard - Refined UI */}
+              <div className="pt-4 space-y-4">
+                 <Header
+                   title="House Standing"
+                   variant="section"
+                 />
+                 <Card className="border-none shadow-md bg-slate-900 text-white rounded-3xl overflow-hidden">
+                    <CardContent className="p-4 space-y-4">
+                      {houseLeaderboard.map((house: any, idx: number) => (
+                        <div key={house.houseId} className="flex items-center justify-between group">
+                          <div className="flex items-center gap-3">
+                             <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black ${
+                                idx === 0 ? 'bg-yellow-400 text-slate-900' : 
+                                idx === 1 ? 'bg-slate-300 text-slate-800' : 
+                                idx === 2 ? 'bg-amber-700 text-white' : 'bg-slate-700 text-slate-300'
+                             }`}>
+                                #{idx + 1}
+                             </div>
+                             <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">{house.name}</span>
+                          </div>
+                          <span className="text-xs font-black">{house.points}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                 </Card>
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </motion.div>
+
+        {/* Shortcuts Footer */}
+        <motion.div variants={sectionFade} className="pt-8 border-t border-slate-100">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <QuickActionButton
+              icon={Trophy}
+              label="Competitions"
+              description="Yearly results"
+              colorClass="border-none bg-blue-50/50 hover:bg-blue-100/50 text-blue-700"
+              iconClass="bg-blue-100"
+            />
+            <QuickActionButton
+              icon={Award}
+              label="Staff Directory"
+              description="Manage teachers"
+              colorClass="border-none bg-purple-50/50 hover:bg-purple-100/50 text-purple-700"
+              iconClass="bg-purple-100"
+            />
+            <QuickActionButton
+              icon={Users}
+              label="Student List"
+              description="Full directory"
+              colorClass="border-none bg-emerald-50/50 hover:bg-emerald-100/50 text-emerald-700"
+              iconClass="bg-emerald-100"
+            />
+            <QuickActionButton
+              icon={Calendar}
+              label="Calendar"
+              description="Full schedule"
+              colorClass="border-none bg-orange-50/50 hover:bg-orange-100/50 text-orange-700"
+              iconClass="bg-orange-100"
+            />
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }
@@ -388,23 +397,5 @@ function QuickActionButton({
         </div>
       </div>
     </motion.button>
-  );
-}
-
-interface AlertBlockProps {
-  title: string;
-  body: string;
-  colorClass: string;
-  textClass: string;
-}
-
-function AlertBlock({ title, body, colorClass, textClass }: AlertBlockProps) {
-  return (
-    <div
-      className={`rounded-lg border px-4 py-3 text-sm ${colorClass}`}
-    >
-      <p className={`font-semibold ${textClass}`}>{title}</p>
-      <p className="mt-1 text-xs text-slate-800">{body}</p>
-    </div>
   );
 }

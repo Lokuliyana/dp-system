@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Users, Plus, Edit, Trash2, ListTree, LayoutList } from "lucide-react";
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { StaffMenu } from "@/components/staff/staff-menu";
 import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogHeader, DialogTitle, Tabs, TabsContent, TabsList, TabsTrigger, Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 import { useStaffRoles, useCreateStaffRole, useUpdateStaffRole, useDeleteStaffRole } from "@/hooks/useStaffRoles";
 import { useTeachers } from "@/hooks/useTeachers";
 import { StaffRoleForm } from "@/components/staff/StaffRoleForm";
@@ -15,38 +17,15 @@ import { ResponsiveTabs } from "@/components/ui";
 import type { StaffRole, Teacher } from "@/types/models";
 
 export default function StaffRolesPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("list");
   const { data: roles = [], isLoading: isLoadingRoles } = useStaffRoles();
   const { data: teachers = [], isLoading: isLoadingTeachers } = useTeachers();
   
-  const createMutation = useCreateStaffRole();
-  const updateMutation = useUpdateStaffRole();
   const deleteMutation = useDeleteStaffRole();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<StaffRole | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<LevelItem | null>(null);
-
-  const handleSave = (data: CreateStaffRolePayload) => {
-    if (editingRole) {
-      updateMutation.mutate({ id: editingRole.id, payload: data }, {
-        onSuccess: () => {
-          setIsModalOpen(false);
-          setEditingRole(null);
-        },
-      });
-    } else {
-      createMutation.mutate(data, {
-        onSuccess: () => setIsModalOpen(false),
-      });
-    }
-  };
-
-  const handleEdit = (role: StaffRole) => {
-    setEditingRole(role);
-    setIsModalOpen(true);
-  };
 
   const handleDelete = (id: string) => {
     deleteMutation.mutate(id, {
@@ -71,7 +50,7 @@ export default function StaffRolesPage() {
         color: `bg-${['blue', 'purple', 'green', 'orange', 'red', 'indigo'][index % 6]}-500`,
         items: roleTeachers.map(t => ({
           id: t.id,
-          label: t.fullNameEn,
+          label: t.fullNameEn || "Unknown",
           data: {
             role: role.nameEn,
             email: t.email,
@@ -106,13 +85,12 @@ export default function StaffRolesPage() {
         subtitle="Manage teacher roles and hierarchy."
         icon={Users}
         actions={
-          <Button className="gap-2" onClick={() => {
-            setEditingRole(null);
-            setIsModalOpen(true);
-          }}>
-            <Plus className="h-4 w-4" />
-            Add Role
-          </Button>
+          <PermissionGuard permission="staff.staff_role.create">
+            <Button className="gap-2" onClick={() => router.push("/staff/roles/new")}>
+              <Plus className="h-4 w-4" />
+              Add Role
+            </Button>
+          </PermissionGuard>
         }
       />
 
@@ -146,10 +124,11 @@ export default function StaffRolesPage() {
                     roles.map((role) => (
                       <div
                         key={role.id}
-                        className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                        className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors cursor-pointer group"
+                        onClick={() => router.push(`/staff/roles/${role.id}`)}
                       >
                         <div className="space-y-1">
-                          <p className="font-medium text-slate-900">{role.nameEn}</p>
+                          <p className="font-medium text-slate-900 group-hover:text-primary transition-colors">{role.nameEn}</p>
                           <p className="text-sm text-slate-500">{role.nameSi}</p>
                           <div className="flex flex-wrap gap-2 text-xs text-slate-500">
                             {role.gradeBased && (
@@ -170,23 +149,27 @@ export default function StaffRolesPage() {
                           </div>
                           {role.descriptionEn && <p className="text-xs text-slate-400 mt-1">{role.descriptionEn}</p>}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-500 hover:text-blue-600"
-                            onClick={() => handleEdit(role)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-500 hover:text-red-600"
-                            onClick={() => setItemToDelete(role.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <PermissionGuard permission="staff.staff_role.update">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-500 hover:text-blue-600"
+                              onClick={() => router.push(`/staff/roles/${role.id}`)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
+                          <PermissionGuard permission="staff.staff_role.delete">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-500 hover:text-red-600"
+                              onClick={() => setItemToDelete(role.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
                         </div>
                       </div>
                     ))
@@ -217,34 +200,6 @@ export default function StaffRolesPage() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <Dialog open={isModalOpen} onOpenChange={(open) => {
-        setIsModalOpen(open);
-        if (!open) setEditingRole(null);
-      }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingRole ? "Edit Role" : "Add New Role"}</DialogTitle>
-          </DialogHeader>
-          <StaffRoleForm
-            defaultValues={editingRole ? {
-              nameSi: editingRole.nameSi,
-              nameEn: editingRole.nameEn,
-              descriptionSi: editingRole.descriptionSi,
-              descriptionEn: editingRole.descriptionEn,
-              gradeBased: editingRole.gradeBased,
-              singleGraded: editingRole.singleGraded,
-              gradesEffected: editingRole.gradesEffected,
-              responsibilities: editingRole.responsibilities,
-              teacherIds: editingRole.teacherIds,
-              order: editingRole.order,
-            } : undefined}
-            onSubmit={handleSave}
-            onCancel={() => setIsModalOpen(false)}
-            isLoading={createMutation.isPending || updateMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
 
       <DeleteConfirmationModal
         isOpen={!!itemToDelete}

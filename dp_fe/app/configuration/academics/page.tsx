@@ -5,6 +5,7 @@ import { GraduationCap } from "lucide-react";
 import { Header, Card, CardHeader, CardTitle, CardContent, Input, Label, Button, Checkbox } from "@/components/ui";
 import { useGrades, useCreateGrade, useUpdateGrade, useDeleteGrade } from "@/hooks/useGrades";
 import { useSections, useCreateSection, useUpdateSection, useDeleteSection } from "@/hooks/useSections";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 
 type GradeForm = { nameEn: string; nameSi: string; level: number };
 const emptyGrade: GradeForm = { nameEn: "", nameSi: "", level: 1 };
@@ -102,9 +103,11 @@ export default function AcademicsConfigurationPage() {
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={submitGrade} disabled={createGrade.isPending || updateGrade.isPending}>
-                {editingGradeId ? "Update Grade" : "Create Grade"}
-              </Button>
+              <PermissionGuard permission={editingGradeId ? "system.grade.update" : "system.grade.create"}>
+                <Button onClick={submitGrade} disabled={createGrade.isPending || updateGrade.isPending}>
+                  {editingGradeId ? "Update Grade" : "Create Grade"}
+                </Button>
+              </PermissionGuard>
               {editingGradeId && (
                 <Button variant="outline" onClick={() => setEditingGradeId(null)}>
                   Cancel
@@ -123,12 +126,16 @@ export default function AcademicsConfigurationPage() {
                       <p className="text-xs text-muted-foreground">Level {g.level}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => setEditingGradeId(g.id)}>
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => deleteGrade.mutate(g.id)}>
-                        Delete
-                      </Button>
+                      <PermissionGuard permission="system.grade.update">
+                        <Button size="sm" variant="outline" onClick={() => setEditingGradeId(g.id)}>
+                          Edit
+                        </Button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="system.grade.delete">
+                        <Button size="sm" variant="destructive" onClick={() => deleteGrade.mutate(g.id)}>
+                          Delete
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   </div>
                 ))
@@ -174,9 +181,11 @@ export default function AcademicsConfigurationPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={submitSection} disabled={createSection.isPending || updateSection.isPending}>
-                {editingSectionId ? "Update Section" : "Create Section"}
-              </Button>
+              <PermissionGuard permission={editingSectionId ? "system.section.update" : "system.section.create"}>
+                <Button onClick={submitSection} disabled={createSection.isPending || updateSection.isPending}>
+                  {editingSectionId ? "Update Section" : "Create Section"}
+                </Button>
+              </PermissionGuard>
               {editingSectionId && (
                 <Button variant="outline" onClick={() => setEditingSectionId(null)}>
                   Cancel
@@ -197,12 +206,16 @@ export default function AcademicsConfigurationPage() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => setEditingSectionId(s.id)}>
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => deleteSection.mutate(s.id)}>
-                        Delete
-                      </Button>
+                      <PermissionGuard permission="system.section.update">
+                        <Button size="sm" variant="outline" onClick={() => setEditingSectionId(s.id)}>
+                          Edit
+                        </Button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="system.section.delete">
+                        <Button size="sm" variant="destructive" onClick={() => deleteSection.mutate(s.id)}>
+                          Delete
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   </div>
                 ))

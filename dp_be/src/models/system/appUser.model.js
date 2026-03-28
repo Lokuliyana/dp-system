@@ -39,12 +39,18 @@ const appUserSchema = new mongoose.Schema(
       index: true,
     },
 
+    username: { type: String, trim: true, index: true },
     isActive: { type: Boolean, default: true },
     isFirstTimeLogin: { type: Boolean, default: true },
     permissions: { type: [String], default: [] },
     restrictedGradeIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Grade' }],
   },
   baseSchemaOptions
+)
+
+appUserSchema.index(
+  { schoolId: 1, username: 1 },
+  { unique: true, sparse: true }
 )
 
 appUserSchema.virtual('roleId').get(function () {

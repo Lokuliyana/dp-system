@@ -35,5 +35,7 @@ router.use('/organization-calendar', require('./system/organization-calendar.rou
 
 router.use('/app-users', require('./system/appUser.routes'))
 router.use('/roles', require('./system/role.routes'))
+router.use('/schools', require('./system/school.routes'))
+router.use('/dashboard', require('./system/dashboard.routes'))
 
 module.exports = router

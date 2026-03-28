@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 interface StudentListViewProps {
   students: Student[]
@@ -339,13 +340,15 @@ export function StudentListView({
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            onEditStudent?.(student)
-                          }}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Student
-                          </DropdownMenuItem>
+                          <PermissionGuard permission="student.student.update">
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation()
+                              onEditStudent?.(student)
+                            }}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Student
+                            </DropdownMenuItem>
+                          </PermissionGuard>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

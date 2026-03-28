@@ -5,6 +5,8 @@ import { Loader, Medal, Trophy, Search, User, Users, Award } from "lucide-react"
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { HouseMeetsMenu } from "@/components/house-meets/house-meets-menu";
 import { CompetitionSidebar } from "@/components/house-meets/competition-sidebar";
+import { PermissionGuard } from "@/components/auth/permission-guard";
+import { usePermission } from "@/hooks/usePermission";
 import {
   Button,
   Card,
@@ -44,11 +46,12 @@ import { useToast } from "@/components/ui/use-toast";
 
 export default function HouseResultsPage() {
   const { toast } = useToast();
+  const { can } = usePermission();
   const currentYear = new Date().getFullYear();
   const [year] = useState(currentYear);
   const { data: grades = [] } = useGrades();
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
-  const { data: competitions = [] } = useCompetitions(year);
+  const { data: competitions = [] } = useCompetitions(year, selectedGrade || undefined);
   const [competitionId, setCompetitionId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -89,7 +92,8 @@ export default function HouseResultsPage() {
 
   const { data: results = [], isLoading: resultsLoading } = useCompetitionResults(
     competitionId || "",
-    year
+    year,
+    selectedGrade || undefined
   );
 
   const createResult = useCreateCompetitionResult(competitionId || "", year);
@@ -142,10 +146,10 @@ export default function HouseResultsPage() {
       await deleteResult.mutateAsync(existingResult.id || (existingResult as any)._id);
     }
 
-    // Find registration to get houseId
-    const registration = registrations.find((r) => (r.studentId as any).id === studentId || r.studentId === studentId);
+    // Find registration to get houseId and gradeId
+    const registration = registrations.find((r) => getStudentId(r.studentId) === studentId);
     const houseId = registration?.houseId;
-    const gradeId = registration?.gradeId;
+    const gradeId = registration?.gradeId || selectedGrade;
 
     await createResult.mutateAsync({
       competitionId,
@@ -155,7 +159,7 @@ export default function HouseResultsPage() {
           place,
           studentId,
           houseId: houseId || undefined,
-          gradeId: gradeId,
+          gradeId: gradeId || undefined,
         },
       ],
     });
@@ -164,16 +168,16 @@ export default function HouseResultsPage() {
   const handleTeamPlace = async (houseId: string, place: 1 | 2 | 3) => {
     if (!competitionId) return;
     
-    // Check if this house already has a place
-    const existingResult = results.find(r => r.houseId === houseId && r.place === place && !r.studentId);
+    // Check if this house already has a place for this grade
+    const existingResult = results.find(r => r.houseId === houseId && r.place === place && !r.studentId && r.gradeId === selectedGrade);
     
     if (existingResult) {
         await deleteResult.mutateAsync(existingResult.id);
         return;
     }
 
-    // Check if another house has this place (exclusive)
-    const placeHolder = results.find(r => r.place === place && !r.studentId);
+    // Check if another house has this place for this grade (exclusive)
+    const placeHolder = results.find(r => r.place === place && !r.studentId && r.gradeId === selectedGrade);
     if (placeHolder) {
         await deleteResult.mutateAsync(placeHolder.id);
     }
@@ -184,7 +188,7 @@ export default function HouseResultsPage() {
         results: [{
             place,
             houseId,
-            gradeId: undefined // Team results usually apply to the house, not a specific grade? Or maybe the grade context matters.
+            gradeId: selectedGrade || undefined 
         }]
     });
   };
@@ -192,8 +196,8 @@ export default function HouseResultsPage() {
   const handlePersonalAward = async (awardName: string, studentId: string) => {
     if (!competitionId) return;
 
-    // Find the special result entry for personal awards (place 0)
-    let awardResult = results.find(r => r.place === 0);
+    // Find the special result entry for personal awards (place 0) for this grade
+    let awardResult = results.find(r => r.place === 0 && r.gradeId === selectedGrade);
     
     let currentWinners = awardResult?.personalAwardWinners || [];
     
@@ -201,7 +205,7 @@ export default function HouseResultsPage() {
     currentWinners = currentWinners.filter(w => w.awardName !== awardName);
     
     if (studentId) {
-        const reg = registrations.find(r => (r.studentId as any).id === studentId || r.studentId === studentId);
+        const reg = registrations.find(r => getStudentId(r.studentId) === studentId);
         currentWinners.push({
             awardName,
             studentId,
@@ -214,6 +218,7 @@ export default function HouseResultsPage() {
         year,
         results: [{
             place: 0,
+            gradeId: selectedGrade || undefined,
             personalAwardWinners: currentWinners
         }]
     });
@@ -271,12 +276,14 @@ export default function HouseResultsPage() {
             },
           },
           {
-            type: "button",
-            props: {
-              variant: "default",
-              children: "Save & Finalize",
-              onClick: handleSaveAll,
-            },
+            type: "custom",
+            render: (
+              <PermissionGuard permission="housemeets.competition_result.create">
+                <Button variant="default" onClick={handleSaveAll}>
+                  Save & Finalize
+                </Button>
+              </PermissionGuard>
+            )
           },
         ]}
       />
@@ -307,7 +314,7 @@ export default function HouseResultsPage() {
                                 <CardContent>
                                     <div className="space-y-4">
                                         {houses.map(house => {
-                                            const result = results.find(r => r.houseId === getId(house) && r.place > 0 && !r.studentId);
+                                            const result = results.find(r => r.houseId === getId(house) && r.place > 0 && !r.studentId && r.gradeId === selectedGrade);
                                             return (
                                                 <div key={getId(house)} className="flex items-center justify-between p-2 border rounded-md bg-white">
                                                     <div className="flex items-center gap-2">
@@ -316,16 +323,17 @@ export default function HouseResultsPage() {
                                                     </div>
                                                     <div className="flex gap-1">
                                                         {[1, 2, 3].map(p => (
-                                                            <Button
-                                                                key={p}
-                                                                size="sm"
-                                                                variant={result?.place === p ? "default" : "outline"}
-                                                                className={cn(
-                                                                    "w-8 h-8 p-0 rounded-full",
-                                                                    result?.place === p && "bg-amber-500 hover:bg-amber-600 border-amber-600"
-                                                                )}
-                                                                onClick={() => handleTeamPlace(getId(house), p as 1|2|3)}
-                                                            >
+                                                                <Button
+                                                                    key={p}
+                                                                    size="sm"
+                                                                    variant={result?.place === p ? "default" : "outline"}
+                                                                    className={cn(
+                                                                        "w-8 h-8 p-0 rounded-full",
+                                                                        result?.place === p && "bg-amber-500 hover:bg-amber-600 border-amber-600"
+                                                                    )}
+                                                                    onClick={() => handleTeamPlace(getId(house), p as 1|2|3)}
+                                                                    disabled={!can("housemeets.competition_result.update")}
+                                                                >
                                                                 {p}
                                                             </Button>
                                                         ))}
@@ -345,7 +353,7 @@ export default function HouseResultsPage() {
                                 <CardContent>
                                     <div className="space-y-4">
                                         {selectedCompetition.personalAwards?.map((award, idx) => {
-                                            const awardResult = results.find(r => r.place === 0);
+                                            const awardResult = results.find(r => r.place === 0 && r.gradeId === selectedGrade);
                                             const winner = awardResult?.personalAwardWinners?.find(w => w.awardName === award);
                                             
                                             return (
@@ -357,8 +365,9 @@ export default function HouseResultsPage() {
                                                     <Select 
                                                         value={winner?.studentId || "none"} 
                                                         onValueChange={(v) => handlePersonalAward(award, v === "none" ? "" : v)}
+                                                        disabled={!can("housemeets.competition_result.update")}
                                                     >
-                                                        <SelectTrigger>
+                                                        <SelectTrigger disabled={!can("housemeets.competition_result.update")}>
                                                             <SelectValue placeholder="Select Winner" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -432,6 +441,7 @@ export default function HouseResultsPage() {
                                                                         result?.place === p && "bg-amber-500 hover:bg-amber-600 border-amber-600"
                                                                     )}
                                                                     onClick={() => handleToggleResult(s.id || s._id, p)}
+                                                                    disabled={!can("housemeets.competition_result.update")}
                                                                 >
                                                                     {p}
                                                                 </Button>

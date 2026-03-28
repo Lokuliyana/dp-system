@@ -48,6 +48,19 @@ export default function ConfigurationPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Link href="/configuration/attendance">
+          <Card className="hover:border-blue-200 transition-colors cursor-pointer group">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium group-hover:text-blue-600 transition-colors">Attendance Settings</CardTitle>
+              <Settings className="h-4 w-4 text-slate-500 group-hover:text-blue-500 transition-colors" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-slate-500">
+                Configure global attendance marking day and time windows.
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
         {/* Other configuration modules can go here */}
       </div>
     </div>

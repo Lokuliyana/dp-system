@@ -9,6 +9,7 @@ import { Plus, Trash2, Star, Award, Shield, Zap } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 interface TalentsProps {
   talents: Talent[]
@@ -104,82 +105,84 @@ export function StudentTalents({ talents, onAddTalent, onRemoveTalent }: Talents
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Form to add talent */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-yellow-600" />
-            Add New Talent or Skill
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Talent Name</label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="e.g., Basketball, Mathematics, Singing"
-              className="bg-white border-slate-200"
-            />
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4">
+      <PermissionGuard permission="student.student_talent.create">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-yellow-600" />
+              Add New Talent or Skill
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Category</label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value as any }))}
-              >
-                <SelectTrigger className="bg-white border-slate-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TALENT_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium text-slate-700">Talent Name</label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g., Basketball, Mathematics, Singing"
+                className="bg-white border-slate-200"
+              />
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Category</label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value as any }))}
+                >
+                  <SelectTrigger className="bg-white border-slate-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TALENT_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Level</label>
+                <Select
+                  value={formData.level}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, level: value as any }))}
+                >
+                  <SelectTrigger className="bg-white border-slate-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="beginner">Beginner ⭐</SelectItem>
+                    <SelectItem value="intermediate">Intermediate ⭐⭐</SelectItem>
+                    <SelectItem value="advanced">Advanced ⭐⭐⭐</SelectItem>
+                    <SelectItem value="expert">Expert ⭐⭐⭐⭐</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-end">
+                <Button onClick={handleAddTalent} className="bg-blue-600 hover:bg-blue-700 gap-2 w-full">
+                  <Plus className="h-4 w-4" />
+                  Add Talent
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Level</label>
-              <Select
-                value={formData.level}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, level: value as any }))}
-              >
-                <SelectTrigger className="bg-white border-slate-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">Beginner ⭐</SelectItem>
-                  <SelectItem value="intermediate">Intermediate ⭐⭐</SelectItem>
-                  <SelectItem value="advanced">Advanced ⭐⭐⭐</SelectItem>
-                  <SelectItem value="expert">Expert ⭐⭐⭐⭐</SelectItem>
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium text-slate-700">Description (Optional)</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="Describe the talent or skill..."
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                rows={2}
+              />
             </div>
-
-            <div className="flex items-end">
-              <Button onClick={handleAddTalent} className="bg-blue-600 hover:bg-blue-700 gap-2 w-full">
-                <Plus className="h-4 w-4" />
-                Add Talent
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Description (Optional)</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder="Describe the talent or skill..."
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              rows={2}
-            />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </PermissionGuard>
 
       {talents.length > 0 && (
         <>
@@ -290,14 +293,16 @@ export function StudentTalents({ talents, onAddTalent, onRemoveTalent }: Talents
                          )}>
                            {talent.category === 'sports' ? '⚽' : talent.category === 'arts' ? '🎨' : talent.category === 'academic' ? '📚' : talent.category === 'leadership' ? '👑' : '✨'}
                          </div>
-                         <Button
-                           onClick={() => onRemoveTalent(talent.id)}
-                           variant="ghost"
-                           size="icon"
-                           className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                         >
-                           <Trash2 className="h-4 w-4" />
-                         </Button>
+                          <PermissionGuard permission="student.student_talent.delete">
+                            <Button
+                              onClick={() => onRemoveTalent(talent.id)}
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
                       </div>
 
                       <div className="space-y-1">

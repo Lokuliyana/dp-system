@@ -5,6 +5,8 @@ import { Loader, Users, ArrowRight, X, ChevronsRight, Save, RotateCcw, Calendar,
 import * as LucideIcons from "lucide-react";
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { HouseMeetsMenu } from "@/components/house-meets/house-meets-menu";
+import { PermissionGuard } from "@/components/auth/permission-guard";
+import { usePermission } from "@/hooks/usePermission";
 import { 
   Button, 
   Card, 
@@ -37,6 +39,7 @@ import { AutomaticAssignmentDialog } from "@/components/house-meets/automatic-as
 import { TeacherHouseAssignments } from "@/components/house-meets/teacher-house-assignments";
 
 export default function HouseAssignmentsPage() {
+  const { can } = usePermission();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const { data: grades = [] } = useGrades();
@@ -165,13 +168,15 @@ export default function HouseAssignmentsPage() {
             },
           },
           {
-            type: "button",
-            props: {
-              variant: "outline",
-              icon: Wand2,
-              children: "Automatic",
-              onClick: () => setIsAutoDialogOpen(true),
-            },
+            type: "custom",
+            render: (
+              <PermissionGuard permission="housemeets.student_house_assignment.create">
+                <Button variant="outline" onClick={() => setIsAutoDialogOpen(true)} className="gap-2">
+                  <Wand2 className="h-4 w-4" />
+                  Automatic
+                </Button>
+              </PermissionGuard>
+            )
           },
           ...(hasChanges
             ? ([
@@ -185,14 +190,20 @@ export default function HouseAssignmentsPage() {
                   },
                 },
                 {
-                  type: "button",
-                  props: {
-                    variant: "default",
-                    icon: Save,
-                    children: "Save Changes",
-                    onClick: handleSave,
-                    disabled: bulkAssign.isPending,
-                  },
+                  type: "custom",
+                  render: (
+                    <PermissionGuard permission="housemeets.student_house_assignment.create">
+                      <Button 
+                        variant="default" 
+                        onClick={handleSave} 
+                        disabled={bulkAssign.isPending}
+                        className="gap-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        Save Changes
+                      </Button>
+                    </PermissionGuard>
+                  )
                 },
               ] as any[])
             : []),
@@ -307,9 +318,13 @@ export default function HouseAssignmentsPage() {
                                     <button
                                       key={house.id}
                                       onClick={() => handleAssign(student.id, house.id)}
-                                      className="h-7 px-3 rounded-md text-[10px] font-bold text-white shadow-sm hover:shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center tracking-wide"
+                                      className={cn(
+                                        "h-7 px-3 rounded-md text-[10px] font-bold text-white shadow-sm hover:shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center tracking-wide",
+                                        !can("housemeets.student_house_assignment.create") && "opacity-50 cursor-not-allowed"
+                                      )}
                                       style={{ backgroundColor: house.color }}
                                       title={`Assign to ${house.nameEn}`}
+                                      disabled={!can("housemeets.student_house_assignment.create")}
                                     >
                                       {house.nameEn.substring(0, 3).toUpperCase()}
                                     </button>
@@ -352,6 +367,7 @@ function HouseBox({
   students: any[];
   onUnassign: (id: string) => void;
 }) {
+  const { can } = usePermission();
   const [isExpanded, setIsExpanded] = useState(false);
   const defaultCount = 5; 
   
@@ -409,12 +425,14 @@ function HouseBox({
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => onUnassign(student.id)}
-                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all p-0.5 hover:bg-red-50 rounded"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                  <PermissionGuard permission="housemeets.student_house_assignment.delete">
+                    <button
+                      onClick={() => onUnassign(student.id)}
+                      className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all p-0.5 hover:bg-red-50 rounded"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </PermissionGuard>
                 </motion.div>
               ))}
             </AnimatePresence>

@@ -43,8 +43,9 @@ const authGuard = (...requiredPermissions) => {
     const allPermissions = [...new Set([...rolePermissions, ...userPermissions])];
 
     // Check permissions
-    // Using 'some' implies if the user has ANY of the required permissions, they are allowed.
-    const hasPermission = requiredPermissions.some(p => allPermissions.includes(p));
+    // If user has '*', they have full access.
+    // Otherwise, check if they have ANY of the required permissions.
+    const hasPermission = allPermissions.includes('*') || requiredPermissions.some(p => allPermissions.includes(p));
 
     if (!hasPermission) {
        return next(new ApiError(403, 'Forbidden: You do not have enough rights'));

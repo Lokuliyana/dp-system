@@ -9,7 +9,7 @@ module.exports = async (req, _res, next) => {
   if (req.method === 'OPTIONS') return next()
 
   // Skip auth for public endpoints
-  if (PUBLIC_PATHS.includes(req.path)) {
+  if (PUBLIC_PATHS.includes(req.originalUrl)) {
     req.user = null
     return next()
   }
@@ -53,20 +53,7 @@ module.exports = async (req, _res, next) => {
 
     // Aggregrate permissions
     const P = require('../constants/permissions')
-    const basePermissions = new Set()
-    
-    // Default: Every user can read everything and mark attendance
-    Object.values(P).forEach(group => {
-      if (typeof group === 'object') {
-        Object.values(group).forEach(perm => {
-          if (perm.endsWith(':read') || perm === P.ATTENDANCE?.MARK) {
-            basePermissions.add(perm)
-          }
-        })
-      }
-    })
-
-    const finalPermissions = new Set([...basePermissions])
+    const finalPermissions = new Set()
     
     // Add User's explicit permissions
     if (user.permissions) {
@@ -74,13 +61,16 @@ module.exports = async (req, _res, next) => {
     }
 
     // Add permissions from Roles
+    let isSuperAdmin = false
     systemRoles.forEach(role => {
+      if (role.name === 'superadmin') isSuperAdmin = true
       if (role.permissions) {
         role.permissions.forEach(p => finalPermissions.add(p))
       }
     })
 
     req.user.permissions = Array.from(finalPermissions)
+    if (isSuperAdmin) req.user.role = 'superadmin'
     // console.log(`[AUTH] User ${user.name} aggregate permissions: ${req.user.permissions.length}`)
 
   /* REMOVED: Grade restrictions based on singleGraded roles

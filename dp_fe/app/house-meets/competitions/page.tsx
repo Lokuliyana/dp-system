@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Flag, Plus, Trash2 } from "lucide-react";
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
 import { HouseMeetsMenu } from "@/components/house-meets/house-meets-menu";
+import { PermissionGuard } from "@/components/auth/permission-guard";
+import { usePermission } from "@/hooks/usePermission";
 import {
   Button,
   Card,
@@ -59,6 +61,7 @@ export default function CompetitionsPage() {
     personalAwards: [] as string[],
     pointsConfig: { place1: 15, place2: 10, place3: 5, place4: 0, place5: 0 },
   });
+  const { can } = usePermission();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear());
   const [newAward, setNewAward] = useState("");
@@ -189,244 +192,259 @@ export default function CompetitionsPage() {
       />
 
       <div className="p-6 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{editingId ? "Edit Competition" : "Create Competition"}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Name (English)</Label>
-                <Input value={form.nameEn} onChange={(e) => setForm((f) => ({ ...f, nameEn: e.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>Name (Sinhala)</Label>
-                <Input value={form.nameSi} onChange={(e) => setForm((f) => ({ ...f, nameSi: e.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>Squad (Optional)</Label>
-                <Select value={form.squadId} onValueChange={(v) => setForm((f) => ({ ...f, squadId: v }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select squad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {squads.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.nameEn}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Participation Type</Label>
-                <Select
-                  value={form.participationType}
-                  onValueChange={(v) => setForm((f) => ({ ...f, participationType: v as "individual" | "team" }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="individual">Individual</SelectItem>
-                    <SelectItem value="team">Team</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {form.participationType === "team" && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3 border p-3 rounded-md bg-slate-50">
-                  <div className="space-y-2">
-                    <Label>Min Team Size</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={form.teamConfig.minSize}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          teamConfig: { ...f.teamConfig, minSize: Number(e.target.value) },
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Max Team Size</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={form.teamConfig.maxSize}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          teamConfig: { ...f.teamConfig, maxSize: Number(e.target.value) },
-                        }))
-                      }
-                    />
-                  </div>
+        {(can("housemeets.competition.create") || can("housemeets.competition.update")) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{editingId ? "Edit Competition" : "Create Competition"}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Name (English)</Label>
+                  <Input value={form.nameEn} onChange={(e) => setForm((f) => ({ ...f, nameEn: e.target.value }))} />
                 </div>
+                <div className="space-y-2">
+                  <Label>Name (Sinhala)</Label>
+                  <Input value={form.nameSi} onChange={(e) => setForm((f) => ({ ...f, nameSi: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Squad (Optional)</Label>
+                  <Select value={form.squadId} onValueChange={(v) => setForm((f) => ({ ...f, squadId: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select squad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {squads.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.nameEn}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Participation Type</Label>
+                  <Select
+                    value={form.participationType}
+                    onValueChange={(v) => setForm((f) => ({ ...f, participationType: v as "individual" | "team" }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="individual">Individual</SelectItem>
+                      <SelectItem value="team">Team</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-                <div className="border p-3 rounded-md bg-slate-50 space-y-3">
-                  <Label className="font-semibold">Personal Awards</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Define awards like &quot;Best Actor&quot;, &quot;Best Speaker&quot; etc.
-                  </p>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Award Name (e.g. Best Actor)"
-                      value={newAward}
-                      onChange={(e) => setNewAward(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddAward();
+              {form.participationType === "team" && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3 border p-3 rounded-md bg-slate-50">
+                    <div className="space-y-2">
+                      <Label>Min Team Size</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={form.teamConfig.minSize}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            teamConfig: { ...f.teamConfig, minSize: Number(e.target.value) },
+                          }))
                         }
-                      }}
-                    />
-                    <Button type="button" onClick={handleAddAward} size="sm">
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Max Team Size</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={form.teamConfig.maxSize}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            teamConfig: { ...f.teamConfig, maxSize: Number(e.target.value) },
+                          }))
+                        }
+                      />
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {form.personalAwards.map((award, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded-md text-sm"
-                      >
-                        <span>{award}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveAward(idx)}
-                          className="text-slate-400 hover:text-red-500"
+
+                  <div className="border p-3 rounded-md bg-slate-50 space-y-3">
+                    <Label className="font-semibold">Personal Awards</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Define awards like &quot;Best Actor&quot;, &quot;Best Speaker&quot; etc.
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Award Name (e.g. Best Actor)"
+                        value={newAward}
+                        onChange={(e) => setNewAward(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddAward();
+                          }
+                        }}
+                      />
+                      <Button type="button" onClick={handleAddAward} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {form.personalAwards.map((award, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded-md text-sm"
                         >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                    {form.personalAwards.length === 0 && (
-                      <span className="text-xs text-slate-400 italic">No personal awards defined.</span>
-                    )}
+                          <span>{award}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAward(idx)}
+                            className="text-slate-400 hover:text-red-500"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      {form.personalAwards.length === 0 && (
+                        <span className="text-xs text-slate-400 italic">No personal awards defined.</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-
-            <div className="space-y-2 border p-3 rounded-md bg-slate-50">
-              <Label className="font-semibold">Points Configuration</Label>
-              <div className="grid grid-cols-5 gap-2">
-                {[1, 2, 3, 4, 5].map((place) => (
-                  <div key={place} className="space-y-1">
-                    <Label className="text-xs">Place {place}</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={(form.pointsConfig as any)[`place${place}`]}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          pointsConfig: { ...f.pointsConfig, [`place${place}`]: Number(e.target.value) },
-                        }))
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label>Scope</Label>
-                <Select value={form.scope} onValueChange={(v) => handleScopeChange(v as Scope)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="grade">Grade-specific</SelectItem>
-                    <SelectItem value="section">Section-specific</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={form.isMainCompetition}
-                  onCheckedChange={(checked) => setForm((f) => ({ ...f, isMainCompetition: checked }))}
-                />
-                <div>
-                  <p className="text-sm font-semibold">Main competition</p>
-                  <p className="text-xs text-muted-foreground">Marks the primary annual event.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={form.active}
-                  onCheckedChange={(checked) => setForm((f) => ({ ...f, active: checked }))}
-                />
-                <div>
-                  <p className="text-sm font-semibold">Active</p>
-                  <p className="text-xs text-muted-foreground">Enable for current year.</p>
-                </div>
-              </div>
-            </div>
-
-            {form.scope === "grade" && (
-              <div>
-                <p className="text-sm font-semibold mb-2">Eligible Grades</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded-md p-3 max-h-48 overflow-auto">
-                  {grades.map((g) => (
-                    <label key={g.id} className="flex items-center gap-2 text-sm">
-                      <Checkbox checked={form.gradeIds.includes(g.id)} onCheckedChange={() => toggleGrade(g.id)} />
-                      {g.nameEn}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {form.scope === "section" && (
-              <div>
-                <p className="text-sm font-semibold mb-2">Eligible Sections</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded-md p-3 max-h-48 overflow-auto">
-                  {sections.map((s) => (
-                    <label key={s.id} className="flex items-center gap-2 text-sm">
-                      <Checkbox checked={form.sectionIds.includes(s.id)} onCheckedChange={() => toggleSection(s.id)} />
-                      {s.nameEn}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSubmit}
-                disabled={createCompetition.isPending || updateCompetition.isPending}
-              >
-                {editingId ? "Update" : "Create"}
-              </Button>
-              {editingId && (
-                <Button variant="outline" onClick={() => { setEditingId(null); setForm({
-                  nameEn: "",
-                  nameSi: "",
-                  squadId: "",
-                  scope: "grade",
-                  gradeIds: [],
-                  sectionIds: [],
-                  isMainCompetition: true,
-                  active: true,
-                  participationType: "individual",
-                  teamConfig: { minSize: 1, maxSize: 1 },
-                  personalAwards: [],
-                  pointsConfig: { place1: 15, place2: 10, place3: 5, place4: 0, place5: 0 },
-                }); }}>
-                  Cancel
-                </Button>
               )}
-            </div>
-          </CardContent>
-        </Card>
+
+              <div className="space-y-2 border p-3 rounded-md bg-slate-50">
+                <Label className="font-semibold">Points Configuration</Label>
+                <div className="grid grid-cols-5 gap-2">
+                  {[1, 2, 3, 4, 5].map((place) => (
+                    <div key={place} className="space-y-1">
+                      <Label className="text-xs">Place {place}</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={(form.pointsConfig as any)[`place${place}`]}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            pointsConfig: { ...f.pointsConfig, [`place${place}`]: Number(e.target.value) },
+                          }))
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Scope</Label>
+                  <Select value={form.scope} onValueChange={(v) => handleScopeChange(v as Scope)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="grade">Grade-specific</SelectItem>
+                      <SelectItem value="section">Section-specific</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={form.isMainCompetition}
+                    onCheckedChange={(checked) => setForm((f) => ({ ...f, isMainCompetition: checked }))}
+                  />
+                  <div>
+                    <p className="text-sm font-semibold">Main competition</p>
+                    <p className="text-xs text-muted-foreground">Marks the primary annual event.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={form.active}
+                    onCheckedChange={(checked) => setForm((f) => ({ ...f, active: checked }))}
+                  />
+                  <div>
+                    <p className="text-sm font-semibold">Active</p>
+                    <p className="text-xs text-muted-foreground">Enable for current year.</p>
+                  </div>
+                </div>
+              </div>
+
+              {form.scope === "grade" && (
+                <div>
+                  <p className="text-sm font-semibold mb-2">Eligible Grades</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded-md p-3 max-h-48 overflow-auto">
+                    {grades.map((g) => (
+                      <label key={g.id} className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={form.gradeIds.includes(g.id)} onCheckedChange={() => toggleGrade(g.id)} />
+                        {g.nameEn}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {form.scope === "section" && (
+                <div>
+                  <p className="text-sm font-semibold mb-2">Eligible Sections</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded-md p-3 max-h-48 overflow-auto">
+                    {sections.map((s) => (
+                      <label key={s.id} className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={form.sectionIds.includes(s.id)} onCheckedChange={() => toggleSection(s.id)} />
+                        {s.nameEn}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                {editingId ? (
+                  <PermissionGuard permission="housemeets.competition.update">
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={updateCompetition.isPending}
+                    >
+                      Update
+                    </Button>
+                  </PermissionGuard>
+                ) : (
+                  <PermissionGuard permission="housemeets.competition.create">
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={createCompetition.isPending}
+                    >
+                      Create
+                    </Button>
+                  </PermissionGuard>
+                )}
+                {editingId && (
+                  <Button variant="outline" onClick={() => { setEditingId(null); setForm({
+                    nameEn: "",
+                    nameSi: "",
+                    squadId: "",
+                    scope: "grade",
+                    gradeIds: [],
+                    sectionIds: [],
+                    isMainCompetition: true,
+                    active: true,
+                    participationType: "individual",
+                    teamConfig: { minSize: 1, maxSize: 1 },
+                    personalAwards: [],
+                    pointsConfig: { place1: 15, place2: 10, place3: 5, place4: 0, place5: 0 },
+                  }); }}>
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -468,12 +486,16 @@ export default function CompetitionsPage() {
                       <TableCell className="capitalize">{c.participationType || "Individual"}</TableCell>
                       <TableCell>{c.active ? "Yes" : "No"}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button size="sm" variant="ghost" onClick={() => startEdit(getId(c))}>
-                          Edit
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => deleteCompetition.mutate(getId(c))}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <PermissionGuard permission="housemeets.competition.update">
+                          <Button size="sm" variant="ghost" onClick={() => startEdit(getId(c))}>
+                            Edit
+                          </Button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="housemeets.competition.delete">
+                          <Button size="sm" variant="ghost" onClick={() => deleteCompetition.mutate(getId(c))}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </PermissionGuard>
                       </TableCell>
                     </TableRow>
                   ))

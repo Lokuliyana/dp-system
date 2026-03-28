@@ -9,6 +9,8 @@ import {
   useHouses,
   useUpdateHouse,
 } from "@/hooks/useHouses"
+import { PermissionGuard } from "@/components/auth/permission-guard"
+import { usePermission } from "@/hooks/usePermission"
 
 type FormState = {
   nameSi: string
@@ -36,6 +38,7 @@ export function HouseCrudPanel({ title = "Houses", description }: Props) {
   const createHouse = useCreateHouse()
   const updateHouse = useUpdateHouse()
   const deleteHouse = useDeleteHouse()
+  const { can } = usePermission()
 
   const [form, setForm] = useState<FormState>(emptyForm)
   const [editing, setEditing] = useState<House | null>(null)
@@ -71,52 +74,64 @@ export function HouseCrudPanel({ title = "Houses", description }: Props) {
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Name (English)</Label>
-            <Input
-              value={form.nameEn}
-              onChange={(e) => setForm((f) => ({ ...f, nameEn: e.target.value }))}
-              placeholder="e.g., Red House"
-            />
+        {(can("housemeets.house.create") || can("housemeets.house.update")) && (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Name (English)</Label>
+              <Input
+                value={form.nameEn}
+                onChange={(e) => setForm((f) => ({ ...f, nameEn: e.target.value }))}
+                placeholder="e.g., Red House"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Name (Sinhala)</Label>
+              <Input
+                value={form.nameSi}
+                onChange={(e) => setForm((f) => ({ ...f, nameSi: e.target.value }))}
+                placeholder="Local name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Color</Label>
+              <Input
+                value={form.color}
+                onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
+                placeholder="e.g., #ff0000 or Red"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Motto (English)</Label>
+              <Input
+                value={form.mottoEn || ""}
+                onChange={(e) => setForm((f) => ({ ...f, mottoEn: e.target.value }))}
+                placeholder="Courage and honor"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Motto (Sinhala)</Label>
+              <Input
+                value={form.mottoSi || ""}
+                onChange={(e) => setForm((f) => ({ ...f, mottoSi: e.target.value }))}
+                placeholder="Localized motto"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Name (Sinhala)</Label>
-            <Input
-              value={form.nameSi}
-              onChange={(e) => setForm((f) => ({ ...f, nameSi: e.target.value }))}
-              placeholder="Local name"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Color</Label>
-            <Input
-              value={form.color}
-              onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
-              placeholder="e.g., #ff0000 or Red"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Motto (English)</Label>
-            <Input
-              value={form.mottoEn || ""}
-              onChange={(e) => setForm((f) => ({ ...f, mottoEn: e.target.value }))}
-              placeholder="Courage and honor"
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Motto (Sinhala)</Label>
-            <Input
-              value={form.mottoSi || ""}
-              onChange={(e) => setForm((f) => ({ ...f, mottoSi: e.target.value }))}
-              placeholder="Localized motto"
-            />
-          </div>
-        </div>
+        )}
         <div className="flex gap-2">
-          <Button onClick={handleSubmit} disabled={createHouse.isPending || updateHouse.isPending}>
-            {editing ? "Update House" : "Create House"}
-          </Button>
+          {editing ? (
+            <PermissionGuard permission="housemeets.house.update">
+              <Button onClick={handleSubmit} disabled={updateHouse.isPending}>
+                Update House
+              </Button>
+            </PermissionGuard>
+          ) : (
+            <PermissionGuard permission="housemeets.house.create">
+              <Button onClick={handleSubmit} disabled={createHouse.isPending}>
+                Create House
+              </Button>
+            </PermissionGuard>
+          )}
           {editing && (
             <Button
               variant="outline"
@@ -145,17 +160,21 @@ export function HouseCrudPanel({ title = "Houses", description }: Props) {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setEditing(house)}>
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => deleteHouse.mutate(house.id)}
-                    disabled={deleteHouse.isPending}
-                  >
-                    Delete
-                  </Button>
+                  <PermissionGuard permission="housemeets.house.update">
+                    <Button size="sm" variant="outline" onClick={() => setEditing(house)}>
+                      Edit
+                    </Button>
+                  </PermissionGuard>
+                  <PermissionGuard permission="housemeets.house.delete">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deleteHouse.mutate(house.id)}
+                      disabled={deleteHouse.isPending}
+                    >
+                      Delete
+                    </Button>
+                  </PermissionGuard>
                 </div>
               </div>
             ))

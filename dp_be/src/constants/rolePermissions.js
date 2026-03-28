@@ -34,6 +34,12 @@ module.exports = {
     ...Object.values(P.PARENT),
     ...Object.values(P.PARENT_STUDENT_LINK),
     ...Object.values(P.APP_USER),
+    ...Object.values(P.ROLE),
+    P.PERMISSION.READ,
+    ...Object.values(P.ORGANIZATION_CALENDAR),
+    ...Object.values(P.EXAM),
+    ...Object.values(P.REPORT),
+    ...Object.values(P.ANALYTICS),
   ],
 
   [ROLES.GRADE_TEACHER]: [P.STUDENT.READ, P.GRADE.READ],

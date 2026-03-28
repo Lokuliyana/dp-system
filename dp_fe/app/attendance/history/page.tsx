@@ -22,15 +22,21 @@ import { useGrades } from "@/hooks/useGrades";
 import { useAttendanceByRange } from "@/hooks/useAttendance";
 import { useStudentsByGrade } from "@/hooks/useStudents";
 import { cn } from "@/lib/utils";
+import { usePermission } from "@/hooks/usePermission";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June", 
   "July", "August", "September", "October", "November", "December"
 ];
 
+import { useSchoolConfig } from "@/hooks/useSchoolConfig";
+import { getDay } from "date-fns";
+
 export default function AttendanceHistoryPage() {
   const { data: grades = [] } = useGrades();
   const [selectedGradeId, setSelectedGradeId] = useState<string>("");
+  const { config } = useSchoolConfig();
   
   // Date state
   const today = new Date();
@@ -65,13 +71,14 @@ export default function AttendanceHistoryPage() {
     };
   }, [selectedYear, selectedMonth, viewRange]);
   
-  // Get all Sundays in the range for columns
-  const sundaysInRange = useMemo(() => {
+  // Get all allowed marking days in the range for columns
+  const allowedDaysInRange = useMemo(() => {
+    const allowedDay = config?.allowedDayOfWeek ?? 0;
     return eachDayOfInterval({
       start: new Date(startDate),
       end: new Date(endDate)
-    }).filter(date => isSunday(date));
-  }, [startDate, endDate]);
+    }).filter(date => getDay(date) === allowedDay);
+  }, [startDate, endDate, config]);
 
   // Fetch data
   const { data: attendance = [], isLoading: isLoadingAttendance } = useAttendanceByRange(startDate, endDate, selectedGradeId);
@@ -106,7 +113,8 @@ export default function AttendanceHistoryPage() {
   const years = useMemo(() => Array.from({ length: 7 }, (_, i) => getYear(today) - 5 + i), [today]);
 
   return (
-    <LayoutController showMainMenu showHorizontalToolbar>
+    <PermissionGuard permission="student.attendance.read">
+      <LayoutController showMainMenu showHorizontalToolbar>
       <AttendanceMenu />
 
       <DynamicPageHeader
@@ -178,7 +186,7 @@ export default function AttendanceHistoryPage() {
                   Attendance Sheet - {displayTitle}
                 </CardTitle>
                 <div className="text-sm text-muted-foreground">
-                  {filteredStudents.length} Students
+                  {allowedDaysInRange.length} Students
                 </div>
               </div>
             </CardHeader>
@@ -198,7 +206,7 @@ export default function AttendanceHistoryPage() {
                         <th className="sticky left-[200px] z-30 bg-slate-50 border-b border-r px-4 py-3 text-left font-semibold min-w-[100px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           Admission
                         </th>
-                        {sundaysInRange.map(day => (
+                        {allowedDaysInRange.map(day => (
                           <th key={day.toString()} className="border-b border-r px-2 py-3 text-center min-w-[60px] font-medium text-slate-600">
                             <div className="flex flex-col items-center">
                               <span className="text-[10px] text-slate-400">{format(day, "MMM")}</span>
@@ -218,7 +226,7 @@ export default function AttendanceHistoryPage() {
                           <td className="sticky left-[200px] z-10 bg-white border-b border-r px-4 py-2 text-slate-500 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                             {student.admissionNumber}
                           </td>
-                          {sundaysInRange.map(day => {
+                          {allowedDaysInRange.map(day => {
                             const dateStr = format(day, "yyyy-MM-dd");
                             const status = attendanceMap[student.id]?.[dateStr];
                             
@@ -252,6 +260,7 @@ export default function AttendanceHistoryPage() {
           </Card>
         )}
       </div>
-    </LayoutController>
+      </LayoutController>
+    </PermissionGuard>
   );
 }

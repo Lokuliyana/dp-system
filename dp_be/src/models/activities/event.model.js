@@ -13,6 +13,8 @@ const eventSchema = new mongoose.Schema(
 
     date: { type: Date, required: true },
     endDate: { type: Date },
+    startTime: { type: String },
+    endTime: { type: String },
     isRegistrable: { type: Boolean, default: true },
 
     gradeIds: [

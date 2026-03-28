@@ -2,31 +2,33 @@ const router = require('express').Router()
 const ctrl = require('../../controllers/student/parent.controller')
 const validate = require('../../middlewares/validate.middleware')
 const V = require('../../validations/student/parent.validation')
+const permit = require('../../middlewares/permit.middleware')
+const P = require('../../constants/permissions')
 
 router.post(
   '/',
-  // permit([P.PARENT.CREATE]),
+  permit([P.PARENT.CREATE]),
   validate(V.createParentSchema),
   ctrl.createParent
 )
 
 router.get(
   '/',
-  // permit([P.PARENT.READ]),
+  permit([P.PARENT.READ]),
   validate(V.listParentsSchema),
   ctrl.listParents
 )
 
 router.patch(
   '/:id',
-  // permit([P.PARENT.UPDATE]),
+  permit([P.PARENT.UPDATE]),
   validate(V.updateParentSchema),
   ctrl.updateParent
 )
 
 router.delete(
   '/:id',
-  // permit([P.PARENT.DELETE]),
+  permit([P.PARENT.DELETE]),
   validate(V.deleteParentSchema),
   ctrl.deleteParent
 )

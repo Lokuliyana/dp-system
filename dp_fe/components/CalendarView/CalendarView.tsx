@@ -25,7 +25,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { DayConfigDialog } from './components/DayConfigDialog';
 import {
@@ -60,8 +59,6 @@ export function CalendarView({
   className,
   readOnly = false,
   entityName = 'Event',
-  businessHours: initialBusinessHours = { start: "08:00", end: "17:00" },
-  onBusinessHoursChange,
   onDayConfigSave,
 }: CalendarViewProps) {
   const eventTypes = config.eventTypes || DEFAULT_EVENT_TYPES;
@@ -71,28 +68,6 @@ export function CalendarView({
   const [showHolidayPanel, setShowHolidayPanel] = useState(false);
   const [showDayConfigDialog, setShowDayConfigDialog] = useState(false);
   const [selectedDayConfig, setSelectedDayConfig] = useState<any>(null);
-  const [businessHours, setBusinessHours] = useState({ 
-    start: initialBusinessHours.start, 
-    end: initialBusinessHours.end, 
-    effectiveDate: new Date() 
-  });
-  const [showBusinessHoursDialog, setShowBusinessHoursDialog] = useState(false);
-  const [tempBusinessHours, setTempBusinessHours] = useState({ 
-    start: initialBusinessHours.start, 
-    end: initialBusinessHours.end, 
-    effectiveDate: new Date() 
-  });
-
-  const formatTime = (timeStr: string) => {
-    if (!timeStr) return "";
-    const [hours, minutes] = timeStr.split(':');
-    const h = parseInt(hours);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const hh = h % 12 || 12;
-    return `${hh.toString().padStart(2, '0')}:${minutes} ${ampm}`;
-  };
-
-  const businessHoursDisplay = `${formatTime(businessHours.start)} to ${formatTime(businessHours.end)}`;
 
   // Combine all events
   const allEvents: CalendarEvent[] = [
@@ -126,58 +101,63 @@ export function CalendarView({
       const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
       const isWeekendDerived = dayOfWeek === 0 || dayOfWeek === 6;
       
-      // Find existing config for this day from externalEvents (backend data)
-      const existingEvent = externalEvents.find(e => e.startDate === dateStr);
+      // Find all existing events for this day from externalEvents (backend data)
+      const dayEvents = externalEvents.filter(e => e.startDate === dateStr);
+      const firstEvent = dayEvents[0];
       
       // Check if it's a public holiday (from Google/Holidays array)
       const publicHoliday = holidays.find(h => h.date === dateStr);
       
       if (!readOnly) {
-        if (existingEvent) {
-          // Use backend data if available
+        if (dayEvents.length > 0) {
+          const isCompetition = dayEvents.some(e => e.type === 'competition-event');
+          const isPublicHoliday = dayEvents.some(e => e.type === 'public-holiday');
+          const isOrgHoliday = dayEvents.some(e => e.type === 'custom-holiday');
+          const isSchoolEvent = dayEvents.some(e => e.type === 'school-event');
+          const isSpecialDay = dayEvents.some(e => e.type === 'special-day');
+
           setSelectedDayConfig({
-            isWorking: (existingEvent as any).isWorking ?? true,
-            isHoliday: (existingEvent as any).isHoliday ?? (existingEvent.type === 'custom-holiday'),
-            holidayType: (existingEvent as any).holidayType || (existingEvent.type === 'custom-holiday' ? 'OrganizationalHoliday' : 'None'),
-            label: existingEvent.title,
-            startTime: (existingEvent as any).startTime || businessHours.start,
-            endTime: (existingEvent as any).endTime || businessHours.end,
+            isHoliday: isPublicHoliday || isOrgHoliday,
+            holidayType: isCompetition ? 'Competition' :
+                         isPublicHoliday ? 'PublicHoliday' :
+                         isOrgHoliday ? 'OrganizationalHoliday' :
+                         isSchoolEvent ? 'SpecialEvent' :
+                         isSpecialDay ? 'SpecialDay' : 'None',
+            label: firstEvent.title,
+            descriptionEn: (firstEvent as any).description,
+            startTime: firstEvent.metadata?.startTime, // Add these
+            endTime: firstEvent.metadata?.endTime,
+            metadata: {
+              ...(firstEvent as any).metadata,
+              allDayEvents: dayEvents 
+            }
           });
         } else if (publicHoliday) {
           // Default for public holiday (Google API)
           setSelectedDayConfig({
-            isWorking: false,
             isHoliday: true,
             holidayType: 'PublicHoliday',
             label: publicHoliday.name,
-            startTime: businessHours.start,
-            endTime: businessHours.end,
           });
         } else if (isWeekendDerived) {
           // Default for weekend
           setSelectedDayConfig({
-            isWorking: false,
             isHoliday: true,
             holidayType: 'Weekend',
             label: '',
-            startTime: businessHours.start,
-            endTime: businessHours.end,
           });
         } else {
           // Default for normal working day
           setSelectedDayConfig({
-            isWorking: true,
             isHoliday: false,
             holidayType: 'None',
             label: '',
-            startTime: businessHours.start,
-            endTime: businessHours.end,
           });
         }
         setShowDayConfigDialog(true);
       }
     },
-    [calendar, callbacks, externalEvents, holidays, readOnly, businessHours]
+    [calendar, callbacks, externalEvents, holidays, readOnly]
   );
 
   const handleSaveDayConfig = (config: any) => {
@@ -198,11 +178,6 @@ export function CalendarView({
             onYearChange={calendar.setYear}
             onShowHolidayPanel={() => setShowHolidayPanel(true)}
             enableHolidayPanel={enableHolidayPanel}
-            businessHours={businessHoursDisplay}
-            onEditBusinessHours={() => {
-              setTempBusinessHours(businessHours);
-              setShowBusinessHoursDialog(true);
-            }}
           />
         )}
 
@@ -222,7 +197,6 @@ export function CalendarView({
                 }}
                 readOnly={readOnly}
                 entityName={entityName}
-                businessHours={businessHours}
               />
             )}
             {calendar.view === 'week' && (
@@ -259,111 +233,19 @@ export function CalendarView({
         <SheetContent className="sm:max-w-[400px] p-0 bg-white dark:bg-slate-950 flex flex-col">
           <SheetHeader className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
             <SheetTitle className="text-lg font-bold">
-              Holidays {calendar.currentDate.getFullYear()}
+              School Calendar {calendar.currentDate.getFullYear()}
             </SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
             <HolidayPanel
               holidays={showHolidaysOnGrid ? holidays : []}
-              customHolidays={[
-                ...customEvents,
-                ...externalEvents.filter(e => 
-                  e.type === 'public-holiday' || 
-                  e.type === 'custom-holiday' || 
-                  e.type === 'holiday'
-                )
-              ]}
+              customHolidays={externalEvents}
               currentYear={calendar.currentDate.getFullYear()}
             />
           </div>
         </SheetContent>
       </Sheet>
 
-      {/* Business Hours Dialog */}
-      <Dialog open={showBusinessHoursDialog} onOpenChange={setShowBusinessHoursDialog}>
-        <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-xl rounded-lg">
-          <DialogHeader className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-md bg-primary/10">
-                <Clock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <DialogTitle className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  Business Hours Configuration
-                </DialogTitle>
-                <p className="text-xs text-slate-500 font-medium">Set operating hours for your organization</p>
-              </div>
-            </div>
-          </DialogHeader>
-
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="startTime" className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Start Time</Label>
-                <Input
-                  id="startTime"
-                  type="time"
-                  value={tempBusinessHours.start}
-                  onChange={(e) => setTempBusinessHours({ ...tempBusinessHours, start: e.target.value })}
-                  className="h-9 rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 text-sm font-medium shadow-sm focus:ring-1 focus:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="endTime" className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">End Time</Label>
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={tempBusinessHours.end}
-                  onChange={(e) => setTempBusinessHours({ ...tempBusinessHours, end: e.target.value })}
-                  className="h-9 rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 text-sm font-medium shadow-sm focus:ring-1 focus:ring-primary/20"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Effective From</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full h-9 justify-start text-xs font-medium rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-                    <CalendarHeart className="mr-2 h-3.5 w-3.5 text-slate-400" />
-                    {tempBusinessHours.effectiveDate ? format(tempBusinessHours.effectiveDate, 'MMMM d, yyyy') : 'Select effective date'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 rounded-md shadow-lg border-slate-200 dark:border-slate-800" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={tempBusinessHours.effectiveDate}
-                    onSelect={(date) => date && setTempBusinessHours({ ...tempBusinessHours, effectiveDate: date })}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <p className="text-[10px] text-slate-500 italic mt-1">Changes will be applied to all working days from this date onwards.</p>
-            </div>
-          </div>
-
-          <DialogFooter className="px-6 py-4 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowBusinessHoursDialog(false)}
-              className="flex-1 h-9 rounded-md text-xs font-semibold text-slate-600 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={() => {
-                setBusinessHours(tempBusinessHours);
-                onBusinessHoursChange?.(tempBusinessHours);
-                setShowBusinessHoursDialog(false);
-                toast.success('Business hours updated successfully');
-              }}
-              className="flex-1 h-9 rounded-md text-xs font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm transition-all"
-            >
-              Apply Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

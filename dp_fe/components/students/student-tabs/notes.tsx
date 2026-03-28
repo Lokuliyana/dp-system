@@ -8,6 +8,7 @@ import { useState, useMemo } from "react"
 import { Plus, Trash2, FileText, Lock, Calendar } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui"
 import { Badge } from "@/components/ui"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 interface NotesProps {
   notes: StudentNote[]
@@ -63,86 +64,88 @@ export function StudentNotes({ notes, onAddNote, onDeleteNote }: NotesProps) {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-blue-600" />
-            Add New Note
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Note Title</label>
-            <Input
-              value={formData.title}
-              onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-              placeholder="e.g., Progress in Mathematics"
-              className="bg-white border-slate-200"
-            />
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
+      <PermissionGuard permission="student.student.update">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-blue-600" />
+              Add New Note
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Category</label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value as any }))}
-              >
-                <SelectTrigger className="bg-white border-slate-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {NOTE_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Author</label>
+              <label className="text-sm font-medium text-slate-700">Note Title</label>
               <Input
-                value={formData.author}
-                onChange={(e) => setFormData((prev) => ({ ...prev, author: e.target.value }))}
-                placeholder="Your name"
+                value={formData.title}
+                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="e.g., Progress in Mathematics"
                 className="bg-white border-slate-200"
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Note Content</label>
-            <textarea
-              value={formData.content}
-              onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
-              placeholder="Write your note here..."
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              rows={4}
-            />
-          </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Category</label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value as any }))}
+                >
+                  <SelectTrigger className="bg-white border-slate-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NOTE_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="isPrivate"
-              checked={formData.isPrivate}
-              onChange={(e) => setFormData((prev) => ({ ...prev, isPrivate: e.target.checked }))}
-              className="rounded"
-            />
-            <label htmlFor="isPrivate" className="text-sm font-medium text-slate-700 flex items-center gap-2">
-              <Lock className="h-4 w-4" />
-              Private Note (only visible to authorized staff)
-            </label>
-          </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Author</label>
+                <Input
+                  value={formData.author}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, author: e.target.value }))}
+                  placeholder="Your name"
+                  className="bg-white border-slate-200"
+                />
+              </div>
+            </div>
 
-          <Button onClick={handleAddNote} className="bg-blue-600 hover:bg-blue-700 gap-2 w-full">
-            <Plus className="h-4 w-4" />
-            Add Note
-          </Button>
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Note Content</label>
+              <textarea
+                value={formData.content}
+                onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
+                placeholder="Write your note here..."
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                rows={4}
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="isPrivate"
+                checked={formData.isPrivate}
+                onChange={(e) => setFormData((prev) => ({ ...prev, isPrivate: e.target.checked }))}
+                className="rounded"
+              />
+              <label htmlFor="isPrivate" className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Private Note (only visible to authorized staff)
+              </label>
+            </div>
+
+            <Button onClick={handleAddNote} className="bg-blue-600 hover:bg-blue-700 gap-2 w-full">
+              <Plus className="h-4 w-4" />
+              Add Note
+            </Button>
+          </CardContent>
+        </Card>
+      </PermissionGuard>
 
       {notes.length > 0 && (
         <Card>
@@ -206,14 +209,16 @@ export function StudentNotes({ notes, onAddNote, onDeleteNote }: NotesProps) {
                         <span>By {note.author}</span>
                       </div>
                     </div>
-                    <Button
-                      onClick={() => onDeleteNote(note.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <PermissionGuard permission="student.student.update">
+                      <Button
+                        onClick={() => onDeleteNote(note.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </PermissionGuard>
                   </div>
                 </div>
               ))

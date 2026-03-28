@@ -41,12 +41,11 @@ const teacherSchema = new mongoose.Schema(
   baseSchemaOptions
 )
 
-teacherSchema.pre('save', function setFullNames(next) {
+teacherSchema.pre('save', function setFullNames() {
   this.fullNameEn = `${this.firstNameEn} ${this.lastNameEn}`.trim()
   if (this.firstNameSi || this.lastNameSi) {
     this.fullNameSi = `${this.firstNameSi || ''} ${this.lastNameSi || ''}`.trim()
   }
-  // no callback needed; mongoose handles sync hooks
 })
 
 teacherSchema.index({ schoolId: 1, email: 1 })

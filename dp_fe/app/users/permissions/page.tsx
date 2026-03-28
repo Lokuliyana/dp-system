@@ -14,6 +14,7 @@ import { Search, Lock, Info, Loader2 } from "lucide-react"
 import { useState, useMemo } from "react"
 import { motion } from "framer-motion"
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function PermissionsPage() {
   const { data: permissionsData, isLoading } = useQuery({
@@ -51,7 +52,8 @@ export default function PermissionsPage() {
   }, [hierarchy, searchTerm])
 
   return (
-    <LayoutController showMainMenu showHorizontalToolbar>
+    <PermissionGuard permission="system.permission.read">
+      <LayoutController showMainMenu showHorizontalToolbar>
       <DynamicPageHeader
         title="Permission Explorer"
         subtitle="Browse available system permissions."
@@ -122,6 +124,7 @@ export default function PermissionsPage() {
           </div>
         )}
       </div>
-    </LayoutController>
+      </LayoutController>
+    </PermissionGuard>
   )
 }

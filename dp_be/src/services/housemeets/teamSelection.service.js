@@ -53,6 +53,7 @@ exports.getTeamSelectionSuggestions = async ({ schoolId, year, level = 'zonal' }
         return {
           competitionId: w.competitionId,
           studentId: student || { _id: w.studentId },
+          gradeId: w.gradeId,
           place: undefined // place at the NEW level is unknown
         }
       })
@@ -83,7 +84,8 @@ exports.getTeamSelectionSuggestions = async ({ schoolId, year, level = 'zonal' }
     return results.map(r => ({
       competitionId: r.competitionId,
       studentId: r.studentId,
-      place: undefined // Reset place for Zonal, it's a new level
+      gradeId: r.gradeId,
+      place: r.place
     }))
   }
 
@@ -98,6 +100,7 @@ exports.getTeamSelectionSuggestions = async ({ schoolId, year, level = 'zonal' }
     return registrations.map(r => ({
       competitionId: r.competitionId,
       studentId: r.studentId,
+      gradeId: r.gradeId,
       place: undefined
     }))
 }
@@ -195,6 +198,7 @@ exports.autoGenerateNextLevel = async ({
     .map((e) => ({
       competitionId: e.competitionId,
       studentId: e.studentId,
+      gradeId: e.gradeId,
       place: undefined,
     }))
 

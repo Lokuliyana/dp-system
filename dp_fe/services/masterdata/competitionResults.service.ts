@@ -20,6 +20,7 @@ export type CreateCompetitionResultPayload = {
 export type ResultFilters = {
   competitionId?: string
   year?: number
+  gradeId?: string
 }
 
 export const competitionResultsService = {

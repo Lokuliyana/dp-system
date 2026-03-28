@@ -21,6 +21,7 @@ import { useGrades } from "@/hooks/useGrades";
 import { CreateExamDialog } from "../../components/exams/create-exam-dialog";
 import { ExamsMenu } from "@/components/exams/exams-menu";
 import { ExportButton } from "@/components/reusable";
+import { PermissionGuard } from "@/components/auth/permission-guard";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -89,13 +90,19 @@ export default function ExamsPage() {
             )
           },
           {
-            type: "button",
-            props: {
-              variant: "default",
-              icon: Plus,
-              children: "Create Paper",
-              onClick: () => setIsCreateDialogOpen(true),
-            },
+            type: "custom",
+            render: (
+              <PermissionGuard permission="student.exam_result.create">
+                <Button
+                  variant="default"
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Paper
+                </Button>
+              </PermissionGuard>
+            ),
           },
         ]}
       />
@@ -119,13 +126,15 @@ export default function ExamsPage() {
             <p className="text-muted-foreground max-w-xs mx-auto mt-2">
               Create a new exam paper to start recording student performance.
             </p>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="mt-6 border-slate-200 hover:bg-white"
-            >
-              Create Your First Paper
-            </Button>
+            <PermissionGuard permission="student.exam_result.create">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="mt-6 border-slate-200 hover:bg-white"
+              >
+                Create Your First Paper
+              </Button>
+            </PermissionGuard>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -166,11 +175,13 @@ export default function ExamsPage() {
                   </div>
                   
                   <div className="p-4 bg-slate-50 border-t flex gap-2">
-                    <Button asChild className="w-full bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-100 hover:border-indigo-200 shadow-none font-bold h-10">
-                      <Link href={`/exams/mark?examId=${exam.id}`}>
-                        Enter Marks
-                      </Link>
-                    </Button>
+                    <PermissionGuard permission="student.exam_result.update">
+                      <Button asChild className="w-full bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-100 hover:border-indigo-200 shadow-none font-bold h-10">
+                        <Link href={`/exams/mark?examId=${exam.id}`}>
+                          Enter Marks
+                        </Link>
+                      </Button>
+                    </PermissionGuard>
                     <Button variant="ghost" className="h-10 text-slate-500 hover:text-slate-900 font-bold px-4">
                       Details
                     </Button>

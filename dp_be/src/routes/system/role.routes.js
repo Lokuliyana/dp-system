@@ -5,33 +5,34 @@ const auth = require('../../middlewares/auth.middleware')
 const authGuard = require('../../middlewares/authGuard')
 const injectTenant = require('../../middlewares/tenant.middleware')
 const V = require('../../validations/system/role.validation')
+const P = require('../../constants/permissions')
 
 router.use(auth)
 router.use(injectTenant)
 
 router.post(
   '/',
-  authGuard(),
+  authGuard(P.ROLE.CREATE),
   validate(V.createRoleSchema),
   ctrl.createRole
 )
 
 router.get(
   '/',
-  authGuard(),
+  authGuard(P.ROLE.READ),
   ctrl.listRoles
 )
 
 router.patch(
   '/:id',
-  authGuard(),
+  authGuard(P.ROLE.UPDATE),
   validate(V.updateRoleSchema),
   ctrl.updateRole
 )
 
 router.delete(
   '/:id',
-  authGuard(),
+  authGuard(P.ROLE.DELETE),
   validate(V.deleteRoleSchema),
   ctrl.deleteRole
 )

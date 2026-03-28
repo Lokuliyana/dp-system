@@ -9,10 +9,10 @@ import { competitionResultsService } from "@/services/masterdata/competitionResu
 import { teamSelectionsService } from "@/services/masterdata/teamSelections.service";
 import type { SaveTeamSelectionPayload, AutoGeneratePayload } from "@/services/masterdata/teamSelections.service";
 
-export function useCompetitions(year?: number) {
+export function useCompetitions(year?: number, gradeId?: string) {
   return useQuery({
-    queryKey: qk.competitions.byYear(year),
-    queryFn: () => competitionsService.list(year),
+    queryKey: [...qk.competitions.byYear(year), gradeId],
+    queryFn: () => competitionsService.list(year, gradeId),
     staleTime: 60_000,
   });
 }
@@ -129,10 +129,10 @@ export function useCreateCompetitionTeam(competitionId: string, year: number) {
 }
 
 /* ----- Results ----- */
-export function useCompetitionResults(competitionId: string, year?: number) {
+export function useCompetitionResults(competitionId: string, year?: number, gradeId?: string) {
   return useQuery({
-    queryKey: qk.competitionResults.byCompetition(competitionId, year),
-    queryFn: () => competitionResultsService.list({ competitionId, year }),
+    queryKey: qk.competitionResults.byCompetition(competitionId, year, gradeId),
+    queryFn: () => competitionResultsService.list({ competitionId, year, gradeId }),
     enabled: !!competitionId,
   });
 }
@@ -154,7 +154,7 @@ export function useCreateCompetitionResult(
     mutationFn: competitionResultsService.create,
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: qk.competitionResults.byCompetition(competitionId, year),
+        queryKey: ["competitionResults", competitionId, year],
       });
     },
   });
@@ -166,7 +166,7 @@ export function useDeleteCompetitionResult(competitionId: string, year: number) 
     mutationFn: (id: string) => competitionResultsService.remove(id),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: qk.competitionResults.byCompetition(competitionId, year),
+        queryKey: ["competitionResults", competitionId, year],
       });
     },
   });
@@ -215,5 +215,12 @@ export function useAutoGenerateTeamSelection(year: number) {
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: [...qk.teamSelections.byYear(year), variables.toLevel] });
     },
+  });
+}
+export function useCompetitionDashboard(year?: number) {
+  return useQuery({
+    queryKey: ["competitionDashboard", year],
+    queryFn: () => competitionsService.getDashboardStats(year),
+    enabled: !!year,
   });
 }

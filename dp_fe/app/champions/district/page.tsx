@@ -1,20 +1,14 @@
 "use client";
 
-import { ChampionsPathView } from "@/components/champions/champions-path-view";
+import { ChampionsUnifiedView } from "@/components/champions/champions-unified-view";
 import { LayoutController } from "@/components/layout/dynamic";
 import { ChampionsMenu } from "@/components/champions/champions-menu";
-import { Medal } from "lucide-react";
 
 export default function DistrictPage() {
   return (
-    <LayoutController showMainMenu showHorizontalToolbar showSidebar>
+    <LayoutController showMainMenu showHorizontalToolbar>
       <ChampionsMenu />
-      <ChampionsPathView 
-        level="district"
-        title="District Team Dashboard"
-        description="Overview of students qualified for District level and school results."
-        icon={Medal}
-      />
+      <ChampionsUnifiedView level="district" />
     </LayoutController>
   );
 }

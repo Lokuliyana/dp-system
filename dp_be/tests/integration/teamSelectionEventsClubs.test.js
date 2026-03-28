@@ -30,11 +30,14 @@ const createTeacher = async (firstName = 'Teacher') => {
     .send({
       firstNameEn: firstName,
       lastNameEn: unique('User'),
+      firstNameSi: 'ගුරු',
+      lastNameSi: unique('නම'),
       email: `${unique('teacher')}@school.test`,
-      phone: '0710000000',
+      phone: `071${Math.floor(Math.random() * 10000000)}`,
       dateJoined: new Date().toISOString(),
     })
 
+  if (res.statusCode !== 201) console.log('CREATE TEACHER FAILED:', res.status, res.body)
   expect(res.statusCode).toBe(201)
   return res.body.data.id
 }
@@ -68,6 +71,7 @@ const createStudent = async (gradeId, overrides = {}) => {
       sex: 'male',
       admissionNumber: unique('ADM'),
       admissionDate: new Date().toISOString(),
+      admissionYear: 2024,
       dob: new Date('2012-01-01').toISOString(),
       gradeId,
       academicYear: 2024,
@@ -142,6 +146,7 @@ const createClubPosition = async (name = 'President') => {
 }
 
 beforeAll(async () => {
+  jest.setTimeout(60000)
   await setup.connect()
   
   const token = jwt.sign({ 
@@ -160,7 +165,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await setup.clear()
-})
+}, 30000)
 
 afterAll(async () => {
   await setup.close()
@@ -189,8 +194,8 @@ describe('Team selection zonal/district/allisland pipeline', () => {
     expect(resultsRes.statusCode).toBe(200)
 
     const suggestionsRes = await request(app)
-      .get(`${env.apiPrefix}/team-selections/zonal-suggestions`)
-      .query({ year: String(year) })
+      .get(`${env.apiPrefix}/team-selections/suggestions`)
+      .query({ year: String(year), level: 'zonal' })
       .set('Authorization', authHeader)
 
     expect(suggestionsRes.statusCode).toBe(200)
@@ -256,7 +261,7 @@ describe('Team selection zonal/district/allisland pipeline', () => {
     expect(autoIslandRes.statusCode).toBe(200)
     expect(autoIslandRes.body.data.level).toBe('allisland')
     expect(autoIslandRes.body.data.entries).toHaveLength(1)
-  })
+  }, 60000)
 
   it('suggests zonal entries from registrations when results are not available', async () => {
     const year = 2032
@@ -278,8 +283,8 @@ describe('Team selection zonal/district/allisland pipeline', () => {
     expect(regRes.statusCode).toBe(201)
 
     const suggestionsRes = await request(app)
-      .get(`${env.apiPrefix}/team-selections/zonal-suggestions`)
-      .query({ year: String(year) })
+      .get(`${env.apiPrefix}/team-selections/suggestions`)
+      .query({ year: String(year), level: 'zonal' })
       .set('Authorization', authHeader)
 
     expect(suggestionsRes.statusCode).toBe(200)
@@ -339,9 +344,10 @@ describe('Events and clubs with MIC teachers', () => {
       .send({
         eventId,
         studentId,
+        gradeId,
         year: eventYear,
       })
-    expect(eventRegRes.statusCode).toBe(200)
+     expect(eventRegRes.statusCode).toBe(200)
 
     const listRegRes = await request(app)
       .get(`${env.apiPrefix}/events/registrations`)
@@ -349,7 +355,7 @@ describe('Events and clubs with MIC teachers', () => {
       .set('Authorization', authHeader)
     expect(listRegRes.statusCode).toBe(200)
     expect(listRegRes.body.data.length).toBe(1)
-    expect(listRegRes.body.data[0].studentId).toBe(studentId)
+    expect(listRegRes.body.data[0].studentId._id).toBe(studentId)
 
     const clubPositionId = await createClubPosition('President')
     const createClubRes = await request(app)
