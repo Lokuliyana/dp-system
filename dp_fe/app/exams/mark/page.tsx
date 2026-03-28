@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { FileText, Search, Save, AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { LayoutController, DynamicPageHeader } from "@/components/layout/dynamic";
@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 import { ExamsMenu } from "@/components/exams/exams-menu";
 import Link from "next/link";
 
-export default function MarkExamPage() {
+function MarkExamContent() {
   const searchParams = useSearchParams();
   const examId = searchParams.get("examId") || "";
   
@@ -300,5 +300,17 @@ export default function MarkExamPage() {
         )}
       </div>
     </LayoutController>
+  );
+}
+
+export default function MarkExamPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-50">
+        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    }>
+      <MarkExamContent />
+    </Suspense>
   );
 }
