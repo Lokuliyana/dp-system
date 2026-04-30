@@ -38,7 +38,7 @@ export default function HouseHistoryPage() {
   const { data: houses = [], isLoading: housesLoading } = useHouses();
   const { data: points = [], isLoading: pointsLoading } = useHousePoints(selectedYear);
   const { data: results = [], isLoading: resultsLoading } = useAllResults(selectedYear);
-  const { data: competitions = [], isLoading: compsLoading } = useCompetitions(selectedYear);
+  const { data: competitions = [], isLoading: compsLoading } = useCompetitions({ year: selectedYear });
 
   const years = useMemo(() => {
     const startYear = 2023; // Or fetch from API

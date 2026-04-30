@@ -65,6 +65,7 @@ exports.getTeamSelectionSuggestions = async ({ schoolId, year, level = 'zonal' }
   const mains = await Competition.find({
     schoolId,
     year: y,
+    eventType: 'main'
   }).lean()
 
   const mainCompetitionIds = mains.map((c) => c._id)
@@ -77,11 +78,38 @@ exports.getTeamSelectionSuggestions = async ({ schoolId, year, level = 'zonal' }
     studentId: { $ne: null },
   })
     .sort({ competitionId: 1, place: 1 })
-    .populate('studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi')
+    .populate('studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi gradeId sectionId')
     .lean()
 
+  const filterEntry = (r) => {
+    const comp = mains.find(c => String(c._id) === String(r.competitionId))
+    if (!comp) return false
+
+    const s = r.studentId
+    if (!s) return false
+
+    // Check grade eligibility
+    const gid = String(r.gradeId || s.gradeId)
+    const isGradeAllowed = comp.gradeIds?.some(id => String(id) === gid)
+    const isGradeExcluded = comp.excludedZonalGradeIds?.some(id => String(id) === gid)
+    if (!isGradeAllowed || isGradeExcluded) return false
+
+    // Check section eligibility
+    const sid = String(s.sectionId)
+    if (comp.sectionIds && comp.sectionIds.length > 0) {
+      const isSectionAllowed = comp.sectionIds.some(id => String(id) === sid)
+      const isSectionExcluded = comp.excludedZonalSectionIds?.some(id => String(id) === sid)
+      if (!isSectionAllowed || isSectionExcluded) return false
+    } else {
+      const isSectionExcluded = comp.excludedZonalSectionIds?.some(id => String(id) === sid)
+      if (isSectionExcluded) return false
+    }
+
+    return true
+  }
+
   if (results.length > 0) {
-    return results.map(r => ({
+    return results.filter(filterEntry).map(r => ({
       competitionId: r.competitionId,
       studentId: r.studentId,
       gradeId: r.gradeId,
@@ -94,15 +122,15 @@ exports.getTeamSelectionSuggestions = async ({ schoolId, year, level = 'zonal' }
     year: y,
     competitionId: { $in: mainCompetitionIds },
   })
-    .populate('studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi')
+    .populate('studentId', 'firstNameEn lastNameEn admissionNumber fullNameSi firstNameSi lastNameSi fullNameEn nameWithInitialsSi gradeId sectionId')
     .lean()
 
-    return registrations.map(r => ({
-      competitionId: r.competitionId,
-      studentId: r.studentId,
-      gradeId: r.gradeId,
-      place: undefined
-    }))
+  return registrations.filter(filterEntry).map(r => ({
+    competitionId: r.competitionId,
+    studentId: r.studentId,
+    gradeId: r.gradeId,
+    place: undefined
+  }))
 }
 
 

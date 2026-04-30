@@ -6,6 +6,7 @@ import { Users, Plus, UserPlus, Search, Layers, ChevronRight, MoreVertical, Tras
 
 import { useGrades, useUpdateGrade, useCreateGrade, useDeleteGrade } from "@/hooks/useGrades";
 import { useSections, useCreateSection, useUpdateSection, useDeleteSection } from "@/hooks/useSections";
+import { useTeachers } from "@/hooks/useTeachers";
 import { GradeSelector } from "@/components/students/grade/GradeSelector";
 import { GradeForm } from "@/components/students/grade/GradeForm";
 import { SectionForm } from "@/components/students/section/SectionForm";
@@ -40,6 +41,7 @@ export default function StudentsPage() {
   // Data Fetching
   const { data: grades = [], isLoading: isLoadingGrades } = useGrades();
   const { data: sections = [], isLoading: isLoadingSections } = useSections();
+  const { data: teachers = [] } = useTeachers();
 
   // Mutations
   const updateGradeMutation = useUpdateGrade();
@@ -315,6 +317,7 @@ export default function StudentsPage() {
                     onSelectGrade={(gradeId) => router.push(`/students/${gradeId}`)}
                     onEdit={handleEditGrade}
                     onDelete={setGradeToDelete}
+                    teachers={teachers}
                   />
                 ) : (
                   <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-lg border border-dashed">
@@ -339,6 +342,7 @@ export default function StudentsPage() {
               onSelectGrade={(gradeId) => router.push(`/students/${gradeId}`)}
               onEdit={handleEditGrade}
               onDelete={setGradeToDelete}
+              teachers={teachers}
             />
           </div>
         )}

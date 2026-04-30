@@ -2,20 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Calendar, Users, Plus, Edit, Trash2, Loader, X, Search, Info, Flag, Clock, UserCheck } from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  Button, 
-  Input, 
-  Badge, 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue, 
-  Textarea,
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Button,
+  Input,
+  Badge,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Separator,
   ScrollArea,
   Avatar,
@@ -30,9 +29,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  CrudModal,
   DeleteConfirmationModal,
 } from "@/components/reusable";
+import { EventFormDialog, type EventFormData } from "@/components/events/EventFormDialog";
 import {
   useEvents,
   useCreateEvent,
@@ -100,6 +99,8 @@ export function EventsManagement() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<any[]>([]);
   const [registrationNote, setRegistrationNote] = useState("");
+  const [editingRoleRegId, setEditingRoleRegId] = useState<string | null>(null);
+  const [editingRoleValue, setEditingRoleValue] = useState("");
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -222,19 +223,6 @@ export function EventsManagement() {
     );
   }, [searchableUsers, studentSearchTerm]);
 
-  const handleInputChange = (
-    e:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<HTMLTextAreaElement>
-      | React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "year" ? Number(value) || prev.year : value,
-    }));
-  };
-
   const resetForm = () => {
     setFormData({
       title: "",
@@ -251,21 +239,20 @@ export function EventsManagement() {
     setEditingId(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (data: EventFormData) => {
     const payload = {
-      nameSi: formData.title,
-      nameEn: formData.title,
-      descriptionSi: formData.description,
-      descriptionEn: formData.description,
-      eventType: formData.eventType,
-      date: formData.date,
-      endDate: formData.endDate || undefined,
+      nameSi: data.title,
+      nameEn: data.title,
+      descriptionSi: data.description,
+      descriptionEn: data.description,
+      eventType: data.eventType,
+      date: data.date,
+      endDate: data.endDate || undefined,
       gradeIds: selectedGradeId ? [selectedGradeId] : [],
-      teacherInChargeId: formData.teacherInChargeId || undefined,
-      year: formData.year,
-      clubId: formData.eventType === 'club' ? formData.clubId || undefined : undefined,
-      squadId: formData.eventType === 'squad' ? formData.squadId || undefined : undefined,
+      teacherInChargeId: data.teacherInChargeId || undefined,
+      year: data.year,
+      clubId: data.eventType === 'club' ? data.clubId || undefined : undefined,
+      squadId: data.eventType === 'squad' ? data.squadId || undefined : undefined,
     };
 
     if (editingId) {
@@ -344,6 +331,26 @@ export function EventsManagement() {
       });
   };
 
+  const handleRoleConfirm = async (reg: any) => {
+    if (!selectedEventId || !editingRoleRegId) return;
+    const regStudentId = typeof reg.studentId === 'string' ? reg.studentId : (reg.studentId as any)?._id || (reg.studentId as any)?.id;
+    const gradeId = typeof reg.gradeId === 'string' ? reg.gradeId : (reg.gradeId as any)?._id || (reg.gradeId as any)?.id;
+    try {
+      await removeRegistration.mutateAsync(reg.id);
+      await registerStudent.mutateAsync({
+        eventId: selectedEventId,
+        studentId: regStudentId,
+        gradeId: gradeId || selectedGradeId || "",
+        year: reg.year || formData.year,
+        noteEn: editingRoleValue,
+      });
+    } catch {
+      toast({ title: "Failed to update role", variant: "destructive" });
+    } finally {
+      setEditingRoleRegId(null);
+    }
+  };
+
   const chairHead = teachers.find((t) => t.id === currentEvent?.teacherInChargeId);
 
   if (isLoadingEvents) {
@@ -357,7 +364,7 @@ export function EventsManagement() {
   return (
     <div className="flex h-[calc(100vh-220px)] flex-col gap-6 lg:flex-row">
       {/* Left Sidebar - Event List */}
-      <div className="flex w-full flex-col gap-4 lg:w-80">
+      <div className="flex w-full flex-col gap-4 lg:w-56">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
@@ -374,7 +381,7 @@ export function EventsManagement() {
               key={ev.id || (ev as any)._id}
               onClick={() => setSelectedEventId(ev.id || (ev as any)._id)}
               className={cn(
-                "group flex flex-col gap-1 rounded-xl border p-4 text-left transition-all hover:border-primary/50",
+                "group flex flex-col gap-1 rounded-lg border p-3 text-left transition-all hover:border-primary/50",
                 selectedEventId === (ev.id || (ev as any)._id)
                   ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
                   : "border-slate-200 bg-white"
@@ -620,16 +627,34 @@ export function EventsManagement() {
                                     </Badge>
                                   </TableCell>
                                   <TableCell className="py-3">
-                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                      {reg.noteEn || "Standard Participant"}
-                                    </div>
+                                    {editingRoleRegId === reg.id ? (
+                                      <Input
+                                        autoFocus
+                                        className="h-7 text-xs w-28"
+                                        value={editingRoleValue}
+                                        onChange={(e) => setEditingRoleValue(e.target.value)}
+                                        onBlur={() => handleRoleConfirm(reg)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') handleRoleConfirm(reg);
+                                          if (e.key === 'Escape') setEditingRoleRegId(null);
+                                        }}
+                                      />
+                                    ) : (
+                                      <button
+                                        className="text-[10px] font-medium text-slate-500 hover:text-primary hover:underline transition-colors text-left"
+                                        onClick={() => { setEditingRoleRegId(reg.id); setEditingRoleValue(reg.noteEn || ""); }}
+                                        title="Click to edit role"
+                                      >
+                                        {reg.noteEn || <span className="italic text-slate-400">—</span>}
+                                      </button>
+                                    )}
                                   </TableCell>
                                   <TableCell className="py-3 text-right">
                                     <PermissionGuard permission="activities.event_registration.delete">
-                                      <Button 
-                                        size="icon" 
-                                        variant="ghost" 
-                                        className="h-7 w-7 text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
                                         onClick={() => handleRemoveRegistration(reg.id)}
                                         disabled={removeRegistration.isPending}
                                       >
@@ -714,124 +739,20 @@ export function EventsManagement() {
         )}
       </div>
 
-      <CrudModal
-        title={editingId ? "Edit Event" : "Create Event"}
+      <EventFormDialog
         isOpen={isFormOpen}
         onClose={resetForm}
         onSubmit={handleSubmit}
         isEditing={!!editingId}
         isLoading={createEvent.isPending || updateEvent.isPending}
-      >
-        <div className="space-y-4">
-          <div className="space-y-1.5 font-sans">
-            <label className="text-sm font-semibold text-slate-700">Event Title</label>
-            <Input 
-              name="title" 
-              value={formData.title} 
-              onChange={handleInputChange} 
-              required 
-              placeholder="e.g. Annual Sport Meet" 
-              className="h-11 border-slate-200"
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-             <div className="space-y-1.5 font-sans">
-                <label className="text-sm font-semibold text-slate-700">Category</label>
-                <select
-                    name="eventType"
-                    value={formData.eventType}
-                    onChange={handleInputChange}
-                    className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                    <option value="regular">Regular</option>
-                    <option value="main">Main Event</option>
-                    <option value="squad">Squad Wise</option>
-                    <option value="club">Club Wise</option>
-                    <option value="academic">Academic</option>
-                    <option value="staff">Staff</option>
-                </select>
-             </div>
-             <div className="space-y-1.5 font-sans">
-                <label className="text-sm font-semibold text-slate-700">Event Year</label>
-                <Input
-                    type="number"
-                    name="year"
-                    value={formData.year}
-                    onChange={handleInputChange}
-                    required
-                    className="h-11 border-slate-200"
-                />
-             </div>
-          </div>
-
-          <div className="space-y-1.5 font-sans">
-            <label className="text-sm font-semibold text-slate-700">Brief Description</label>
-            <Textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="What is this event about?"
-              className="resize-none border-slate-200"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5 font-sans">
-              <label className="text-sm font-semibold text-slate-700">Commencing Date</label>
-              <Input type="date" name="date" value={formData.date} onChange={handleInputChange} required className="h-11 border-slate-200" />
-            </div>
-            <div className="space-y-1.5 font-sans">
-              <label className="text-sm font-semibold text-slate-700">Conclusion (Optional)</label>
-              <Input type="date" name="endDate" value={formData.endDate} onChange={handleInputChange} className="h-11 border-slate-200" />
-            </div>
-          </div>
-
-          <div className="space-y-1.5 font-sans">
-            <label className="text-sm font-semibold text-slate-700">Chair Head / MIC</label>
-            <LiveSearch
-              data={filteredTeachers}
-              labelKey="displayName"
-              valueKey="id"
-              onSearch={setTeacherSearchTerm}
-              selected={(val) => setFormData(prev => ({ ...prev, teacherInChargeId: val.item?.id || "" }))}
-              defaultSelected={formData.teacherInChargeId}
-              placeholder="Select Lead Teacher"
-            />
-          </div>
-
-          {formData.eventType === 'club' && (
-            <div className="space-y-1.5 font-sans">
-              <label className="text-sm font-semibold text-slate-700">Select Club</label>
-              <LiveSearch
-                data={filteredClubs}
-                labelKey="displayName"
-                valueKey="id"
-                onSearch={setClubSearchTerm}
-                selected={(val) => setFormData(prev => ({ ...prev, clubId: val.item?.id || "" }))}
-                defaultSelected={formData.clubId}
-                placeholder="Select Club"
-              />
-            </div>
-          )}
-
-          {formData.eventType === 'squad' && (
-            <div className="space-y-1.5 font-sans">
-              <label className="text-sm font-semibold text-slate-700">Select Squad</label>
-              <LiveSearch
-                data={filteredSquads}
-                labelKey="displayName"
-                valueKey="id"
-                onSearch={setSquadSearchTerm}
-                selected={(val) => setFormData(prev => ({ ...prev, squadId: val.item?.id || "" }))}
-                defaultSelected={formData.squadId}
-                placeholder="Select Squad"
-              />
-            </div>
-          )}
-        </div>
-      </CrudModal>
+        defaultValues={editingId ? formData : undefined}
+        filteredTeachers={filteredTeachers}
+        filteredClubs={filteredClubs}
+        filteredSquads={filteredSquads}
+        onTeacherSearch={setTeacherSearchTerm}
+        onClubSearch={setClubSearchTerm}
+        onSquadSearch={setSquadSearchTerm}
+      />
 
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}

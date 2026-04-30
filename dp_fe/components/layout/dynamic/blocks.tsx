@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { usePathname } from "next/navigation";
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,13 +32,11 @@ export interface MenuBarProps extends React.ComponentProps<"div"> {
 
 export const HorizontalToolbar = React.forwardRef<HTMLDivElement, MenuBarProps>(
   ({ children, className, ...props }, ref) => {
-    const isMobile = useIsMobile();
     return (
       <HorizontalToolbarWrapper>
         <div
           className={cn(
-            "w-full flex gap-2 justify-between",
-            isMobile ? "flex-col items-stretch" : "flex-row items-center",
+            "w-full flex flex-row items-center justify-between gap-2",
             className
           )}
           ref={ref}
@@ -69,15 +68,10 @@ export const HorizontalToolbarIcons = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div">
 >(({ className, ...props }, ref) => {
-  const isMobile = useIsMobile();
   return (
     <div
       ref={ref}
-      className={cn(
-        "flex items-center gap-2",
-        isMobile ? "flex-wrap" : "flex-row",
-        className
-      )}
+      className={cn("flex items-center gap-2 flex-wrap", className)}
       {...props}
     />
   );
@@ -145,14 +139,29 @@ MainMenu.displayName = "MainMenu";
 
 export const MainMenuTitle = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, ...props }, ref) => {
+  React.ComponentProps<"div"> & { moduleLabel?: boolean }
+>(({ className, children, moduleLabel = false, ...props }, ref) => {
+  const { setModuleTitle } = useInnerLayoutControls();
+
+  useEffect(() => {
+    // Only the first/primary MainMenuTitle should set the module title
+    if (moduleLabel && typeof children === "string") {
+      setModuleTitle(children);
+      return () => setModuleTitle(null);
+    }
+  }, [children, moduleLabel, setModuleTitle]);
+
   return (
     <div
       ref={ref}
-      className={cn("px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-widest", className)}
+      className={cn(
+        "px-3 py-2 text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest",
+        className
+      )}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 });
 MainMenuTitle.displayName = "MainMenuTitle";
@@ -171,44 +180,63 @@ interface MainMenuItemProps extends React.ComponentProps<"div"> {
 
 export const MainMenuItem = React.forwardRef<HTMLDivElement, MainMenuItemProps>(
   ({ items, className, ...props }, ref) => {
+    const pathname = usePathname();
+
     return (
-      <div ref={ref} className={cn("space-y-0.5", className)} {...props}>
-        {items.map((item, index) => (
-          <div key={index}>
-            {item.subMenus && item.subMenus.length > 0 ? (
-              <Collapsible className="group/collapsible">
-                <CollapsibleTrigger className={cn(
-                  "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-semibold transition-all duration-200",
-                  item.active 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                )}>
-                  <div className="flex items-center gap-3">
-                    {item.icon && <span className={cn("opacity-80", item.active && "opacity-100")}>{item.icon}</span>}
-                    {item.text}
-                  </div>
-                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pl-3 pt-0.5">
-                  <MainMenuItem items={item.subMenus} />
-                </CollapsibleContent>
-              </Collapsible>
-            ) : (
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-all duration-200",
-                  item.active 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                )}
-              >
-                {item.icon && <span className={cn("opacity-80", item.active && "opacity-100")}>{item.icon}</span>}
-                {item.text}
-              </Link>
-            )}
-          </div>
-        ))}
+      <div ref={ref} className={cn("space-y-0.5 px-2", className)} {...props}>
+        {items.map((item, index) => {
+          const isActive = item.active !== undefined
+            ? item.active
+            : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+          return (
+            <div key={index}>
+              {item.subMenus && item.subMenus.length > 0 ? (
+                <Collapsible className="group/collapsible">
+                  <CollapsibleTrigger className={cn(
+                    "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  )}>
+                    <div className="flex items-center gap-2.5">
+                      {item.icon && (
+                        <span className={cn("opacity-70", isActive && "opacity-100 text-primary")}>
+                          {item.icon}
+                        </span>
+                      )}
+                      {item.text}
+                    </div>
+                    <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]/collapsible:rotate-90 text-slate-400" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pl-3 pt-0.5">
+                    <MainMenuItem items={item.subMenus} />
+                  </CollapsibleContent>
+                </Collapsible>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  )}
+                >
+                  {item.icon && (
+                    <span className={cn("opacity-70 flex-shrink-0", isActive && "opacity-100 text-primary")}>
+                      {item.icon}
+                    </span>
+                  )}
+                  <span>{item.text}</span>
+                  {isActive && (
+                    <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
+                  )}
+                </Link>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }

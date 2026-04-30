@@ -10,7 +10,7 @@ export function StudentsMenu() {
 
   return (
     <MainMenu>
-      <MainMenuTitle>Students</MainMenuTitle>
+      <MainMenuTitle moduleLabel>Students</MainMenuTitle>
       <PermissionGuard permission="student.student.read">
         <MainMenuItem
           items={[
@@ -34,7 +34,7 @@ export function StudentsMenu() {
           items={[
             {
               text: "All Grades",
-              href: "#", // Collapsible parent
+              href: "#",
               icon: <GraduationCap className="h-4 w-4" />,
               subMenus: grades.map((grade) => ({
                 text: grade.nameSi,
@@ -45,7 +45,6 @@ export function StudentsMenu() {
           ]}
         />
       </PermissionGuard>
-
     </MainMenu>
   );
 }

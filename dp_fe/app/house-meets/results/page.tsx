@@ -51,7 +51,7 @@ export default function HouseResultsPage() {
   const [year] = useState(currentYear);
   const { data: grades = [] } = useGrades();
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
-  const { data: competitions = [] } = useCompetitions(year, selectedGrade || undefined);
+  const { data: competitions = [] } = useCompetitions({ year, gradeId: selectedGrade || undefined });
   const [competitionId, setCompetitionId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 

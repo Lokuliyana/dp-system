@@ -12,6 +12,12 @@ const competitionSchema = new mongoose.Schema(
       index: true,
     },
 
+    clubId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Club',
+      index: true,
+    },
+
     scope: {
       type: String,
       enum: ['open', 'grade', 'section'],
@@ -19,6 +25,15 @@ const competitionSchema = new mongoose.Schema(
     },
     gradeIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Grade' }],
     sectionIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Section' }],
+
+    excludedZonalGradeIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Grade' }],
+    excludedZonalSectionIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Section' }],
+
+    eventType: {
+      type: String,
+      enum: ['regular', 'main', 'annual'],
+      default: 'regular',
+    },
 
     isMainCompetition: { type: Boolean, default: false },
     active: { type: Boolean, default: true, index: true },
@@ -60,7 +75,7 @@ const competitionSchema = new mongoose.Schema(
 )
 
 competitionSchema.index(
-  { schoolId: 1, squadId: 1, year: 1, nameEn: 1 },
+  { schoolId: 1, squadId: 1, clubId: 1, year: 1, nameEn: 1 },
   { unique: true }
 )
 

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { PageContainer } from "@/components/layout";
-import { Header } from "@/components/ui";
 import { LucideIcon } from "lucide-react";
 
 interface NavItem {
@@ -34,39 +33,42 @@ export function ModuleLayout({
   return (
     <PageContainer variant="fluid" className="h-[calc(100vh-3rem)] p-0">
       <div className="flex h-full">
-        {/* Sidebar */}
-        <aside className="w-52 border-r border-slate-200 bg-slate-50/50 flex-shrink-0 overflow-y-auto">
-          <div className="p-3 border-b border-slate-200/50">
-            <h2 className="font-semibold text-slate-900 flex items-center gap-2 text-sm">
-              {icon && (() => {
-                const Icon = icon;
-                return <Icon className="h-4 w-4 text-slate-500" />;
-              })()}
-              {title}
-            </h2>
-            <p className="mt-1 text-[10px] text-slate-500 line-clamp-2 leading-tight">
-              {description}
-            </p>
+        {/* Module Sidebar */}
+        <aside className="w-48 flex-shrink-0 border-r border-slate-200 bg-slate-50 flex flex-col overflow-y-auto">
+          <div className="px-4 py-3 border-b border-slate-200/70">
+            {icon && (() => {
+              const Icon = icon;
+              return (
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/8 text-primary mb-2">
+                  <Icon className="h-3.5 w-3.5" />
+                </div>
+              );
+            })()}
+            <h2 className="text-sm font-bold text-slate-900 leading-tight">{title}</h2>
+            <p className="mt-0.5 text-[11px] text-slate-500 leading-tight">{description}</p>
           </div>
-          <nav className="flex-1 py-2">
+          <nav className="flex-1 py-2 px-2">
             {navItems.map((item) => {
               const isActive = item.exact
                 ? pathname === item.href
                 : pathname === item.href || pathname.startsWith(`${item.href}/`);
               const Icon = item.icon;
-              
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "group flex items-center gap-3 px-4 py-1.5 text-sm font-medium border-l-2 transition-colors",
+                    "group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150 mb-0.5",
                     isActive
-                      ? "border-blue-600 bg-white text-slate-900"
-                      : "border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                      ? "bg-white text-primary shadow-sm border border-slate-200/80"
+                      : "text-slate-500 hover:bg-white/70 hover:text-slate-800"
                   )}
                 >
-                  <Icon className={cn("h-4 w-4", isActive ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600")} />
+                  <Icon className={cn(
+                    "h-3.5 w-3.5 flex-shrink-0 transition-colors",
+                    isActive ? "text-primary" : "text-slate-400 group-hover:text-slate-600"
+                  )} />
                   {item.label}
                 </Link>
               );
@@ -76,7 +78,7 @@ export function ModuleLayout({
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto bg-white">
-          <div className="p-6 max-w-5xl mx-auto">
+          <div className="p-5 max-w-5xl mx-auto">
             {children}
           </div>
         </main>

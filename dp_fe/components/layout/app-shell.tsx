@@ -10,11 +10,9 @@ import { MainNavigation, MobileBottomNav, MobileHeader } from "@/components/layo
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useCurrentUser } from "@/hooks/useAuth"
-import { Loader2, BookOpen, User } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
-import Link from "next/link"
-import Image from "next/image"
 import { UserNav } from "@/components/layout/user-nav"
 import { LoginModal } from "@/components/auth/login-modal"
 
@@ -23,10 +21,6 @@ interface AppShellProps {
   children: ReactNode;
 }
 
-/**
- * Global application shell for the admin console.
- * Handles sidebar, chrome, and top header – pages only render their content.
- */
 export function AppShell({ children }: AppShellProps) {
   const isMobile = useIsMobile();
   const pathname = usePathname();
@@ -35,7 +29,6 @@ export function AppShell({ children }: AppShellProps) {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const { data: user, isLoading: isUserLoading, isError, refetch } = useCurrentUser();
-
 
   useEffect(() => {
     const isLoginPage = pathname === "/login";
@@ -59,20 +52,19 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [pathname, user, isUserLoading, isError]);
 
-
-  // If we're on a protected page and still loading user or checking token
   if (pathname !== "/login" && (isUserLoading || isCheckingAuth)) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-sm font-medium text-slate-500">Verifying session...</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          </div>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Verifying session</p>
         </div>
       </div>
     );
   }
 
-  // If on login page, just render children (LoginForm) without the shell chrome
   if (pathname === "/login") {
     return <>{children}</>;
   }
@@ -86,26 +78,11 @@ export function AppShell({ children }: AppShellProps) {
       <SidebarInset className="flex flex-col h-screen overflow-hidden">
         {/* Desktop Header */}
         {!isMobile && (
-          <header className="flex h-12 items-center gap-4 border-b bg-white/80 backdrop-blur-md px-4 sticky top-0 z-30 shadow-sm flex-shrink-0">
-            <SidebarTrigger className="h-8 w-8 hover:bg-slate-100 transition-colors rounded-lg" />
-            
-            <div className="flex-1 flex justify-center">
-              <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.02]">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] text-primary-foreground transform group-hover:rotate-6 transition-transform overflow-hidden">
-                  <Image src="/logo.png" alt="Sri Ananda Logo" width={32} height={32} className="h-full w-full object-cover" />
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-base font-black tracking-tight text-slate-900 leading-tight">SRI ANANDA</span>
-                  <div className="flex items-center gap-1.5 mt-[-1px]">
-                    <div className="h-[1px] w-4 bg-slate-300" />
-                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">Admin Console</span>
-                    <div className="h-[1px] w-4 bg-slate-300" />
-                  </div>
-                </div>
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-3">
+          <header className="flex h-11 flex-shrink-0 items-center gap-3 border-b border-slate-200/80 bg-white px-3 sticky top-0 z-30">
+            <SidebarTrigger className="h-7 w-7 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors" />
+            <div className="h-4 w-px bg-slate-200" />
+            <div className="flex-1" />
+            <div className="flex items-center gap-2">
               <UserNav />
             </div>
           </header>
@@ -116,8 +93,8 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* Scrollable content area */}
         <main className={cn(
-          "flex-1 bg-slate-50/50 min-h-0 flex flex-col",
-          isMobile ? "overflow-auto pb-20" : "overflow-hidden"
+          "flex-1 bg-slate-50 min-h-0 flex flex-col",
+          isMobile ? "overflow-auto pb-[65px]" : "overflow-hidden"
         )}>
           {children}
         </main>
@@ -125,14 +102,14 @@ export function AppShell({ children }: AppShellProps) {
         {/* Mobile Bottom Navigation */}
         {isMobile && <MobileBottomNav />}
       </SidebarInset>
-      <LoginModal 
-        isOpen={showLoginModal} 
+
+      <LoginModal
+        isOpen={showLoginModal}
         onSuccess={() => {
           setShowLoginModal(false);
           refetch();
-        }} 
+        }}
       />
     </SidebarProvider>
-
   );
 }

@@ -49,6 +49,8 @@ exports.createCompetitionSchema = z.object({
       gradeIds: z.array(objectId).optional(),
       sectionIds: z.array(objectId).optional(),
       isMainCompetition: z.boolean().optional(),
+      excludedZonalGradeIds: z.array(objectId).optional(),
+      excludedZonalSectionIds: z.array(objectId).optional(),
       active: z.boolean().optional(),
       year: z.number().int().optional(),
       participationType: z.enum(['individual', 'team']).optional(),
@@ -88,6 +90,8 @@ exports.updateCompetitionSchema = z.object({
       sectionIds: z.array(objectId).optional(),
 
       isMainCompetition: z.boolean().optional(),
+      excludedZonalGradeIds: z.array(objectId).optional(),
+      excludedZonalSectionIds: z.array(objectId).optional(),
       year: z.number().int().min(2000).optional(),
       date: z.string().optional(),
       startTime: z.string().optional(),

@@ -62,7 +62,7 @@ export function HouseMeetsMenu() {
 
   return (
     <MainMenu>
-      <MainMenuTitle>House Meets</MainMenuTitle>
+      <MainMenuTitle moduleLabel>House Meets</MainMenuTitle>
       <MainMenuItem items={mainItems} />
 
       {configItems.length > 0 && (

@@ -32,7 +32,7 @@ export function AttendanceMenu() {
 
   return (
     <MainMenu>
-      <MainMenuTitle>Attendance</MainMenuTitle>
+      <MainMenuTitle moduleLabel>Attendance</MainMenuTitle>
       <MainMenuItem items={items} />
     </MainMenu>
   );

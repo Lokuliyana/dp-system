@@ -12,7 +12,7 @@ export default function EditUserPage() {
   const { data: user, isLoading } = useAppUser(id)
 
   return (
-    <LayoutController showMainMenu showHorizontalToolbar>
+    <LayoutController showMainMenu showHorizontalToolbar showVerticalToolbar>
       <div className="p-4 sm:p-8">
         {isLoading ? (
           <div className="flex h-[60vh] items-center justify-center">

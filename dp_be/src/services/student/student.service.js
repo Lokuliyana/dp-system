@@ -78,8 +78,9 @@ const applyCohortFilter = async (q, schoolId, gradeId, academicYear, restrictedG
         if (y === null || y === undefined) continue
         const neededLevel = cohortConstant + y
         // Find the grade for this level in this specific year
-        const g = grades.find((grade) => grade.level === neededLevel && grade.academicYear === String(y))
-          || grades.find((grade) => grade.level === neededLevel && grade.academicYear === '')
+        const g =
+          grades.find((grade) => grade.level === neededLevel && grade.academicYear === String(y)) ||
+          grades.find((grade) => grade.level === neededLevel && grade.academicYear === '')
 
         if (g) {
           if (restrictedGradeIds) {
@@ -175,7 +176,7 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
       const s = val.trim()
       if (!s) return undefined
 
-      // Attempt to handle various separators: . / - 
+      // Attempt to handle various separators: . / -
       const parts = s.split(/[.\/\-]/)
       if (parts.length === 3) {
         let day, month, year
@@ -253,9 +254,7 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
       // First try the new "English Grade Name" column (gradeSearchName)
       if (!gradeId && gradeSearchName) {
         const g = grades.find(
-          (g) =>
-            g.nameEn === gradeSearchName ||
-            g.nameEn === String(gradeSearchName).trim()
+          (g) => g.nameEn === gradeSearchName || g.nameEn === String(gradeSearchName).trim()
         )
         if (g) gradeId = g._id
       }
@@ -315,7 +314,9 @@ exports.bulkImportStudents = async ({ schoolId, fileBuffer, userId }) => {
         admissionDate: parseDate(admissionDateRaw),
         // If year is provided map it, otherwise maybe it's derived from admissionDate?
         // Model has `admissionYear`.
-        admissionYear: admissionYear || (parseDate(admissionDateRaw) ? parseDate(admissionDateRaw).getFullYear() : undefined),
+        admissionYear:
+          admissionYear ||
+          (parseDate(admissionDateRaw) ? parseDate(admissionDateRaw).getFullYear() : undefined),
         admittedGrade: String(admittedGradeName || ''),
         gradeId,
         addressSi,
@@ -441,9 +442,16 @@ exports.listStudents = async ({
   }
 }
 
-exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear, restrictedGradeIds, sex, status }) => {
+exports.listStudentsByGrade = async ({
+  schoolId,
+  gradeId,
+  academicYear,
+  restrictedGradeIds,
+  sex,
+  status,
+}) => {
   const q = { schoolId }
-  
+
   if (status && status !== 'all') {
     q.status = status
   } else if (!status) {
@@ -462,7 +470,14 @@ exports.listStudentsByGrade = async ({ schoolId, gradeId, academicYear, restrict
   return items.map((item) => ({ ...item, id: item._id }))
 }
 
-exports.listStudentsWithResultsByGrade = async ({ schoolId, gradeId, academicYear, restrictedGradeIds, sex, status }) => {
+exports.listStudentsWithResultsByGrade = async ({
+  schoolId,
+  gradeId,
+  academicYear,
+  restrictedGradeIds,
+  sex,
+  status,
+}) => {
   const q = { schoolId }
 
   if (status && status !== 'all') {
@@ -509,9 +524,7 @@ exports.listStudentsWithResultsByGrade = async ({ schoolId, gradeId, academicYea
     const studentIdStr = String(student._id)
 
     // Filter house results for this student
-    const studentHouseResults = houseResults.filter(
-      (hr) => String(hr.studentId) === studentIdStr
-    )
+    const studentHouseResults = houseResults.filter((hr) => String(hr.studentId) === studentIdStr)
 
     // Filter team selections (Zonal/District/All Island) for this student
     const studentHigherResults = []
@@ -576,7 +589,6 @@ exports.listStudentsWithResultsByGrade = async ({ schoolId, gradeId, academicYea
 
   return studentsWithResults
 }
-
 
 exports.updateStudentBasicInfo = async ({ schoolId, id, payload, userId }) => {
   try {
@@ -771,7 +783,7 @@ exports.getStudent360 = async ({ schoolId, id, year }) => {
     student,
     attendance,
     examResults,
-    examMarks: y ? examMarks.filter(m => m.examId?.year === y) : examMarks,
+    examMarks: y ? examMarks.filter((m) => m.examId?.year === y) : examMarks,
     houseHistory,
     competitions, // Registrations
     competitionWins, // Results
@@ -791,7 +803,7 @@ exports.getStudent360 = async ({ schoolId, id, year }) => {
   // Some prefect records have "undefined undefined" as name.
   // We overwrite/enrich this with the current student's name.
   if (result.prefectHistory && result.prefectHistory.length > 0) {
-    result.prefectHistory.forEach(yearRecord => {
+    result.prefectHistory.forEach((yearRecord) => {
       // If we used the map approach above (processedPrefectHistory), we might need to adjust it or the raw array.
       // The code above defines 'processedPrefectHistory' but then returns it as 'prefectHistory'.
       // So we should iterate over 'result.prefectHistory'.
@@ -799,12 +811,14 @@ exports.getStudent360 = async ({ schoolId, id, year }) => {
       // calculated above: const processedPrefectHistory = ... map ... myEntry
       // So yearRecord has .myEntry
       if (yearRecord.myEntry) {
-        yearRecord.myEntry.studentNameEn = student.fullNameEn || student.nameWithInitialsEn || yearRecord.myEntry.studentNameEn
-        yearRecord.myEntry.studentNameSi = student.nameWithInitialsSi || student.fullNameSi || yearRecord.myEntry.studentNameSi
+        yearRecord.myEntry.studentNameEn =
+          student.fullNameEn || student.nameWithInitialsEn || yearRecord.myEntry.studentNameEn
+        yearRecord.myEntry.studentNameSi =
+          student.nameWithInitialsSi || student.fullNameSi || yearRecord.myEntry.studentNameSi
 
         // Also update the array in 'students' just in case frontend uses that
         if (yearRecord.students) {
-          const s = yearRecord.students.find(x => String(x.studentId) === String(id))
+          const s = yearRecord.students.find((x) => String(x.studentId) === String(id))
           if (s) {
             s.studentNameEn = student.fullNameEn || student.nameWithInitialsEn || s.studentNameEn
             s.studentNameSi = student.nameWithInitialsSi || student.fullNameSi || s.studentNameSi

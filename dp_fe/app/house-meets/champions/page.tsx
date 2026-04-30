@@ -43,7 +43,12 @@ export default function ChampionsPage() {
   }, [grades, selectedGrade]);
 
   // 1. Fetch Data
-  const { data: competitions = [], isLoading: compsLoading } = useCompetitions(year, selectedGrade || undefined);
+  const { data: competitions = [], isLoading: compsLoading } = useCompetitions({
+    year,
+    gradeId: selectedGrade || undefined,
+    eventType: "main",
+    forZonal: "true",
+  });
   const { data: suggestions = [], isLoading: suggLoading } = useTeamSelectionSuggestions(year);
   
   // Fetch selections for all levels

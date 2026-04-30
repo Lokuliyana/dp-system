@@ -26,7 +26,7 @@ export function PrefectsMenu() {
 
   return (
     <MainMenu>
-      <MainMenuTitle>Prefects Management</MainMenuTitle>
+      <MainMenuTitle moduleLabel>Prefects Management</MainMenuTitle>
       <MainMenuItem items={items} />
     </MainMenu>
   );

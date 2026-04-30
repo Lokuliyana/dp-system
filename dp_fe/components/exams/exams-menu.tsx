@@ -8,7 +8,7 @@ export function ExamsMenu() {
   const { can } = usePermission();
   return (
     <MainMenu>
-      <MainMenuTitle>Exams & Results</MainMenuTitle>
+      <MainMenuTitle moduleLabel>Exams & Results</MainMenuTitle>
       <MainMenuItem
         items={[
           {

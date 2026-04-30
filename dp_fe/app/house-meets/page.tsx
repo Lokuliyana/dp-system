@@ -11,12 +11,12 @@ export default function HouseMeetsPage() {
     <LayoutController showMainMenu showHorizontalToolbar>
       <HouseMeetsMenu />
 
-      <div className="p-8 max-w-7xl mx-auto space-y-8">
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Competition Hub</h1>
-          <p className="text-slate-500 font-medium">Real-time standings, grade dominance, and MVP spotlights.</p>
+          <h1 className="text-2xl font-semibold text-slate-900">House Meets</h1>
+          <p className="text-sm text-slate-500 mt-1">Overview of house standings, competition progress, and top performers.</p>
         </div>
-        
+
         <EnrichedHouseMeetsDashboard year={year} />
       </div>
     </LayoutController>

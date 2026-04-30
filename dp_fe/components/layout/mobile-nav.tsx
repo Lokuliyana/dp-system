@@ -3,173 +3,234 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Home,
   Users,
   Calendar,
-  MoreHorizontal,
+  LayoutGrid,
   Trophy,
   Crown,
   Award,
   Users2,
   BarChart3,
   ShieldCheck,
-  BookOpen,
-  Search,
+  FileText,
+  Settings,
   Bell,
+  ChevronRight,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
+  SheetClose,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { UserNav } from "@/components/layout/user-nav";
 
 const BOTTOM_NAV_ITEMS = [
   { id: "dashboard", label: "Home", href: "/dashboard", icon: Home },
   { id: "students", label: "Students", href: "/students", icon: Users },
-  { id: "attendance", label: "Attendance", href: "/attendance", icon: Calendar, hidden: false },
-  { id: "staff", label: "Staff", href: "/staff", icon: Users, hidden: false },
+  { id: "house-meets", label: "House Meets", href: "/house-meets", icon: Trophy },
+  { id: "staff", label: "Staff", href: "/staff", icon: Users2 },
 ];
 
-const ALL_NAV_ITEMS = [
-  { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: Home, group: "Overview" },
-  { id: "students", label: "Students", href: "/students", icon: Users, group: "Academics" },
-  { id: "attendance", label: "Attendance", href: "/attendance", icon: Calendar, group: "Academics" },
-  { id: "house-meets", label: "House Meets", href: "/house-meets", icon: Trophy, group: "Engagement" },
-  { id: "champions", label: "Champions", href: "/champions", icon: Trophy, group: "Engagement" },
-  { id: "activities", label: "Activities", href: "/activities", icon: Award, group: "Engagement" },
-  { id: "staff", label: "Staff", href: "/staff", icon: Users, group: "People" },
-  { id: "prefects", label: "Prefects", href: "/prefects", icon: Crown, group: "People" },
-  { id: "parents", label: "Parents", href: "/parents", icon: Users2, group: "People" },
-  { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3, group: "Insights" },
-  { id: "configuration", label: "Configuration", href: "/configuration", icon: ShieldCheck, group: "Insights" },
+const ALL_NAV_GROUPS = [
+  {
+    label: "Overview",
+    items: [
+      { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: Home },
+      { id: "calendar", label: "Calendar", href: "/calendar", icon: Calendar },
+    ],
+  },
+  {
+    label: "Academics",
+    items: [
+      { id: "students", label: "Students", href: "/students", icon: Users },
+      { id: "attendance", label: "Attendance", href: "/attendance", icon: Calendar },
+      { id: "exams", label: "Exam Results", href: "/exams", icon: FileText },
+    ],
+  },
+  {
+    label: "Engagement",
+    items: [
+      { id: "house-meets", label: "House Meets", href: "/house-meets", icon: Trophy },
+      { id: "champions", label: "Champions", href: "/champions", icon: Crown },
+      { id: "activities", label: "Activities", href: "/activities", icon: Award },
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      { id: "staff", label: "Staff", href: "/staff", icon: Users2 },
+      { id: "prefects", label: "Prefects", href: "/prefects", icon: Crown },
+      { id: "parents", label: "Parents", href: "/parents", icon: Users },
+      { id: "users", label: "Users", href: "/users", icon: ShieldCheck },
+    ],
+  },
+  {
+    label: "Insights",
+    items: [
+      { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3 },
+      { id: "configuration", label: "Configuration", href: "/configuration", icon: Settings },
+    ],
+  },
 ];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    if (href === "/dashboard") {
-      return pathname === "/" || pathname === "/dashboard";
-    }
+    if (href === "/dashboard") return pathname === "/" || pathname === "/dashboard";
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t bg-white/95 px-2 pb-safe backdrop-blur-lg md:hidden">
-      {BOTTOM_NAV_ITEMS.filter(item => !(item as any).hidden).map((item) => {
-        const Icon = item.icon;
-        const active = isActive(item.href);
-        return (
-          <Link
-            key={item.id}
-            href={item.href}
-            className="relative flex flex-col items-center justify-center gap-1 rounded-lg px-3 py-1 transition-colors"
-          >
-            <motion.div
-              initial={false}
-              animate={{
-                scale: active ? 1.1 : 1,
-                color: active ? "var(--primary)" : "var(--muted-foreground)",
-              }}
-              className="flex flex-col items-center"
-            >
-              <Icon className={cn("h-5 w-5", active && "fill-primary/10")} />
-              <span className="text-[10px] font-semibold tracking-tight">{item.label}</span>
-            </motion.div>
-            {active && (
-              <motion.div
-                layoutId="active-pill"
-                className="absolute -top-1 h-1 w-8 rounded-full bg-primary"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
-            )}
-          </Link>
-        );
-      })}
-
-      <Sheet>
-        <SheetTrigger asChild>
-          <button className="flex flex-col items-center justify-center gap-1 rounded-lg px-3 py-1 text-muted-foreground transition-colors active:scale-90">
-            <MoreHorizontal className="h-5 w-5" />
-            <span className="text-[10px] font-semibold tracking-tight">More</span>
-          </button>
-        </SheetTrigger>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-[2rem] p-0 outline-none">
-          <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-slate-200" />
-          <SheetHeader className="p-6 text-left">
-            <SheetTitle className="text-2xl font-bold">Explore</SheetTitle>
-          </SheetHeader>
-          <ScrollArea className="h-full px-6 pb-20">
-            <div className="grid grid-cols-3 gap-3">
-              <AnimatePresence>
-                {ALL_NAV_ITEMS.filter(item => !(item as any).hidden).map((item, index) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.href);
-                  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+      {/* Safe area padding */}
+      <div className="border-t border-slate-200 bg-white/98 backdrop-blur-xl shadow-[0_-1px_0_0_rgba(0,0,0,0.05)]">
+        <div className="flex items-center justify-around px-1 pb-safe">
+          {BOTTOM_NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="relative flex flex-col items-center justify-center gap-0.5 min-w-[60px] py-2 px-2"
+              >
+                <div className={cn(
+                  "relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200",
+                  active
+                    ? "bg-primary text-white shadow-sm shadow-primary/30"
+                    : "text-slate-500"
+                )}>
+                  {active && (
                     <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                    >
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 transition-all active:scale-95",
-                          active ? "border-primary/20 bg-primary/5 text-primary shadow-sm" : "border-slate-100 bg-slate-50/50 text-slate-600"
-                        )}
-                      >
-                        <div className={cn(
-                          "flex h-12 w-12 items-center justify-center rounded-2xl transition-colors",
-                          active ? "bg-primary/10" : "bg-white shadow-sm"
-                        )}>
-                          <Icon className="h-6 w-6" />
-                        </div>
-                        <span className="text-center text-[11px] font-bold leading-tight">
-                          {item.label}
-                        </span>
-                      </Link>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
+                      layoutId="mobile-active-bg"
+                      className="absolute inset-0 rounded-xl bg-primary"
+                      transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                    />
+                  )}
+                  <Icon className={cn("relative z-10 h-5 w-5", active && "text-white")} />
+                </div>
+                <span className={cn(
+                  "text-[10px] font-semibold transition-colors",
+                  active ? "text-primary" : "text-slate-400"
+                )}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+
+          {/* More Menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <button className="flex flex-col items-center justify-center gap-0.5 min-w-[60px] py-2 px-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors active:bg-slate-100">
+                  <LayoutGrid className="h-5 w-5" />
+                </div>
+                <span className="text-[10px] font-semibold text-slate-400">More</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl p-0 border-0 outline-none shadow-2xl">
+              {/* Handle bar */}
+              <div className="flex justify-center pt-2.5 pb-1">
+                <div className="h-1 w-10 rounded-full bg-slate-200" />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">All Sections</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Navigate to any module</p>
+                </div>
+                <SheetClose asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </SheetClose>
+              </div>
+
+              <ScrollArea className="h-[calc(80vh-80px)]">
+                <div className="px-4 py-3 pb-10">
+                  {ALL_NAV_GROUPS.map((group) => (
+                    <div key={group.label} className="mb-5">
+                      <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        {group.label}
+                      </p>
+                      <div className="space-y-0.5">
+                        {group.items.map((item) => {
+                          const Icon = item.icon;
+                          const active = isActive(item.href);
+                          return (
+                            <SheetClose asChild key={item.id}>
+                              <Link
+                                href={item.href}
+                                className={cn(
+                                  "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all active:scale-[0.98]",
+                                  active
+                                    ? "bg-primary/8 text-primary"
+                                    : "text-slate-700 hover:bg-slate-50"
+                                )}
+                              >
+                                <div className={cn(
+                                  "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg",
+                                  active ? "bg-primary text-white shadow-sm" : "bg-slate-100 text-slate-500"
+                                )}>
+                                  <Icon className="h-4 w-4" />
+                                </div>
+                                <span className={cn(
+                                  "flex-1 text-sm font-semibold",
+                                  active ? "text-primary" : "text-slate-800"
+                                )}>
+                                  {item.label}
+                                </span>
+                                <ChevronRight className={cn(
+                                  "h-4 w-4 flex-shrink-0",
+                                  active ? "text-primary/60" : "text-slate-300"
+                                )} />
+                              </Link>
+                            </SheetClose>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
     </div>
   );
 }
 
 export function MobileHeader() {
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-white/90 px-4 backdrop-blur-md md:hidden">
-      <Link href="/dashboard" className="flex items-center gap-3 active:scale-95 transition-transform">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-lg shadow-primary/20 text-white overflow-hidden">
-          <Image src="/logo.png" alt="Sri Ananda Logo" width={40} height={40} className="h-full w-full object-cover" />
+    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-md md:hidden shadow-[0_1px_0_0_rgba(0,0,0,0.04)]">
+      <Link href="/dashboard" className="flex items-center gap-2.5 active:opacity-70 transition-opacity">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden ring-1 ring-slate-200 shadow-sm">
+          <Image src="/logo.png" alt="Sri Ananda" width={32} height={32} className="h-full w-full object-cover" />
         </div>
-        <div className="flex flex-col">
-          <span className="text-base font-bold leading-none tracking-tight">Sri Ananda</span>
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Admin Console</span>
+        <div className="flex flex-col leading-none">
+          <span className="text-sm font-black tracking-tight text-slate-900">SRI ANANDA</span>
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em]">Admin Console</span>
         </div>
       </Link>
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <Search className="h-5 w-5 text-slate-600" />
+        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-slate-500 relative">
+          <Bell className="h-[18px] w-[18px]" />
+          <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-red-500 ring-1 ring-white" />
         </Button>
-        <Button variant="ghost" size="icon" className="relative rounded-full">
-          <Bell className="h-5 w-5 text-slate-600" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-        </Button>
-        <div className="ml-1 h-9 w-9 rounded-full border-2 border-primary/10 bg-slate-100 p-0.5">
-          <div className="h-full w-full rounded-full bg-slate-200" />
+        <div className="ml-1">
+          <UserNav />
         </div>
       </div>
     </header>

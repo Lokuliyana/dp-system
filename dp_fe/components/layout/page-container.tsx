@@ -17,8 +17,6 @@ interface PageContainerProps {
  *
  * - `default`: centered with max-width (good for forms, CRUD lists)
  * - `fluid`: full-width (good for dashboards, analytics, dense tables)
- *
- * On mobile, both effectively behave full-width because viewport < max-width.
  */
 export function PageContainer({
   children,
@@ -28,7 +26,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "px-4 py-4 sm:px-4 lg:px-6", // consistent padding
+        "px-4 py-4 lg:px-6",
         variant === "default" && "mx-auto max-w-7xl",
         variant === "fluid" && "w-full",
         className

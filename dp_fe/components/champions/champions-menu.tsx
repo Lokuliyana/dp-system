@@ -36,7 +36,7 @@ export function ChampionsMenu() {
 
   return (
     <MainMenu>
-      <MainMenuTitle>Champions Dashboard</MainMenuTitle>
+      <MainMenuTitle moduleLabel>Champions Dashboard</MainMenuTitle>
       <MainMenuItem items={items} />
     </MainMenu>
   );

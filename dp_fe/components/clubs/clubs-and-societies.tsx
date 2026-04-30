@@ -21,9 +21,10 @@ import {
 import { LiveSearch } from "@/components/reusable";
 import {
   StatCard,
-  CrudModal,
   DeleteConfirmationModal,
 } from "@/components/reusable";
+import { ClubFormDialog, type ClubFormData } from "@/components/clubs/ClubFormDialog";
+import { ClubPositionDialog, type ClubPositionFormData } from "@/components/clubs/ClubPositionDialog";
 import { 
   useClubs, 
   useCreateClub, 
@@ -64,7 +65,6 @@ export function ClubsAndSocieties() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<any[]>([]);
-  const [showMemberSearch, setShowMemberSearch] = useState(false);
   const [selectedPositionId, setSelectedPositionId] = useState<string>("member");
   const [selectedGradeId, setSelectedGradeId] = useState<string>("");
 
@@ -107,6 +107,7 @@ export function ClubsAndSocieties() {
   const selectedClub = clubs.find((c) => (c.id || (c as any)._id) === selectedClubId) || null;
   const bulkAssignMutation = useBulkAssignClubMember(selectedClubId);
   const removeMemberMutation = useRemoveClubMember(selectedClubId);
+  const assignMemberMutation = useAssignClubMember(selectedClubId);
 
   const searchableUsers = useMemo(
     () => {
@@ -198,19 +199,6 @@ export function ClubsAndSocieties() {
     );
   }, [searchablePositions, positionSearchTerm]);
 
-  const handleInputChange = (
-    e:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<HTMLTextAreaElement>
-      | React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "year" ? Number(value) || prev.year : value,
-    }));
-  };
-
   const resetForm = () => {
     setFormData({
       nameSi: "",
@@ -224,16 +212,14 @@ export function ClubsAndSocieties() {
     setEditingId(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = (data: ClubFormData) => {
     const payload = {
-      nameSi: formData.nameSi,
-      nameEn: formData.nameEn,
-      descriptionSi: formData.descriptionSi,
-      descriptionEn: formData.descriptionEn,
-      teacherInChargeId: formData.teacherInChargeId,
-      year: formData.year,
+      nameSi: data.nameSi,
+      nameEn: data.nameEn,
+      descriptionSi: data.descriptionSi,
+      descriptionEn: data.descriptionEn,
+      teacherInChargeId: data.teacherInChargeId,
+      year: data.year,
     };
 
     if (editingId) {
@@ -291,7 +277,6 @@ export function ClubsAndSocieties() {
       onSuccess: () => {
         toast({ title: `Successfully enrolled ${selectedMembersToAdd.length} student(s)` });
         setSelectedMembersToAdd([]);
-        setShowMemberSearch(false);
       },
       onError: (err: any) => {
         toast({ 
@@ -303,11 +288,10 @@ export function ClubsAndSocieties() {
     });
   };
 
-  const handlePositionSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePositionSubmit = (data: ClubPositionFormData) => {
     if (editingPositionId) {
       updatePosition.mutate(
-        { id: editingPositionId, payload: positionFormData },
+        { id: editingPositionId, payload: data },
         {
           onSuccess: () => {
             toast({ title: "Position updated successfully" });
@@ -317,7 +301,7 @@ export function ClubsAndSocieties() {
         }
       );
     } else {
-      createPosition.mutate(positionFormData, {
+      createPosition.mutate(data, {
         onSuccess: () => {
           toast({ title: "Position created successfully" });
           setPositionFormData({ nameSi: "", nameEn: "", responsibilitySi: "", responsibilityEn: "" });
@@ -327,6 +311,11 @@ export function ClubsAndSocieties() {
   };
 
   const handlePositionEdit = (pos: any) => {
+    if (!pos) {
+      setEditingPositionId(null);
+      setPositionFormData({ nameSi: "", nameEn: "", responsibilitySi: "", responsibilityEn: "" });
+      return;
+    }
     setEditingPositionId(pos.id);
     setPositionFormData({
       nameSi: pos.nameSi,
@@ -349,7 +338,7 @@ export function ClubsAndSocieties() {
   return (
     <div className="flex h-[calc(100vh-220px)] flex-col gap-6 lg:flex-row">
       {/* Left Sidebar - Club List */}
-      <div className="flex w-full flex-col gap-4 lg:w-80">
+      <div className="flex w-full flex-col gap-4 lg:w-56">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
@@ -366,7 +355,7 @@ export function ClubsAndSocieties() {
               key={club.id || (club as any)._id}
               onClick={() => setSelectedClubId(club.id || (club as any)._id)}
               className={cn(
-                "group flex flex-col gap-1 rounded-xl border p-4 text-left transition-all hover:border-primary/50",
+                "group flex flex-col gap-1 rounded-lg border p-3 text-left transition-all hover:border-primary/50",
                 selectedClubId === (club.id || (club as any)._id)
                   ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
                   : "border-slate-200 bg-white"
@@ -517,100 +506,75 @@ export function ClubsAndSocieties() {
                       <CardTitle className="text-sm font-bold flex items-center gap-2">
                         <Users className="h-4 w-4 text-primary" /> Members & Roles
                       </CardTitle>
-                      <PermissionGuard permission="activities.club.update">
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => setShowMemberSearch(!showMemberSearch)}
-                          className={cn("h-8 gap-2", showMemberSearch && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary")}
-                        >
-                          {showMemberSearch ? "Cancel Addition" : <><Plus className="h-4 w-4" /> Add Student</>}
-                        </Button>
-                      </PermissionGuard>
+                      <div className="flex items-center gap-2">
+                        <LiveSearch
+                          data={filteredGrades}
+                          labelKey="displayName"
+                          valueKey="id"
+                          onSearch={setGradeSearchTerm}
+                          selected={(val) => setSelectedGradeId(val.item?.id || "")}
+                          defaultSelected={selectedGradeId}
+                          mode="filter"
+                          placeholder="Grade"
+                          popoverTriggerClases="h-8 text-[11px] font-bold uppercase tracking-wider w-[150px]"
+                        />
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="p-0">
-                    {showMemberSearch && (
-                      <div className="border-b bg-slate-50/40 p-6 animate-in fade-in slide-in-from-top-4 duration-300">
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="h-2 w-2 rounded-full bg-primary" />
-                          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest">New Enrollment</h3>
+                    <div className="space-y-4 border-b bg-slate-50/20 p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enroll Student</label>
+                          <LiveSearch
+                            data={filteredSearchableUsers}
+                            labelKey="displayName"
+                            valueKey="_id"
+                            onSearch={setStudentSearchTerm}
+                            selected={(_, ids) => {
+                              const selected = searchableUsers.filter((u: any) => ids.includes(u._id));
+                              setSelectedMembersToAdd(selected);
+                            }}
+                            multiple={true}
+                            defaultSelected={selectedMembersToAdd.map(u => u._id)}
+                            placeholder={selectedGradeId ? "Type student name..." : "← Select grade first"}
+                          />
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Stage 1: Filter Grade</label>
-                            <LiveSearch
-                              data={filteredGrades}
-                              labelKey="displayName"
-                              valueKey="id"
-                              onSearch={setGradeSearchTerm}
-                              selected={(val) => setSelectedGradeId(val.item?.id || "")}
-                              defaultSelected={selectedGradeId}
-                              placeholder="Select Grade"
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Stage 2: Search Student</label>
-                            <LiveSearch
-                              data={filteredSearchableUsers}
-                              labelKey="displayName"
-                              valueKey="_id"
-                              onSearch={setStudentSearchTerm}
-                              selected={(_, ids) => {
-                                const selected = searchableUsers.filter((u: any) => ids.includes(u._id));
-                                setSelectedMembersToAdd(selected);
-                              }}
-                              multiple={true}
-                              defaultSelected={selectedMembersToAdd.map(u => u._id)}
-                              placeholder={selectedGradeId ? "Search name or ID..." : "← Select grade first"}
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Stage 3: Assign Role</label>
-                            <LiveSearch
-                              data={filteredPositions}
-                              labelKey="displayName"
-                              valueKey="id"
-                              onSearch={setPositionSearchTerm}
-                              selected={(val) => setSelectedPositionId(val.item?.id || "member")}
-                              defaultSelected={selectedPositionId}
-                              placeholder="Select role"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setShowMemberSearch(false)}
-                            className="text-slate-500 h-11 px-6"
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            className="h-11 px-8 shadow-sm transition-all active:scale-[0.98]"
-                            onClick={handleAssignMembers}
-                            disabled={!selectedMembersToAdd.length || bulkAssignMutation.isPending}
-                          >
-                            {bulkAssignMutation.isPending ? <Loader className="animate-spin h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                            Enroll {selectedMembersToAdd.length > 0 ? `${selectedMembersToAdd.length} Student${selectedMembersToAdd.length > 1 ? 's' : ''}` : 'Students'}
-                          </Button>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Role / Position</label>
+                          <LiveSearch
+                            data={filteredPositions}
+                            labelKey="displayName"
+                            valueKey="id"
+                            onSearch={setPositionSearchTerm}
+                            selected={(val) => setSelectedPositionId(val.item?.id || "member")}
+                            defaultSelected={selectedPositionId}
+                            placeholder="Select role"
+                          />
                         </div>
                       </div>
-                    )}
-                    <div className="overflow-hidden">
+                      <PermissionGuard permission="activities.club.update">
+                        <Button
+                          className="w-full gap-2"
+                          onClick={handleAssignMembers}
+                          disabled={!selectedMembersToAdd.length || bulkAssignMutation.isPending}
+                          size="sm"
+                        >
+                          {bulkAssignMutation.isPending ? <Loader className="animate-spin h-4 w-4" /> : <><Plus className="h-4 w-4" /> Confirm Enrollment</>}
+                        </Button>
+                      </PermissionGuard>
+                    </div>
+
+                    <div className="border-t">
                       {(selectedClub.members || []).length > 0 ? (
                         <Table>
-                          <TableHeader className="bg-slate-50/50">
-                            <TableRow>
-                              <TableHead className="w-[40%] pl-6">Student</TableHead>
-                              <TableHead>Admission No</TableHead>
-                              <TableHead>Position</TableHead>
-                              <TableHead className="text-right pr-6">Action</TableHead>
+                          <TableHeader>
+                            <TableRow className="bg-slate-50/50">
+                              <TableHead className="w-[80px] text-[10px] font-bold uppercase tracking-widest text-slate-500"></TableHead>
+                              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Name</TableHead>
+                              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Admission</TableHead>
+                              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Role</TableHead>
+                              <TableHead className="w-[50px] text-right"></TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -618,48 +582,63 @@ export function ClubsAndSocieties() {
                               const student = m.studentId;
                               const pos = m.positionId;
                               const studentNameEn = student?.firstNameEn ? `${student.firstNameEn} ${student.lastNameEn}` : `Student ${m.studentId}`;
-                              const studentNameSi = student?.fullNameSi || student?.nameWithInitialsSi || studentNameEn;
                               const admissionNo = student?.admissionNumber || "N/A";
+                              const studentId = typeof student === 'string' ? student : (student?.id || student?._id);
 
                               return (
-                                <TableRow key={typeof student === 'string' ? student : student?.id}>
-                                  <TableCell className="pl-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                      <Avatar className="h-9 w-9 border border-slate-200">
-                                        <AvatarFallback className="bg-slate-100 text-slate-500 text-xs font-bold">
-                                          {typeof student === 'string' ? student.slice(0, 2).toUpperCase() : (student?.firstNameEn?.[0] || 'S')}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <div>
-                                        <div className="text-sm font-semibold text-slate-900">{student?.nameWithInitialsSi || studentNameEn} ({admissionNo})</div>
-                                        <div className="text-[10px] text-slate-500">{studentNameEn}</div>
-                                      </div>
+                                <TableRow key={studentId} className="hover:bg-slate-50/50 border-slate-100">
+                                  <TableCell className="py-3">
+                                    <Avatar className="h-8 w-8 border-white shadow-sm ring-1 ring-slate-100">
+                                      <AvatarFallback className="bg-indigo-50 text-indigo-600 text-[10px] font-bold">
+                                        {typeof student === 'string' ? student.slice(0, 1).toUpperCase() : (student?.firstNameEn?.[0] || 'S')}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  </TableCell>
+                                  <TableCell className="py-3">
+                                    <div className="text-xs font-semibold text-slate-900">
+                                      {student?.nameWithInitialsSi || studentNameEn} ({admissionNo})
                                     </div>
+                                    <div className="text-[10px] text-slate-500">{studentNameEn}</div>
                                   </TableCell>
-                                  <TableCell className="text-sm font-medium text-slate-600">
-                                    {admissionNo}
+                                  <TableCell className="py-3">
+                                    <Badge variant="outline" className="text-[10px] font-semibold bg-slate-50 text-slate-600 border-slate-200">
+                                      {admissionNo}
+                                    </Badge>
                                   </TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      <Badge variant="outline" className={cn(
-                                        "px-2 py-0 text-[10px] uppercase font-bold tracking-tight",
-                                        pos ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-slate-50 text-slate-500 border-slate-100"
-                                      )}>
-                                        {pos?.nameEn || "Member"}
-                                      </Badge>
-                                      {pos?.nameSi && <span className="text-[9px] text-slate-400 font-medium">{pos.nameSi}</span>}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="text-right pr-6">
+                                  <TableCell className="py-3">
                                     <PermissionGuard permission="activities.club.update">
-                                      <Button 
-                                        size="icon" 
-                                        variant="ghost" 
-                                        className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
-                                        onClick={() => removeMemberMutation.mutate(typeof student === 'string' ? student : (student.id || student._id))}
+                                      <Select
+                                        value={(pos as any)?.id || "member"}
+                                        onValueChange={(val) => {
+                                          assignMemberMutation.mutate({
+                                            studentId,
+                                            positionId: val === "member" ? null : val,
+                                          });
+                                        }}
+                                        disabled={assignMemberMutation.isPending}
+                                      >
+                                        <SelectTrigger className="h-7 text-xs w-32 border-slate-200">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="member">Member</SelectItem>
+                                          {positions.map((p: any) => (
+                                            <SelectItem key={p.id} value={p.id}>{p.nameEn}</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </PermissionGuard>
+                                  </TableCell>
+                                  <TableCell className="py-3 text-right">
+                                    <PermissionGuard permission="activities.club.update">
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                                        onClick={() => removeMemberMutation.mutate(studentId)}
                                         disabled={removeMemberMutation.isPending}
                                       >
-                                        {removeMemberMutation.isPending ? <Loader className="animate-spin h-3 w-3" /> : <Trash2 className="h-4 w-4" />}
+                                        {removeMemberMutation.isPending ? <Loader className="animate-spin h-3 w-3" /> : <Trash2 className="h-3.5 w-3.5" />}
                                       </Button>
                                     </PermissionGuard>
                                   </TableCell>
@@ -669,22 +648,12 @@ export function ClubsAndSocieties() {
                           </TableBody>
                         </Table>
                       ) : (
-                        <div className="flex flex-col items-center justify-center p-16 text-center bg-slate-50/20">
-                          <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                            <Users className="h-8 w-8 text-slate-400 opacity-50" />
-                          </div>
+                        <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
+                          <Users className="mb-2 h-10 w-10 opacity-20" />
                           <h3 className="text-sm font-bold text-slate-900 mb-1 tracking-tight">No Members Enrolled</h3>
                           <p className="text-xs text-slate-500 max-w-[240px] leading-relaxed">
                             This club currently has no students assigned. Use the &apos;Add Student&apos; tool above to begin.
                           </p>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-6 h-9 px-6 text-[11px] font-bold uppercase tracking-wider bg-white shadow-sm hover:bg-slate-50"
-                            onClick={() => setShowMemberSearch(true)}
-                          >
-                            Enroll Students
-                          </Button>
                         </div>
                       )}
                     </div>
@@ -752,88 +721,16 @@ export function ClubsAndSocieties() {
         )}
       </div>
 
-      <CrudModal
-        title={editingId ? "Edit Club" : "Create Club"}
+      <ClubFormDialog
         isOpen={isFormOpen}
         onClose={resetForm}
         onSubmit={handleSubmit}
         isEditing={!!editingId}
         isLoading={createClub.isPending || updateClub.isPending}
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5 font-sans">
-              <label className="text-sm font-semibold text-slate-700">Name (English)</label>
-              <Input 
-                name="nameEn" 
-                value={formData.nameEn} 
-                onChange={handleInputChange} 
-                required 
-                placeholder="e.g. Science Society" 
-                className="h-11 border-slate-200 focus:ring-primary/20"
-              />
-            </div>
-            <div className="space-y-1.5 font-sans">
-              <label className="text-sm font-semibold text-slate-700">Name (Sinhala)</label>
-              <Input 
-                name="nameSi" 
-                value={formData.nameSi} 
-                onChange={handleInputChange} 
-                required 
-                placeholder="උදා: විද්‍යා සංගමය" 
-                className="h-11 border-slate-200 focus:ring-primary/20"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5 font-sans">
-              <label className="text-sm font-semibold text-slate-700">Description (English)</label>
-              <Input
-                name="descriptionEn"
-                value={formData.descriptionEn}
-                onChange={handleInputChange}
-                placeholder="English description"
-                className="h-11 border-slate-200 focus:ring-primary/20"
-              />
-            </div>
-            <div className="space-y-1.5 font-sans">
-              <label className="text-sm font-semibold text-slate-700">Description (Sinhala)</label>
-              <Input
-                name="descriptionSi"
-                value={formData.descriptionSi}
-                onChange={handleInputChange}
-                placeholder="Sinhala description"
-                className="h-11 border-slate-200 focus:ring-primary/20"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5 font-sans">
-              <label className="text-sm font-semibold text-slate-700">Master In Charge</label>
-              <LiveSearch
-                data={filteredTeachers}
-                labelKey="displayName"
-                valueKey="id"
-                onSearch={setTeacherSearchTerm}
-                selected={(val) => setFormData(prev => ({ ...prev, teacherInChargeId: val.item?.id || "" }))}
-                defaultSelected={formData.teacherInChargeId}
-                placeholder="Search teacher..."
-              />
-            </div>
-            <div className="space-y-1.5 font-sans">
-              <label className="text-sm font-semibold text-slate-700">Active Year</label>
-              <Input
-                type="number"
-                name="year"
-                value={formData.year}
-                onChange={handleInputChange}
-                required
-                className="h-11 border-slate-200 focus:ring-primary/20"
-              />
-            </div>
-          </div>
-        </div>
-      </CrudModal>
+        defaultValues={editingId ? formData : undefined}
+        filteredTeachers={filteredTeachers}
+        onTeacherSearch={setTeacherSearchTerm}
+      />
 
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
@@ -857,8 +754,7 @@ export function ClubsAndSocieties() {
         description="This action cannot be undone. All membership data for this club will be lost forever."
       />
 
-      <CrudModal
-        title="Manage Positions"
+      <ClubPositionDialog
         isOpen={isPositionModalOpen}
         onClose={() => {
           setIsPositionModalOpen(false);
@@ -866,81 +762,13 @@ export function ClubsAndSocieties() {
           setPositionFormData({ nameSi: "", nameEn: "", responsibilitySi: "", responsibilityEn: "" });
         }}
         onSubmit={handlePositionSubmit}
-        isEditing={!!editingPositionId}
+        onEdit={handlePositionEdit}
+        onDelete={(id) => deletePosition.mutate(id)}
         isLoading={createPosition.isPending || updatePosition.isPending}
-      >
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Position Name (English)</label>
-              <Input
-                value={positionFormData.nameEn}
-                onChange={(e) => setPositionFormData({ ...positionFormData, nameEn: e.target.value })}
-                placeholder="e.g. President"
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Position Name (Sinhala)</label>
-              <Input
-                value={positionFormData.nameSi}
-                onChange={(e) => setPositionFormData({ ...positionFormData, nameSi: e.target.value })}
-                placeholder="උදා: සභාපති"
-                required
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Responsibility (English)</label>
-              <textarea
-                className="w-full min-h-[80px] rounded-lg border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-sans"
-                value={positionFormData.responsibilityEn}
-                onChange={(e) => setPositionFormData({ ...positionFormData, responsibilityEn: e.target.value })}
-                placeholder="English responsibility description"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Responsibility (Sinhala)</label>
-              <textarea
-                className="w-full min-h-[80px] rounded-lg border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-sans"
-                value={positionFormData.responsibilitySi}
-                onChange={(e) => setPositionFormData({ ...positionFormData, responsibilitySi: e.target.value })}
-                placeholder="Sinhala responsibility description"
-              />
-            </div>
-          </div>
-
-          <Separator className="my-4" />
-          
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Existing Positions</h4>
-            <ScrollArea className="h-[150px] w-full rounded-md border p-4">
-              <div className="space-y-2">
-                {positions.map((pos) => (
-                  <div key={pos.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100">
-                    <div>
-                      <p className="text-sm font-medium">{pos.nameEn} <span className="text-xs text-slate-400">({pos.nameSi})</span></p>
-                    </div>
-                    <div className="flex gap-1">
-                      <PermissionGuard permission="activities.club_position.update">
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handlePositionEdit(pos)}>
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                      </PermissionGuard>
-                      <PermissionGuard permission="activities.club_position.delete">
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500" onClick={() => deletePosition.mutate(pos.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </PermissionGuard>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-        </div>
-      </CrudModal>
+        editingId={editingPositionId}
+        defaultValues={editingPositionId ? positionFormData : undefined}
+        positions={positions}
+      />
     </div>
   );
 }

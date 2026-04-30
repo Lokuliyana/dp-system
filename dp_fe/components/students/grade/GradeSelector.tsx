@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
 import { Button } from "@/components/ui"
 import { Users, BookOpen, Pencil, Trash2 } from "lucide-react"
-import type { Grade } from "@/types/models"
+import type { Grade, Teacher } from "@/types/models"
 
 import { PermissionGuard } from "@/components/auth/permission-guard"
 
@@ -13,9 +13,10 @@ interface GradeSelectorProps {
   onEdit: (grade: Grade) => void
   onDelete: (gradeId: string) => void
   studentCountsByGrade: Record<string, number>
+  teachers?: Teacher[]
 }
 
-export function GradeSelector({ grades, onSelectGrade, onEdit, onDelete, studentCountsByGrade }: GradeSelectorProps) {
+export function GradeSelector({ grades, onSelectGrade, onEdit, onDelete, studentCountsByGrade, teachers = [] }: GradeSelectorProps) {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -52,9 +53,17 @@ export function GradeSelector({ grades, onSelectGrade, onEdit, onDelete, student
                 
                 <div className="flex justify-between items-center px-2">
                   <span className="text-slate-500 text-xs">Class Teacher</span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${grade.classTeacherId ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
-                    {grade.classTeacherId ? "Assigned" : "Pending"}
-                  </span>
+                  {grade.classTeacherId ? (
+                    <span className="text-xs font-medium text-green-700">
+                      {(() => {
+                        const teacher = teachers.find(t => t.id === grade.classTeacherId)
+                        if (!teacher) return "Assigned"
+                        return teacher.nameWithInitialsSi || `${teacher.firstNameSi || ""} ${teacher.lastNameSi || ""}`.trim() || `${teacher.firstNameEn} ${teacher.lastNameEn}`
+                      })()}
+                    </span>
+                  ) : (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Pending</span>
+                  )}
                 </div>
               </div>
 

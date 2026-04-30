@@ -5,12 +5,13 @@ import { HorizontalToolbar, HorizontalToolbarTitle } from "./blocks";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useInnerLayoutControls } from "./context";
-import { 
-  HeaderAction, 
-  HeaderButton, 
-  HeaderSelect, 
-  HeaderDatePicker, 
-  HeaderSearch 
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  HeaderAction,
+  HeaderButton,
+  HeaderSelect,
+  HeaderDatePicker,
+  HeaderSearch
 } from "./header-actions";
 
 interface DynamicPageHeaderProps {
@@ -29,6 +30,7 @@ export function DynamicPageHeader({
   className,
 }: DynamicPageHeaderProps) {
   const { setPageTitle } = useInnerLayoutControls();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setPageTitle(title);
@@ -40,7 +42,7 @@ export function DynamicPageHeader({
     if (!Array.isArray(actions)) return actions;
 
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {actions.map((action, idx) => {
           if (action.type === "button") return <HeaderButton key={idx} {...action.props} />;
           if (action.type === "select") return <HeaderSelect key={idx} {...action.props} />;
@@ -54,33 +56,36 @@ export function DynamicPageHeader({
   };
 
   return (
-    <HorizontalToolbar className={cn("h-12 px-6", className)}>
-      <div className="flex items-center gap-3">
-        {Icon && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-sm">
-            <Icon className="h-4 w-4" />
-          </div>
-        )}
-        
-        <div className="flex flex-col border-r border-slate-100 pr-3 mr-1">
-          <div className="flex items-center gap-2">
+    <HorizontalToolbar className={cn(isMobile ? "px-4 py-2" : "h-12 px-6", className)}>
+      {/* Title section — hidden on mobile (shown in module nav bar instead) */}
+      {!isMobile && (
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {Icon && (
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Icon className="h-3.5 w-3.5" />
+            </div>
+          )}
+          <div className="flex items-center gap-2 border-r border-slate-200 pr-4 mr-1">
             <HorizontalToolbarTitle className="text-sm font-bold tracking-tight text-slate-800">
               {title}
             </HorizontalToolbarTitle>
             {subtitle && (
               <>
-                <Separator orientation="vertical" className="h-3 mx-1 bg-slate-200" />
-                <span className="text-[10px] font-medium text-slate-500">{subtitle}</span>
+                <Separator orientation="vertical" className="h-3 mx-0.5 bg-slate-200" />
+                <span className="text-[10px] font-medium text-slate-500 whitespace-nowrap">{subtitle}</span>
               </>
             )}
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="flex items-center gap-3">
+      {/* Actions — shown on both mobile and desktop */}
+      <div className={cn(
+        "flex items-center gap-2",
+        isMobile && "flex-wrap"
+      )}>
         {renderActions()}
       </div>
     </HorizontalToolbar>
   );
 }
-

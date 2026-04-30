@@ -38,9 +38,9 @@ export const competitionsService = {
       .then((r) => r.data.data as Competition)
   },
 
-  list(year?: number, gradeId?: string) {
+  list(filters: Record<string, any> = {}) {
     return axiosInstance
-      .get(endpoints.competitions.base, { params: { year, gradeId } })
+      .get(endpoints.competitions.base, { params: filters })
       .then((r) => r.data.data as Competition[])
   },
 

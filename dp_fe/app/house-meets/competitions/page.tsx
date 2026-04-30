@@ -30,48 +30,47 @@ import {
 } from "@/components/ui";
 import { useCompetitions, useCreateCompetition, useUpdateCompetition, useDeleteCompetition } from "@/hooks/useCompetitions";
 import { useSquads } from "@/hooks/useSquads";
+import { useClubs } from "@/hooks/useClubs";
 import { useGrades } from "@/hooks/useGrades";
 import { useSections } from "@/hooks/useSections";
 
 type Scope = "open" | "grade" | "section";
+type OrgType = "squad" | "club";
+type EventType = "regular" | "main" | "annual";
 
-const emptyForm = {
+const defaultForm = {
   nameEn: "",
   nameSi: "",
+  organizationType: "squad" as OrgType,
   squadId: "",
+  clubId: "",
   scope: "grade" as Scope,
   gradeIds: [] as string[],
   sectionIds: [] as string[],
-  isMainCompetition: true,
-  year: new Date().getFullYear(),
+  eventType: "regular" as EventType,
+  active: true,
+  participationType: "individual" as "individual" | "team",
+  teamConfig: { minSize: 1, maxSize: 1 },
+  personalAwards: [] as string[],
+  pointsConfig: { place1: 15, place2: 10, place3: 5, place4: 0, place5: 0 },
+  excludedZonalGradeIds: [] as string[],
+  excludedZonalSectionIds: [] as string[],
 };
 
 export default function CompetitionsPage() {
-  const [form, setForm] = useState({
-    nameEn: "",
-    nameSi: "",
-    squadId: "",
-    scope: "grade" as Scope,
-    gradeIds: [] as string[],
-    sectionIds: [] as string[],
-    isMainCompetition: true,
-    active: true,
-    participationType: "individual" as "individual" | "team",
-    teamConfig: { minSize: 1, maxSize: 1 },
-    personalAwards: [] as string[],
-    pointsConfig: { place1: 15, place2: 10, place3: 5, place4: 0, place5: 0 },
-  });
+  const [form, setForm] = useState(defaultForm);
   const { can } = usePermission();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear());
   const [newAward, setNewAward] = useState("");
 
-  const { data: competitions = [], isLoading: compLoading } = useCompetitions(yearFilter);
+  const { data: competitions = [], isLoading: compLoading } = useCompetitions({ year: yearFilter });
   const createCompetition = useCreateCompetition();
   const updateCompetition = useUpdateCompetition();
   const deleteCompetition = useDeleteCompetition(yearFilter);
 
   const { data: squads = [] } = useSquads();
+  const { data: clubs = [] } = useClubs();
   const { data: grades = [] } = useGrades();
   const { data: sections = [] } = useSections();
 
@@ -112,17 +111,21 @@ export default function CompetitionsPage() {
     const payload = {
       nameEn: form.nameEn,
       nameSi: form.nameSi,
-      squadId: form.squadId || undefined,
+      squadId: form.organizationType === "squad" ? (form.squadId || undefined) : undefined,
+      clubId: form.organizationType === "club" ? (form.clubId || undefined) : undefined,
       scope: form.scope,
       gradeIds: form.scope === "grade" ? form.gradeIds : [],
       sectionIds: form.scope === "section" ? form.sectionIds : [],
-      isMainCompetition: form.isMainCompetition,
+      eventType: form.eventType,
+      isMainCompetition: form.eventType === "main",
       active: form.active,
       participationType: form.participationType,
       teamConfig: form.participationType === "team" ? form.teamConfig : undefined,
       personalAwards: form.participationType === "team" ? form.personalAwards : [],
       pointsConfig: form.pointsConfig,
       year: new Date().getFullYear(),
+      excludedZonalGradeIds: form.eventType === "main" ? form.excludedZonalGradeIds : [],
+      excludedZonalSectionIds: form.eventType === "main" ? form.excludedZonalSectionIds : [],
     };
 
     if (editingId) {
@@ -130,20 +133,7 @@ export default function CompetitionsPage() {
     } else {
       await createCompetition.mutateAsync(payload);
     }
-    setForm({
-      nameEn: "",
-      nameSi: "",
-      squadId: "",
-      scope: "grade",
-      gradeIds: [],
-      sectionIds: [],
-      isMainCompetition: true,
-      active: true,
-      participationType: "individual",
-      teamConfig: { minSize: 1, maxSize: 1 },
-      personalAwards: [],
-      pointsConfig: { place1: 15, place2: 10, place3: 5, place4: 0, place5: 0 },
-    });
+    setForm(defaultForm);
     setEditingId(null);
   };
 
@@ -151,19 +141,25 @@ export default function CompetitionsPage() {
     const comp = competitions.find((c) => getId(c) === id);
     if (!comp) return;
     setEditingId(id);
+    const orgType: OrgType = comp.clubId ? "club" : "squad";
+    const evType: EventType = (comp.eventType as EventType) || (comp.isMainCompetition ? "main" : "regular");
     setForm({
       nameEn: comp.nameEn,
       nameSi: comp.nameSi,
+      organizationType: orgType,
       squadId: comp.squadId || "",
+      clubId: comp.clubId || "",
       scope: comp.scope as Scope,
       gradeIds: comp.gradeIds || [],
       sectionIds: comp.sectionIds || [],
-      isMainCompetition: comp.isMainCompetition,
+      eventType: evType,
       active: comp.active !== undefined ? comp.active : true,
       participationType: comp.participationType || "individual",
       teamConfig: comp.teamConfig || { minSize: 1, maxSize: 1 },
       personalAwards: comp.personalAwards || [],
       pointsConfig: comp.pointsConfig || { place1: 15, place2: 10, place3: 5, place4: 0, place5: 0 },
+      excludedZonalGradeIds: comp.excludedZonalGradeIds || [],
+      excludedZonalSectionIds: comp.excludedZonalSectionIds || [],
     });
   };
 
@@ -178,6 +174,24 @@ export default function CompetitionsPage() {
     setForm((f) => ({
       ...f,
       sectionIds: f.sectionIds.includes(id) ? f.sectionIds.filter((s) => s !== id) : [...f.sectionIds, id],
+    }));
+  };
+
+  const toggleExcludedZonalGrade = (id: string) => {
+    setForm((f) => ({
+      ...f,
+      excludedZonalGradeIds: f.excludedZonalGradeIds.includes(id)
+        ? f.excludedZonalGradeIds.filter((g) => g !== id)
+        : [...f.excludedZonalGradeIds, id],
+    }));
+  };
+
+  const toggleExcludedZonalSection = (id: string) => {
+    setForm((f) => ({
+      ...f,
+      excludedZonalSectionIds: f.excludedZonalSectionIds.includes(id)
+        ? f.excludedZonalSectionIds.filter((s) => s !== id)
+        : [...f.excludedZonalSectionIds, id],
     }));
   };
 
@@ -208,19 +222,56 @@ export default function CompetitionsPage() {
                   <Input value={form.nameSi} onChange={(e) => setForm((f) => ({ ...f, nameSi: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Squad (Optional)</Label>
-                  <Select value={form.squadId} onValueChange={(v) => setForm((f) => ({ ...f, squadId: v }))}>
+                  <Label>Competition Type</Label>
+                  <Select
+                    value={form.organizationType}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, organizationType: v as OrgType, squadId: "", clubId: "" }))
+                    }
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select squad" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {squads.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.nameEn}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="squad">Squad</SelectItem>
+                      <SelectItem value="club">Club</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  {form.organizationType === "squad" ? (
+                    <>
+                      <Label>Squad (Optional)</Label>
+                      <Select value={form.squadId} onValueChange={(v) => setForm((f) => ({ ...f, squadId: v }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select squad" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {squads.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.nameEn}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </>
+                  ) : (
+                    <>
+                      <Label>Club (Optional)</Label>
+                      <Select value={form.clubId} onValueChange={(v) => setForm((f) => ({ ...f, clubId: v }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select club" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clubs.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.nameEn}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Participation Type</Label>
@@ -353,15 +404,21 @@ export default function CompetitionsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={form.isMainCompetition}
-                    onCheckedChange={(checked) => setForm((f) => ({ ...f, isMainCompetition: checked }))}
-                  />
-                  <div>
-                    <p className="text-sm font-semibold">Main competition</p>
-                    <p className="text-xs text-muted-foreground">Marks the primary annual event.</p>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Event Type</Label>
+                  <Select
+                    value={form.eventType}
+                    onValueChange={(v) => setForm((f) => ({ ...f, eventType: v as EventType }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="regular">Regular</SelectItem>
+                      <SelectItem value="main">Main Event</SelectItem>
+                      <SelectItem value="annual">Annual Event</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch
@@ -403,6 +460,57 @@ export default function CompetitionsPage() {
                 </div>
               )}
 
+              {form.eventType === "main" && (
+                <div className="border border-amber-200 bg-amber-50 rounded-md p-4 space-y-4">
+                  <div>
+                    <p className="text-sm font-semibold text-amber-900">Zonal Level Exclusions</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Select grades or sections that will <strong>not</strong> participate at zonal level for this competition.
+                    </p>
+                  </div>
+
+                  {(form.scope === "grade" || form.scope === "open") && (
+                    <div>
+                      <p className="text-xs font-medium text-amber-800 mb-2">Exclude Grades from Zonal</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 bg-white border border-amber-100 rounded-md p-3 max-h-40 overflow-auto">
+                        {(form.scope === "grade" && form.gradeIds.length > 0
+                          ? grades.filter((g) => form.gradeIds.includes(g.id))
+                          : grades
+                        ).map((g) => (
+                          <label key={g.id} className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                              checked={form.excludedZonalGradeIds.includes(g.id)}
+                              onCheckedChange={() => toggleExcludedZonalGrade(g.id)}
+                            />
+                            {g.nameEn}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {form.scope === "section" && (
+                    <div>
+                      <p className="text-xs font-medium text-amber-800 mb-2">Exclude Sections from Zonal</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 bg-white border border-amber-100 rounded-md p-3 max-h-40 overflow-auto">
+                        {(form.sectionIds.length > 0
+                          ? sections.filter((s) => form.sectionIds.includes(s.id))
+                          : sections
+                        ).map((s) => (
+                          <label key={s.id} className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                              checked={form.excludedZonalSectionIds.includes(s.id)}
+                              onCheckedChange={() => toggleExcludedZonalSection(s.id)}
+                            />
+                            {s.nameEn}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex gap-2">
                 {editingId ? (
                   <PermissionGuard permission="housemeets.competition.update">
@@ -424,20 +532,7 @@ export default function CompetitionsPage() {
                   </PermissionGuard>
                 )}
                 {editingId && (
-                  <Button variant="outline" onClick={() => { setEditingId(null); setForm({
-                    nameEn: "",
-                    nameSi: "",
-                    squadId: "",
-                    scope: "grade",
-                    gradeIds: [],
-                    sectionIds: [],
-                    isMainCompetition: true,
-                    active: true,
-                    participationType: "individual",
-                    teamConfig: { minSize: 1, maxSize: 1 },
-                    personalAwards: [],
-                    pointsConfig: { place1: 15, place2: 10, place3: 5, place4: 0, place5: 0 },
-                  }); }}>
+                  <Button variant="outline" onClick={() => { setEditingId(null); setForm(defaultForm); }}>
                     Cancel
                   </Button>
                 )}
@@ -457,9 +552,9 @@ export default function CompetitionsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Squad</TableHead>
+                  <TableHead>Squad / Club</TableHead>
                   <TableHead>Scope</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Event Type</TableHead>
                   <TableHead>Active</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -478,12 +573,22 @@ export default function CompetitionsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCompetitions.map((c) => (
+                  filteredCompetitions.map((c) => {
+                    const orgName = c.squadId
+                      ? squads.find((s) => s.id === c.squadId)?.nameEn
+                      : c.clubId
+                      ? clubs.find((cl) => cl.id === c.clubId)?.nameEn
+                      : null;
+                    const evLabel =
+                      c.eventType === "main" ? "Main Event" :
+                      c.eventType === "annual" ? "Annual Event" :
+                      c.isMainCompetition ? "Main Event" : "Regular";
+                    return (
                     <TableRow key={getId(c)}>
                       <TableCell>{c.nameEn}</TableCell>
-                      <TableCell>{squads.find((s) => s.id === c.squadId)?.nameEn || c.squadId || "-"}</TableCell>
+                      <TableCell>{orgName || "-"}</TableCell>
                       <TableCell className="capitalize">{c.scope}</TableCell>
-                      <TableCell className="capitalize">{c.participationType || "Individual"}</TableCell>
+                      <TableCell>{evLabel}</TableCell>
                       <TableCell>{c.active ? "Yes" : "No"}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <PermissionGuard permission="housemeets.competition.update">
@@ -498,7 +603,8 @@ export default function CompetitionsPage() {
                         </PermissionGuard>
                       </TableCell>
                     </TableRow>
-                  ))
+                  );
+                  })
                 )}
               </TableBody>
             </Table>

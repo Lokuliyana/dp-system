@@ -10,7 +10,7 @@ export function StaffMenu() {
   const { can } = usePermission();
   return (
     <MainMenu>
-      <MainMenuTitle>Staff Management</MainMenuTitle>
+      <MainMenuTitle moduleLabel>Staff Management</MainMenuTitle>
       <MainMenuItem
         items={[
           {

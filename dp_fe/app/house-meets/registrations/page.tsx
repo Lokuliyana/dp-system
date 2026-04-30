@@ -60,7 +60,7 @@ export default function HouseRegistrationsPage() {
   const getId = (doc: any) => doc.id || doc._id;
 
   // 1. Fetch Competitions
-  const { data: competitions = [] } = useCompetitions(year, selectedGrade || undefined);
+  const { data: competitions = [] } = useCompetitions({ year, gradeId: selectedGrade || undefined });
 
   // Auto-select first competition
   useEffect(() => {

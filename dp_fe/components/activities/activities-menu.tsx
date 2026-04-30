@@ -26,7 +26,7 @@ export function ActivitiesMenu() {
 
   return (
     <MainMenu>
-      <MainMenuTitle>Activities</MainMenuTitle>
+      <MainMenuTitle moduleLabel>Activities</MainMenuTitle>
       <MainMenuItem items={items} />
     </MainMenu>
   );

@@ -14,6 +14,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CreateStaffRolePayload } from "@/services/masterdata/staffRoles.service";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useGrades } from "@/hooks/useGrades";
@@ -21,6 +28,7 @@ import { useTeachers } from "@/hooks/useTeachers";
 import { useFieldArray, useWatch } from "react-hook-form";
 import { LiveSearch } from "@/components/reusable";
 import { useState, useMemo } from "react";
+import { Plus, Trash2 } from "lucide-react";
 
 const roleSchema = z.object({
   nameSi: z.string().min(1, "Sinhala name is required"),
@@ -58,6 +66,17 @@ interface StaffRoleFormProps {
   onCancel: () => void;
 }
 
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+        {children}
+      </p>
+      <div className="flex-1 border-t border-dashed border-slate-200" />
+    </div>
+  );
+}
+
 export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: StaffRoleFormProps) {
   const { data: grades = [] } = useGrades();
   const { data: teachers = [] } = useTeachers();
@@ -80,32 +99,28 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
     },
   });
 
-  const searchableTeachers = useMemo(() => {
-    return teachers.map((t: any) => ({
-      ...t,
-      displayName: t.fullNameEn ?? `${t.firstNameEn} ${t.lastNameEn}`,
-    }));
-  }, [teachers]);
+  const searchableTeachers = useMemo(
+    () => teachers.map((t: any) => ({ ...t, displayName: t.fullNameEn ?? `${t.firstNameEn} ${t.lastNameEn}` })),
+    [teachers],
+  );
 
   const filteredTeachers = useMemo(() => {
     const q = teacherSearchTerm.trim().toLowerCase();
     if (!q) return searchableTeachers;
-    return searchableTeachers.filter((t: any) =>
-      t.displayName.toLowerCase().includes(q)
-    );
+    return searchableTeachers.filter((t: any) => t.displayName.toLowerCase().includes(q));
   }, [searchableTeachers, teacherSearchTerm]);
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "responsibilities",
-  });
-
+  const { fields, append, remove } = useFieldArray({ control: form.control, name: "responsibilities" });
   const gradeBased = useWatch({ control: form.control, name: "gradeBased" });
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+        {/* ── Basic Info ─────────────────────────────────── */}
+        <SectionHeading>Basic Information</SectionHeading>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
             name="nameEn"
@@ -113,7 +128,7 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
               <FormItem>
                 <FormLabel>Name (English)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Name (English)" {...field} />
+                  <Input placeholder="e.g. Head of Department" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -126,17 +141,12 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
               <FormItem>
                 <FormLabel>Name (Sinhala)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Name (Sinhala)" {...field} />
+                  <Input placeholder="e.g. දෙපාර්තමේන්තු ප්‍රධානී" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-        </div>
-
-
-
-        <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="descriptionEn"
@@ -144,7 +154,7 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
               <FormItem>
                 <FormLabel>Description (English)</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Role Description" {...field} />
+                  <Textarea placeholder="Brief description of this role…" rows={3} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -157,7 +167,7 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
               <FormItem>
                 <FormLabel>Description (Sinhala)</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="වැඩ වගකීම්" {...field} />
+                  <Textarea placeholder="භූමිකාවේ විස්තරය…" rows={3} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -165,19 +175,25 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* ── Grade Settings ─────────────────────────────── */}
+        <SectionHeading>Grade Settings</SectionHeading>
+
+        <div className="flex flex-col sm:flex-row gap-6">
           <FormField
             control={form.control}
             name="gradeBased"
             render={({ field }) => (
-              <FormItem className="flex items-center gap-2">
+              <FormItem className="flex items-center gap-2.5">
                 <FormControl>
                   <Checkbox
                     checked={field.value}
                     onCheckedChange={(checked) => field.onChange(!!checked)}
                   />
                 </FormControl>
-                <FormLabel className="m-0">Grade-based role</FormLabel>
+                <div>
+                  <FormLabel className="m-0 cursor-pointer">Grade-based role</FormLabel>
+                  <p className="text-xs text-muted-foreground">This role is tied to specific grades.</p>
+                </div>
               </FormItem>
             )}
           />
@@ -185,7 +201,7 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
             control={form.control}
             name="singleGraded"
             render={({ field }) => (
-              <FormItem className="flex items-center gap-2">
+              <FormItem className={`flex items-center gap-2.5 ${!gradeBased ? "opacity-40 pointer-events-none" : ""}`}>
                 <FormControl>
                   <Checkbox
                     checked={field.value}
@@ -193,7 +209,10 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
                     disabled={!gradeBased}
                   />
                 </FormControl>
-                <FormLabel className="m-0">Single grade only</FormLabel>
+                <div>
+                  <FormLabel className="m-0 cursor-pointer">Single grade only</FormLabel>
+                  <p className="text-xs text-muted-foreground">Teacher assigned to one grade at a time.</p>
+                </div>
               </FormItem>
             )}
           />
@@ -205,10 +224,10 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
             name="gradesEffected"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Grades covered</FormLabel>
-                <div className="grid grid-cols-2 gap-2 border rounded-md p-3 max-h-44 overflow-y-auto">
+                <FormLabel>Grades Covered</FormLabel>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 border rounded-md p-3 max-h-48 overflow-y-auto bg-slate-50/50">
                   {grades.map((g) => (
-                    <label key={g.id} className="flex items-center gap-2 text-sm text-slate-700">
+                    <label key={g.id} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
                       <Checkbox
                         checked={field.value?.includes(g.id)}
                         onCheckedChange={(checked) =>
@@ -227,90 +246,104 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
           />
         )}
 
+        {/* ── Responsibilities ───────────────────────────── */}
+        <SectionHeading>Responsibilities</SectionHeading>
+
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <FormLabel className="text-base">Responsibilities</FormLabel>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => append({ level: 1, textSi: "", textEn: "" })}
-            >
-              Add responsibility
-            </Button>
-          </div>
-          {fields.length === 0 && (
-            <p className="text-sm text-slate-500">No responsibilities added yet.</p>
-          )}
-          {fields.map((fieldItem, idx) => (
-            <div key={fieldItem.id} className="grid grid-cols-4 gap-2 border rounded-md p-3">
-              <FormField
-                control={form.control}
-                name={`responsibilities.${idx}.level`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Level</FormLabel>
-                    <FormControl>
-                      <select
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                        value={field.value}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+          {fields.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic">No responsibilities added yet.</p>
+          ) : (
+            fields.map((fieldItem, idx) => (
+              <div key={fieldItem.id} className="grid grid-cols-1 sm:grid-cols-[140px_1fr_1fr_auto] gap-3 border rounded-md p-3 bg-slate-50/50">
+                {/* Level */}
+                <FormField
+                  control={form.control}
+                  name={`responsibilities.${idx}.level`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Level</FormLabel>
+                      <Select
+                        value={String(field.value)}
+                        onValueChange={(v) => field.onChange(Number(v))}
                       >
-                        <option value={1}>Primary</option>
-                        <option value={2}>Secondary</option>
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name={`responsibilities.${idx}.textEn`}
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormLabel>Responsibility (English)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Lead grade activities" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name={`responsibilities.${idx}.textSi`}
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormLabel>Responsibility (Sinhala)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="භාර කටයුතු" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex items-end justify-end">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => remove(idx)}
-                  className="text-red-600"
-                >
-                  Remove
-                </Button>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1">Primary</SelectItem>
+                          <SelectItem value="2">Secondary</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {/* English */}
+                <FormField
+                  control={form.control}
+                  name={`responsibilities.${idx}.textEn`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Responsibility (English)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Lead grade activities" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {/* Sinhala */}
+                <FormField
+                  control={form.control}
+                  name={`responsibilities.${idx}.textSi`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Responsibility (Sinhala)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="භාර කටයුතු" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {/* Remove */}
+                <div className="flex items-end pb-0.5 justify-end sm:justify-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                    onClick={() => remove(idx)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => append({ level: 1, textSi: "", textEn: "" })}
+          >
+            <Plus className="h-4 w-4" />
+            Add Responsibility
+          </Button>
         </div>
+
+        {/* ── Assign Teachers ────────────────────────────── */}
+        <SectionHeading>Assign Teachers</SectionHeading>
 
         <FormField
           control={form.control}
           name="teacherIds"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assign teachers</FormLabel>
+              <FormLabel>Teachers</FormLabel>
               <FormControl>
                 <LiveSearch
                   data={filteredTeachers}
@@ -318,42 +351,46 @@ export function StaffRoleForm({ defaultValues, onSubmit, isLoading, onCancel }: 
                   valueKey="id"
                   multiple
                   onSearch={setTeacherSearchTerm}
-                  selected={(_, ids) => {
-                    field.onChange(ids);
-                  }}
+                  selected={(_, ids) => field.onChange(ids)}
                   defaultSelected={field.value}
-                  placeholder="Search and add teachers..."
+                  placeholder="Search and add teachers…"
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        {/* ── Ordering ───────────────────────────────────── */}
+        <SectionHeading>Display Order</SectionHeading>
 
         <FormField
           control={form.control}
           name="order"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="max-w-[160px]">
               <FormLabel>Order / Priority</FormLabel>
               <FormControl>
-                <Input 
-                  type="number" 
-                  {...field} 
+                <Input
+                  type="number"
+                  min={0}
+                  {...field}
                   onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
                 />
               </FormControl>
+              <p className="text-xs text-muted-foreground">Lower number = higher in hierarchy.</p>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="flex justify-end gap-2 pt-4">
+        {/* ── Actions ────────────────────────────────────── */}
+        <div className="flex justify-end gap-3 pt-4 border-t">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Role"}
+            {isLoading ? "Saving…" : "Save Role"}
           </Button>
         </div>
       </form>

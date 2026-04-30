@@ -9,10 +9,10 @@ import { competitionResultsService } from "@/services/masterdata/competitionResu
 import { teamSelectionsService } from "@/services/masterdata/teamSelections.service";
 import type { SaveTeamSelectionPayload, AutoGeneratePayload } from "@/services/masterdata/teamSelections.service";
 
-export function useCompetitions(year?: number, gradeId?: string) {
+export function useCompetitions(filters: Record<string, any> = {}) {
   return useQuery({
-    queryKey: [...qk.competitions.byYear(year), gradeId],
-    queryFn: () => competitionsService.list(year, gradeId),
+    queryKey: [...qk.competitions.all, filters],
+    queryFn: () => competitionsService.list(filters),
     staleTime: 60_000,
   });
 }

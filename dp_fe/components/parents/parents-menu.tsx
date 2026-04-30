@@ -20,7 +20,7 @@ export function ParentsMenu() {
 
   return (
     <MainMenu>
-      <MainMenuTitle>Parents Management</MainMenuTitle>
+      <MainMenuTitle moduleLabel>Parents Management</MainMenuTitle>
       <MainMenuItem items={items} />
     </MainMenu>
   );

@@ -27,8 +27,10 @@ exports.listCompetitions = async ({ schoolId, filters }) => {
   const q = { schoolId }
 
   if (filters.squadId) q.squadId = filters.squadId
+  if (filters.clubId) q.clubId = filters.clubId
   if (filters.year) q.year = Number(filters.year)
   if (filters.scope) q.scope = filters.scope
+  if (filters.eventType) q.eventType = filters.eventType
   if (filters.isMainCompetition !== undefined) {
     q.isMainCompetition = filters.isMainCompetition === 'true'
   }
@@ -43,6 +45,10 @@ exports.listCompetitions = async ({ schoolId, filters }) => {
       { scope: 'grade', gradeIds: filters.gradeId },
       { scope: 'section', sectionIds: { $in: sectionIds } },
     ]
+
+    if (filters.forZonal === 'true') {
+      q.excludedZonalGradeIds = { $ne: filters.gradeId }
+    }
   }
 
   const items = await Competition.find(q)

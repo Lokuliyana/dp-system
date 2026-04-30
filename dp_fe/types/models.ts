@@ -228,16 +228,23 @@ export type Squad = BaseDoc & {
 /* -------------------- COMPETITION (F16) -------------------- */
 export type CompetitionScope = "open" | "grade" | "section";
 
+export type CompetitionEventType = "regular" | "main" | "annual";
+
 export type Competition = BaseDoc & {
   nameSi: string;
   nameEn: string;
 
   squadId?: Id;
+  clubId?: Id;
 
   scope: CompetitionScope;
   gradeIds?: Id[];
   sectionIds?: Id[];
 
+  excludedZonalGradeIds?: Id[];
+  excludedZonalSectionIds?: Id[];
+
+  eventType?: CompetitionEventType;
   isMainCompetition: boolean;
   active: boolean;
   year?: number;
